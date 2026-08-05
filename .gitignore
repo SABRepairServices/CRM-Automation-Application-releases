@@ -1,0 +1,32 @@
+# Secrets — never commit these
+Configs/.env
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+
+# Dependencies
+node_modules/
+
+# Build output
+.next/
+out/
+build/
+dist/
+Desktop/dist/
+graphify-out/
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS/editor cruft
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# GSD planning graphs (regenerable, large)
+.planning/graphs/*.json
+.planning/graphs/*.html

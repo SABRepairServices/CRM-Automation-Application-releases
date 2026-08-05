@@ -1,0 +1,92 @@
+'use client';
+
+import { useState } from 'react';
+import Link from 'next/link';
+import { usePathname, useRouter } from 'next/navigation';
+import { useAuth } from '@/context/AuthContext';
+
+const PAGE_TITLES: Record<string, string> = {
+  '/dashboard': 'Dashboard',
+  '/clients': 'Clients',
+  '/customers': 'Customers',
+  '/technicians': 'Technicians',
+  '/jobs': 'Repair Jobs',
+  '/inspections': 'Inspection Reports',
+  '/quotes': 'Quotations',
+  '/invoices': 'Invoices',
+  '/social-accounts': 'Social Accounts',
+  '/social-posts': 'Social Posts',
+  '/call-agent': 'Call Agent',
+  '/settings': 'Settings',
+};
+
+export function Header() {
+  const pathname = usePathname();
+  const router = useRouter();
+  const { user, logout } = useAuth();
+  const [menuOpen, setMenuOpen] = useState(false);
+  const title = PAGE_TITLES[pathname] || 'Imran Pro Services';
+
+  const initials = user?.fullName
+    ? user.fullName.split(' ').map((p) => p[0]).slice(0, 2).join('').toUpperCase()
+    : user?.email?.[0]?.toUpperCase() || '?';
+
+  const handleLogout = () => {
+    logout();
+    router.replace('/login');
+  };
+
+  return (
+    <header className="fixed top-0 left-64 right-0 h-16 bg-slate-900 border-b border-slate-800 z-30 flex items-center justify-between px-8">
+      <h2 className="text-lg font-semibold text-white">{title}</h2>
+
+      <div className="flex items-center gap-3">
+        <Link
+          href="/settings"
+          aria-label="Settings"
+          title="Settings"
+          className={`w-10 h-10 flex items-center justify-center rounded-full transition-all duration-200 ${
+            pathname === '/settings'
+              ? 'bg-blue-500/10 text-blue-400 shadow-[0_0_12px_rgba(96,165,250,0.5)]'
+              : 'text-slate-500 hover:bg-slate-800 hover:text-slate-300 hover:shadow-[0_0_12px_rgba(148,163,184,0.35)]'
+          }`}
+        >
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path
+              d="M12 15.5A3.5 3.5 0 1 0 12 8.5a3.5 3.5 0 0 0 0 7Z"
+              stroke="currentColor"
+              strokeWidth="1.6"
+            />
+            <path
+              d="M19.4 13.5a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V19.5a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1.08-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H4.5a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1.08 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H10a1.65 1.65 0 0 0 1-1.51V4.5a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V10a1.65 1.65 0 0 0 1.51 1h.09a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"
+              stroke="currentColor"
+              strokeWidth="1.6"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        </Link>
+
+        <div className="relative">
+          <button
+            onClick={() => setMenuOpen((v) => !v)}
+            className="w-9 h-9 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-white text-sm font-semibold transition-shadow duration-200 hover:shadow-[0_0_14px_rgba(168,85,247,0.55)]"
+          >
+            {initials}
+          </button>
+          {menuOpen && (
+            <div className="absolute right-0 mt-2 w-48 bg-slate-900 border border-slate-800 rounded-lg shadow-lg py-2 z-40">
+              <div className="px-4 py-2 text-sm text-slate-500 border-b truncate">{user?.email}</div>
+              <button
+                onClick={handleLogout}
+                className="w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-red-500/10"
+              >
+                Sign out
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    </header>
+  );
+}

@@ -1,0 +1,220 @@
+================================================================================
+COPY & PASTE COMMANDS TO RUN
+================================================================================
+
+Your Social Media Automation Platform - Simple Command Reference
+
+All commands copy-paste ready. Just open Command Prompt and paste each one.
+
+================================================================================
+STEP 1: COPY FILES TO D: DRIVE
+================================================================================
+
+Option A: If files are in Downloads (Easiest)
+
+  xcopy /E /I /Y "C:\Users\%USERNAME%\Downloads\Social-Media-Automation\*" "D:\Developer Application\Social-Media-Automation\"
+
+
+Option B: If files are in a different folder
+
+  1. Open Command Prompt
+  2. Type: cd <folder-where-files-are>
+  3. Then paste:
+
+  xcopy /E /I /Y * "D:\Developer Application\Social-Media-Automation\"
+
+
+================================================================================
+STEP 2: VERIFY FILES ARE COPIED
+================================================================================
+
+Check folder structure:
+
+  dir "D:\Developer Application\Social-Media-Automation"
+
+Check file count (should be ~36):
+
+  dir /s /b "D:\Developer Application\Social-Media-Automation" | find /c ":"
+
+================================================================================
+STEP 3: INSTALL DEPENDENCIES
+================================================================================
+
+Frontend installation:
+
+  cd D:\Developer Application\Social-Media-Automation\Web
+  npm install
+
+
+Backend installation:
+
+  cd ..\API
+  npm install
+
+(If this fails, try: cd D:\Developer Application\Social-Media-Automation\API)
+
+================================================================================
+STEP 4: START FRONTEND SERVER (OPEN NEW TERMINAL WINDOW 1)
+================================================================================
+
+  cd D:\Developer Application\Social-Media-Automation\Web
+  npm run dev
+
+Result: Should show "Local: http://localhost:3000"
+Keep this window OPEN - don't close it
+
+================================================================================
+STEP 5: START BACKEND SERVER (OPEN NEW TERMINAL WINDOW 2)
+================================================================================
+
+  cd D:\Developer Application\Social-Media-Automation\API
+  npm run dev
+
+Result: Should show "Server running on http://localhost:5000"
+Keep this window OPEN - don't close it
+
+================================================================================
+STEP 6: TEST IN BROWSER (OPEN YOUR BROWSER)
+================================================================================
+
+Frontend - Open new browser tab:
+  http://localhost:3000
+
+Backend Health Check - Open new browser tab:
+  http://localhost:5000/api/health
+
+Both should load without errors ✅
+
+================================================================================
+STEP 7: TEST API WITH CURL (Optional - In New Command Prompt)
+================================================================================
+
+Health check:
+
+  curl http://localhost:5000/api/health
+
+
+Register user:
+
+  curl -X POST http://localhost:5000/api/auth/register ^
+    -H "Content-Type: application/json" ^
+    -d "{\"email\":\"test@example.com\",\"password\":\"Password123\",\"fullName\":\"Test User\"}"
+
+
+Login:
+
+  curl -X POST http://localhost:5000/api/auth/login ^
+    -H "Content-Type: application/json" ^
+    -d "{\"email\":\"test@example.com\",\"password\":\"Password123\"}"
+
+(Copy the accessToken from login response and use it below)
+
+Get profile (replace TOKEN with actual token):
+
+  curl -H "Authorization: Bearer TOKEN" http://localhost:5000/api/auth/me
+
+================================================================================
+STOP EVERYTHING (When Done)
+================================================================================
+
+In each terminal window where servers are running, press:
+
+  Ctrl + C
+
+This stops the servers gracefully.
+
+================================================================================
+QUICK REFERENCE - File Locations
+================================================================================
+
+Main folder:
+  D:\Developer Application\Social-Media-Automation\
+
+Frontend:
+  D:\Developer Application\Social-Media-Automation\Web\
+
+Backend:
+  D:\Developer Application\Social-Media-Automation\API\
+
+Database:
+  D:\Developer Application\Social-Media-Automation\Database\
+
+Configuration:
+  D:\Developer Application\Social-Media-Automation\Configs\.env
+
+Scripts:
+  D:\Developer Application\Social-Media-Automation\Scripts\
+
+================================================================================
+COMMON ISSUES & FIXES
+================================================================================
+
+Issue: "npm command not found"
+Fix: Node.js not installed. Download from https://nodejs.org/
+
+Issue: "Port 5000 already in use"
+Fix:
+  netstat -ano | findstr :5000
+  taskkill /PID <PID> /F
+
+Issue: "Can't connect to backend"
+Fix: Make sure BOTH servers are running in separate windows
+
+Issue: "Files not found"
+Fix: Make sure files are in D:\Developer Application\Social-Media-Automation\
+
+Issue: "npm install fails"
+Fix:
+  1. Delete node_modules folder
+  2. Delete package-lock.json
+  3. Run npm install again
+  4. If still fails, try: npm cache clean --force
+
+================================================================================
+AFTER EVERYTHING WORKS
+================================================================================
+
+1. Read: README_INSTRUCTIONS.md (main guide)
+2. Read: API_ENDPOINTS_REFERENCE.md (API help)
+3. Edit: Configs/.env (add your settings)
+4. Test more endpoints using curl commands in API_ENDPOINTS_REFERENCE.md
+5. Start building features!
+
+================================================================================
+IMPORTANT NOTES
+================================================================================
+
+- Keep BOTH server windows OPEN while developing
+- Both terminals must say NO ERRORS
+- If you close a terminal, the server stops
+- To restart, just run npm run dev again
+- Ctrl+C stops the server
+
+- Edit .env BEFORE running installer:
+  D:\Developer Application\Social-Media-Automation\Configs\.env
+
+- Never delete these folders:
+  - API/
+  - Web/
+  - Database/
+  - node_modules/ (you can delete if needed, then npm install again)
+
+================================================================================
+READY? LET'S GO!
+================================================================================
+
+1. Copy files to D: drive (use commands above)
+2. Open Command Prompt
+3. Paste the commands one by one
+4. Open browser to http://localhost:3000
+5. Test API with curl commands
+
+Everything should work in ~15 minutes!
+
+Questions? Read the markdown files (.md) - they have detailed explanations.
+
+================================================================================
+Version: 1.0.0
+Date: July 30, 2026
+Status: Complete & Ready
+================================================================================

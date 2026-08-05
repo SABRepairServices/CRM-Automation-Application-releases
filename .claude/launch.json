@@ -1,0 +1,12 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "Imran Pro Services",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["dev-launch.js"],
+      "port": 3000,
+      "cwd": "D:\\Developer Application\\Social-Media-Automation"
+    }
+  ]
+}

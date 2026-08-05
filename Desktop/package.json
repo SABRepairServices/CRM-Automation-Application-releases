@@ -1,0 +1,39 @@
+{
+  "name": "imran-pro-services-desktop",
+  "version": "1.0.0",
+  "description": "Desktop application for Imran Pro Services CRM & Business Automation Platform",
+  "author": "Imran Pro Services",
+  "private": true,
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder"
+  },
+  "devDependencies": {
+    "electron": "^31.0.0",
+    "electron-builder": "^24.13.3"
+  },
+  "dependencies": {
+    "tree-kill": "^1.2.2"
+  },
+  "build": {
+    "appId": "com.imranproservices.desktop",
+    "productName": "Imran Pro Services",
+    "publish": null,
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "backupConfig.js",
+      "pdfBackup.js",
+      "splash.html",
+      "icon.ico"
+    ],
+    "win": {
+      "target": "nsis",
+      "icon": "icon.ico"
+    }
+  }
+}
