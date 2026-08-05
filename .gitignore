@@ -22,6 +22,9 @@ graphify-out/
 *.log
 npm-debug.log*
 
+# Runtime state (not source)
+.claude/*.lock
+
 # OS/editor cruft
 .DS_Store
 Thumbs.db
