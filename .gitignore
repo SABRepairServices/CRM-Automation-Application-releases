@@ -16,6 +16,7 @@ build/
 dist/
 Desktop/dist/
 graphify-out/
+*.tsbuildinfo
 
 # Logs
 *.log
