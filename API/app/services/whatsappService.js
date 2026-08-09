@@ -1,6 +1,31 @@
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import db from '../../config/database.js';
 
 const GRAPH_API_VERSION = 'v21.0';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const DRY_RUN_DOCS = path.resolve(__dirname, '../../dry-run-documents');
+
+/**
+ * In dry-run the PDF is still fully generated — it just has nowhere to go.
+ * Writing it to disk lets the simulator show the operator the exact file a
+ * real customer would receive, which is the whole point of testing without
+ * a live number. Never called once real credentials are configured.
+ */
+const persistDryRunDocument = (filename, buffer) => {
+  try {
+    fs.mkdirSync(DRY_RUN_DOCS, { recursive: true });
+    const safe = String(filename).replace(/[^a-zA-Z0-9._-]/g, '_');
+    const filePath = path.join(DRY_RUN_DOCS, safe);
+    fs.writeFileSync(filePath, buffer);
+    return safe;
+  } catch (err) {
+    console.error('[WhatsApp:DRY-RUN] could not persist document:', err.message);
+    return null;
+  }
+};
 
 const graphUrl = () =>
   `https://graph.facebook.com/${GRAPH_API_VERSION}/${process.env.WHATSAPP_PHONE_NUMBER_ID}/messages`;
@@ -40,7 +65,11 @@ const sendText = async (to, body, { clientId = null, threadId = null } = {}) => 
   }
 
   await logMessage({ clientId, threadId, direction: 'outbound', from: process.env.WHATSAPP_PHONE_NUMBER_ID, to, body, raw: result });
-  return result;
+  // Meta signals refusal (expired 24h window, unregistered recipient, rate
+  // limit) with a 4xx body, not a thrown error. Callers must be able to tell
+  // "delivered" from "refused", or they will report success for a message
+  // the customer never saw.
+  return { ok: response.ok, error: response.ok ? null : result?.error || result, raw: result };
 };
 
 /**
@@ -51,9 +80,18 @@ const sendText = async (to, body, { clientId = null, threadId = null } = {}) => 
  */
 const sendDocument = async (to, { buffer, filename, caption }, { clientId = null, threadId = null } = {}) => {
   if (!isConfigured()) {
+    const saved = persistDryRunDocument(filename, buffer);
     console.log(`[WhatsApp:DRY-RUN] -> ${to}: [document: ${filename}] ${caption || ''}`);
-    await logMessage({ clientId, threadId, direction: 'outbound', from: process.env.WHATSAPP_PHONE_NUMBER_ID || 'unset', to, body: `[document: ${filename}] ${caption || ''}`, raw: null });
-    return { dryRun: true };
+    await logMessage({
+      clientId,
+      threadId,
+      direction: 'outbound',
+      from: process.env.WHATSAPP_PHONE_NUMBER_ID || 'unset',
+      to,
+      body: `[document: ${filename}] ${caption || ''}`,
+      raw: saved ? { dryRunDocument: saved, bytes: buffer?.length ?? 0 } : null,
+    });
+    return { ok: true, dryRun: true, document: saved };
   }
 
   const mediaForm = new FormData();
@@ -67,7 +105,18 @@ const sendDocument = async (to, { buffer, filename, caption }, { clientId = null
   const mediaResult = await mediaResponse.json();
   if (!mediaResponse.ok) {
     console.error('[WhatsApp] media upload failed:', mediaResult);
-    return mediaResult;
+    // Log the failure too — otherwise a rejected upload leaves no trace at
+    // all beyond one console line, and the job silently waits forever.
+    await logMessage({
+      clientId,
+      threadId,
+      direction: 'outbound',
+      from: process.env.WHATSAPP_PHONE_NUMBER_ID,
+      to,
+      body: `[FAILED to upload document: ${filename}]`,
+      raw: mediaResult,
+    });
+    return { ok: false, error: mediaResult?.error || mediaResult, stage: 'media_upload' };
   }
 
   const response = await fetch(graphUrl(), {
@@ -90,7 +139,7 @@ const sendDocument = async (to, { buffer, filename, caption }, { clientId = null
   }
 
   await logMessage({ clientId, threadId, direction: 'outbound', from: process.env.WHATSAPP_PHONE_NUMBER_ID, to, body: `[document: ${filename}] ${caption || ''}`, raw: result });
-  return result;
+  return { ok: response.ok, error: response.ok ? null : result?.error || result, stage: 'message_send', raw: result };
 };
 
 const logMessage = async ({ clientId, threadId, direction, from, to, body, raw }) => {

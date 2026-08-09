@@ -14,6 +14,7 @@ import {
   MessagesSquare,
   Phone,
   UserCog,
+  FlaskConical,
 } from 'lucide-react';
 
 const links = [
@@ -27,7 +28,8 @@ const links = [
   { href: '/invoices', label: 'Invoices', icon: Receipt },
   { href: '/social-accounts', label: 'Accounts', icon: Link2 },
   { href: '/social-posts', label: 'Posts', icon: MessagesSquare },
-  { href: '/call-agent', label: 'Call Agent', icon: Phone, comingSoon: true },
+  { href: '/call-agent', label: 'Call Agent', icon: Phone },
+  { href: '/whatsapp-sim', label: 'WhatsApp Sim', icon: FlaskConical },
 ];
 
 export function Sidebar() {
@@ -74,11 +76,6 @@ export function Sidebar() {
                 strokeWidth={2}
               />
               <span className="flex-1">{link.label}</span>
-              {link.comingSoon && (
-                <span className="text-[9px] font-bold uppercase tracking-wide bg-amber-500/15 text-amber-400 px-1.5 py-0.5 rounded-full">
-                  Soon
-                </span>
-              )}
             </Link>
           );
         })}

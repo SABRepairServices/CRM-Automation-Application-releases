@@ -20,6 +20,8 @@ import technicianRoutes from './app/routes/technicianRoutes.js';
 import socialAccountRoutes from './app/routes/socialAccountRoutes.js';
 import socialPostRoutes from './app/routes/socialPostRoutes.js';
 import whatsappRoutes from './app/routes/whatsappRoutes.js';
+import callRoutes from './app/routes/callRoutes.js';
+import whatsappSimRoutes from './app/routes/whatsappSimRoutes.js';
 import cron from 'node-cron';
 import { runMonthEndContractorBatch } from './app/services/invoiceBatchService.js';
 
@@ -29,8 +31,16 @@ dotenv.config({ path: path.resolve(__dirname, '../Configs/.env') });
 dotenv.config();
 
 const app = express();
-const PORT = process.env.API_PORT || 5000;
+// Render (and most PaaS hosts) assign the port via PORT and require the app
+// to bind to it — API_PORT stays as the local-dev override.
+const PORT = process.env.PORT || process.env.API_PORT || 5000;
 const HOST = process.env.API_HOST || '0.0.0.0';
+
+// Behind Render's (or any) reverse proxy, TLS terminates at the edge — the
+// app itself only ever sees plain HTTP. Without this, req.protocol always
+// reports "http", which breaks the Facebook OAuth callback URL we build
+// dynamically in socialAccountRoutes.js (Meta requires an exact https match).
+app.set('trust proxy', 1);
 
 // ============================================================
 // Middleware
@@ -121,6 +131,12 @@ app.use('/api/posts', socialPostRoutes);
 // WhatsApp technician bot — no auth middleware, Meta calls these directly
 app.use('/api/whatsapp', whatsappRoutes);
 
+// Call log
+app.use('/api/calls', callRoutes);
+
+// WhatsApp simulator — drives the real webhook with real Meta-shaped payloads
+app.use('/api/whatsapp-sim', whatsappSimRoutes);
+
 // Placeholder routes for future implementation
 app.get('/api/analytics/dashboard', (req, res) => {
   res.status(501).json({ message: 'Dashboard analytics not implemented yet' });
@@ -196,6 +212,8 @@ app.listen(PORT, HOST, () => {
   console.log('   ✓ POST /api/posts/:id/schedule  - Schedule post');
   console.log('   ✓ GET  /api/whatsapp/webhook    - Meta verification handshake');
   console.log('   ✓ POST /api/whatsapp/webhook    - Inbound WhatsApp messages');
+  console.log('   ✓ GET  /api/calls               - List call log');
+  console.log('   ✓ POST /api/calls               - Log a call');
   console.log('   → /api/accounts, /api/analytics, /api/ai (coming soon)\n');
   console.log('📖 Docs: http://localhost:5000/api/docs');
   console.log('🔗 Frontend: http://localhost:3000\n');

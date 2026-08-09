@@ -29,6 +29,7 @@ const runMonthEndContractorBatch = async (now) => {
   );
 
   let sent = 0;
+  let failed = 0;
   for (const row of pending.rows) {
     try {
       const clientResult = await db.query(`SELECT * FROM clients WHERE id = $1`, [row.client_id]);
@@ -40,21 +41,45 @@ const runMonthEndContractorBatch = async (now) => {
       const pdf = await generateInvoicePdf({ client, invoice, customerName: customer.name, customerPhone: customer.phone });
       const filename = `Invoice_${invoice.invoice_number}.pdf`;
 
+      let delivered = false;
       if (customer.whatsapp) {
-        await sendDocument(customer.whatsapp, { buffer: pdf, filename, caption: `Monthly invoice ${invoice.invoice_number} — total ${Number(invoice.total_amount).toFixed(2)} AED.` }, { clientId: row.client_id });
-      }
-      if (customer.email) {
-        await sendPdfEmail({ to: customer.email, subject: `Invoice ${invoice.invoice_number}`, text: 'Please find your monthly invoice attached.', filename, pdfBuffer: pdf });
+        const result = await sendDocument(
+          customer.whatsapp,
+          { buffer: pdf, filename, caption: `Monthly invoice ${invoice.invoice_number} — total ${Number(invoice.total_amount).toFixed(2)} AED.` },
+          { clientId: row.client_id }
+        );
+        delivered = Boolean(result?.ok);
+        if (!delivered) {
+          console.error(`[InvoiceBatch] WhatsApp refused invoice ${invoice.invoice_number}:`, result?.error);
+        }
       }
 
-      await db.query(`UPDATE invoices SET status = 'sent', sent_at = NOW() WHERE id = $1`, [row.invoice_id]);
-      sent += 1;
+      // Email is secondary — its failure must not stop the invoice being
+      // marked sent when WhatsApp already delivered it.
+      if (customer.email) {
+        try {
+          await sendPdfEmail({ to: customer.email, subject: `Invoice ${invoice.invoice_number}`, text: 'Please find your monthly invoice attached.', filename, pdfBuffer: pdf });
+          delivered = true;
+        } catch (err) {
+          console.error(`[InvoiceBatch] email failed for invoice ${invoice.invoice_number}:`, err.message);
+        }
+      }
+
+      // Leaving it 'draft' when nothing got through means the next daily run
+      // retries it, instead of silently writing off an unsent invoice.
+      if (delivered) {
+        await db.query(`UPDATE invoices SET status = 'sent', sent_at = NOW() WHERE id = $1`, [row.invoice_id]);
+        sent += 1;
+      } else {
+        failed += 1;
+      }
     } catch (err) {
+      failed += 1;
       console.error(`[InvoiceBatch] failed to send invoice ${row.invoice_id}:`, err.message);
     }
   }
 
-  return { ran: true, sent, total: pending.rows.length };
+  return { ran: true, sent, failed, total: pending.rows.length };
 };
 
 export { runMonthEndContractorBatch, isWithinLastThreeDaysOfMonth };

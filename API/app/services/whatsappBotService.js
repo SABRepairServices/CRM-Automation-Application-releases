@@ -89,43 +89,96 @@ const openThread = async ({ clientId, jobId, technicianId, stage, documentType, 
   return result.rows[0];
 };
 
+/**
+ * Delivers a generated PDF over both channels and reports what actually
+ * happened on each. Two rules here are load-bearing:
+ *
+ *  1. Email is a secondary channel. Its failure must never unwind the caller,
+ *     because by then the WhatsApp document is already in the customer's hand
+ *     and the caller still has to record the thread — otherwise the customer
+ *     replies "approved" to a thread that was never opened and gets told no
+ *     request is waiting on them.
+ *  2. A WhatsApp send that Meta refused is NOT a delivery. sendDocument
+ *     reports {ok:false} rather than throwing (expired 24h window, blocked
+ *     recipient, rate limit), so the result has to be inspected and passed
+ *     back up, or the technician is told "sent" about a message nobody got.
+ */
+const deliverDocument = async ({ customer, buffer, filename, caption, subject, emailText, threadCtx }) => {
+  let whatsappSent = false;
+  let whatsappError = null;
+  let emailError = null;
+
+  if (customer.whatsapp) {
+    const result = await sendDocument(customer.whatsapp, { buffer, filename, caption }, threadCtx);
+    whatsappSent = Boolean(result?.ok);
+    if (!whatsappSent) whatsappError = result?.error?.message || 'WhatsApp rejected the message';
+  }
+
+  if (customer.email) {
+    try {
+      await sendPdfEmail({ to: customer.email, subject, text: emailText, filename, pdfBuffer: buffer });
+    } catch (err) {
+      emailError = err.message;
+      console.error('[Email] send failed:', err.message);
+    }
+  }
+
+  return { whatsappSent, whatsappError, emailError, hasWhatsapp: Boolean(customer.whatsapp) };
+};
+
+/** Turns a delivery result into a line the technician can act on. */
+const deliveryNote = (delivery, who) => {
+  if (delivery.hasWhatsapp && !delivery.whatsappSent) {
+    return `\n⚠️ WhatsApp delivery to ${who} FAILED (${delivery.whatsappError}). They have not seen it — follow up directly.`;
+  }
+  if (delivery.emailError) {
+    return `\n(Sent on WhatsApp. The email copy failed: ${delivery.emailError})`;
+  }
+  return '';
+};
+
 const sendInspectionToCustomer = async (client, customer, job, report, threadCtx) => {
   const full = await getInspectionReport(client.id, report.id);
   const pdf = await generateInspectionPdf({ client, report: full, customerName: customer.name, customerPhone: customer.phone });
-  const filename = `Inspection_${report.report_number}.pdf`;
 
-  if (customer.whatsapp) {
-    await sendDocument(customer.whatsapp, { buffer: pdf, filename, caption: `Inspection report for your ${job.appliance_type || 'appliance'} — reply "approved" to proceed with a quotation, or let us know if you'd like changes.` }, threadCtx);
-  }
-  if (customer.email) {
-    await sendPdfEmail({ to: customer.email, subject: `Inspection Report ${report.report_number}`, text: 'Please find your inspection report attached.', filename, pdfBuffer: pdf });
-  }
+  return deliverDocument({
+    customer,
+    buffer: pdf,
+    filename: `Inspection_${report.report_number}.pdf`,
+    caption: `Inspection report for your ${job.appliance_type || 'appliance'} — reply "approved" to proceed with a quotation, or let us know if you'd like changes.`,
+    subject: `Inspection Report ${report.report_number}`,
+    emailText: 'Please find your inspection report attached.',
+    threadCtx,
+  });
 };
 
 const sendQuotationToCustomer = async (client, customer, job, quotation, threadCtx) => {
   const full = await getQuotation(client.id, quotation.id);
   const pdf = await generateQuotationPdf({ client, quotation: full, customerName: customer.name, customerPhone: customer.phone });
-  const filename = `Quotation_${quotation.quotation_number}.pdf`;
 
-  if (customer.whatsapp) {
-    await sendDocument(customer.whatsapp, { buffer: pdf, filename, caption: `Quotation for your ${job.appliance_type || 'appliance'} repair — reply "approved" to proceed, or let us know if you'd like to discuss.` }, threadCtx);
-  }
-  if (customer.email) {
-    await sendPdfEmail({ to: customer.email, subject: `Quotation ${quotation.quotation_number}`, text: 'Please find your quotation attached.', filename, pdfBuffer: pdf });
-  }
+  return deliverDocument({
+    customer,
+    buffer: pdf,
+    filename: `Quotation_${quotation.quotation_number}.pdf`,
+    caption: `Quotation for your ${job.appliance_type || 'appliance'} repair — reply "approved" to proceed, or let us know if you'd like to discuss.`,
+    subject: `Quotation ${quotation.quotation_number}`,
+    emailText: 'Please find your quotation attached.',
+    threadCtx,
+  });
 };
 
 const sendInvoiceToCustomer = async (client, customer, invoice) => {
   const full = await getInvoice(client.id, invoice.id);
   const pdf = await generateInvoicePdf({ client, invoice: full, customerName: customer.name, customerPhone: customer.phone });
-  const filename = `Invoice_${invoice.invoice_number}.pdf`;
 
-  if (customer.whatsapp) {
-    await sendDocument(customer.whatsapp, { buffer: pdf, filename, caption: `Invoice ${invoice.invoice_number} — total ${Number(invoice.total_amount).toFixed(2)} AED.` });
-  }
-  if (customer.email) {
-    await sendPdfEmail({ to: customer.email, subject: `Invoice ${invoice.invoice_number}`, text: 'Please find your invoice attached.', filename, pdfBuffer: pdf });
-  }
+  return deliverDocument({
+    customer,
+    buffer: pdf,
+    filename: `Invoice_${invoice.invoice_number}.pdf`,
+    caption: `Invoice ${invoice.invoice_number} — total ${Number(invoice.total_amount).toFixed(2)} AED.`,
+    subject: `Invoice ${invoice.invoice_number}`,
+    emailText: 'Please find your invoice attached.',
+  });
 };
 
 /**
@@ -155,9 +208,13 @@ const handleTechnicianMessage = async (technician, from, body) => {
       taxable_amount: Number(parsed.fields.amount) || 0,
       tax_rate: 5.0,
     });
-    await sendInspectionToCustomer(client, customer, job, report, threadCtx);
+    const delivery = await sendInspectionToCustomer(client, customer, job, report, threadCtx);
     await openThread({ clientId: technician.client_id, jobId: job.id, technicianId: technician.id, stage: 'inspection_sent', documentType: 'inspection', documentId: report.id, customerWhatsapp: customer.whatsapp, technicianWhatsapp: from });
-    await sendText(from, `Inspection ${report.report_number} sent to ${customer.name}. I'll let you know when they reply.`, threadCtx);
+    await sendText(
+      from,
+      `Inspection ${report.report_number} sent to ${customer.name}. I'll let you know when they reply.${deliveryNote(delivery, customer.name)}`,
+      threadCtx
+    );
     return;
   }
 
@@ -170,9 +227,13 @@ const handleTechnicianMessage = async (technician, from, body) => {
 
     if (parsed.command === 'QOT') {
       const quotation = await createQuotationDirect(technician.client_id, job.id, description, amount);
-      await sendQuotationToCustomer(client, customer, job, quotation, threadCtx);
+      const delivery = await sendQuotationToCustomer(client, customer, job, quotation, threadCtx);
       await openThread({ clientId: technician.client_id, jobId: job.id, technicianId: technician.id, stage: 'quotation_sent', documentType: 'quotation', documentId: quotation.id, customerWhatsapp: customer.whatsapp, technicianWhatsapp: from });
-      await sendText(from, `Quotation ${quotation.quotation_number} sent to ${customer.name}.`, threadCtx);
+      await sendText(
+        from,
+        `Quotation ${quotation.quotation_number} sent to ${customer.name}.${deliveryNote(delivery, customer.name)}`,
+        threadCtx
+      );
     } else {
       const invoice = await createInvoice(technician.client_id, {
         customer_id: customer.id,
@@ -184,8 +245,12 @@ const handleTechnicianMessage = async (technician, from, body) => {
       if (customer.billing_type === 'contractor') {
         await sendText(from, `Invoice ${invoice.invoice_number} created and queued — contractor invoices are batched and sent in the last 3 days of the month.`, threadCtx);
       } else {
-        await sendInvoiceToCustomer(client, customer, invoice);
-        await sendText(from, `Invoice ${invoice.invoice_number} sent to ${customer.name}.`, threadCtx);
+        const delivery = await sendInvoiceToCustomer(client, customer, invoice);
+        await sendText(
+          from,
+          `Invoice ${invoice.invoice_number} sent to ${customer.name}.${deliveryNote(delivery, customer.name)}`,
+          threadCtx
+        );
       }
     }
   }
@@ -229,7 +294,13 @@ const handleCustomerReply = async (thread, from, body) => {
   if (isReject) {
     await db.query(`UPDATE whatsapp_job_threads SET status = 'rejected', updated_at = NOW() WHERE id = $1`, [thread.id]);
     if (thread.document_type === 'inspection') {
-      await updateInspectionReport(thread.client_id, thread.document_id, { status: 'final' }); // still finalize the record, just don't auto-quote
+      // Close the report directly rather than via updateInspectionReport:
+      // that path fires the finalize -> auto-generate-quotation chain, which
+      // would hand a rejecting customer a quotation they never asked for.
+      await db.query(
+        `UPDATE inspection_reports SET status = 'final', updated_at = NOW() WHERE id = $1 AND client_id = $2`,
+        [thread.document_id, thread.client_id]
+      );
     } else if (thread.document_type === 'quotation') {
       await db.query(`UPDATE quotations SET status = 'rejected', updated_at = NOW() WHERE id = $1`, [thread.document_id]);
     }
@@ -250,13 +321,17 @@ const handleCustomerReply = async (thread, from, body) => {
     const customerResult = await db.query(`SELECT * FROM customers WHERE id = $1`, [job.customer_id]);
     const customer = customerResult.rows[0];
 
-    await sendQuotationToCustomer(client, customer, job, quotation, { clientId: thread.client_id });
+    const delivery = await sendQuotationToCustomer(client, customer, job, quotation, { clientId: thread.client_id });
     await db.query(
       `UPDATE whatsapp_job_threads SET stage = 'quotation_sent', document_type = 'quotation', document_id = $2, status = 'awaiting_customer', updated_at = NOW() WHERE id = $1`,
       [thread.id, quotation.id]
     );
     if (thread.technician_whatsapp) {
-      await sendText(thread.technician_whatsapp, `Customer approved the inspection. Quotation ${quotation.quotation_number} sent automatically.`, { clientId: thread.client_id });
+      await sendText(
+        thread.technician_whatsapp,
+        `Customer approved the inspection. Quotation ${quotation.quotation_number} sent automatically.${deliveryNote(delivery, customer.name)}`,
+        { clientId: thread.client_id }
+      );
     }
   } else if (thread.document_type === 'quotation') {
     await updateQuotation(thread.client_id, thread.document_id, { status: 'approved', approval_channel: 'whatsapp' });
@@ -303,9 +378,17 @@ const handleTechnicianDone = async (technician, from) => {
   if (customer.billing_type === 'contractor') {
     await sendText(from, `Job marked complete. Invoice ${invoice.invoice_number} is queued — contractor invoices go out in a batch during the last 3 days of the month.`, { clientId: thread.client_id });
   } else {
-    await sendInvoiceToCustomer(client, customer, invoice);
-    await db.query(`UPDATE invoices SET status = 'sent', sent_at = NOW() WHERE id = $1`, [invoice.id]);
-    await sendText(from, `Job marked complete. Invoice ${invoice.invoice_number} sent to ${customer.name}.`, { clientId: thread.client_id });
+    const delivery = await sendInvoiceToCustomer(client, customer, invoice);
+    // Only mark it sent if it actually went out — otherwise the invoice looks
+    // delivered in the UI while the customer never received anything.
+    if (!delivery.hasWhatsapp || delivery.whatsappSent) {
+      await db.query(`UPDATE invoices SET status = 'sent', sent_at = NOW() WHERE id = $1`, [invoice.id]);
+    }
+    await sendText(
+      from,
+      `Job marked complete. Invoice ${invoice.invoice_number} sent to ${customer.name}.${deliveryNote(delivery, customer.name)}`,
+      { clientId: thread.client_id }
+    );
   }
 };
 

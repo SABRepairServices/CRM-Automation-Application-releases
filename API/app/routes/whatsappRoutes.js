@@ -65,13 +65,40 @@ router.post('/webhook', async (req, res) => {
     console.log(`[WhatsApp] inbound from ${from} (${technician ? technician.name : 'unknown number'}): ${body}`);
 
     if (technician) {
-      await handleTechnicianMessage(technician, from, body);
+      // A failure here (bad command format, DB error, PDF failure) must never
+      // end in silence — the technician would assume the document went out.
+      try {
+        await handleTechnicianMessage(technician, from, body);
+      } catch (err) {
+        console.error('[WhatsApp] technician command failed:', err.message);
+        await sendText(
+          from,
+          `That didn't go through: ${err.message}\n\nNothing was sent to the customer. Fix the message and send it again.`,
+          { clientId: technician.client_id }
+        );
+      }
       return;
     }
 
     const thread = await findOpenThreadForCustomer(from);
     if (thread) {
-      await handleCustomerReply(thread, from, body);
+      try {
+        await handleCustomerReply(thread, from, body);
+      } catch (err) {
+        // Never show a customer a raw error. Tell them a human is coming, and
+        // make sure the technician actually knows they need to step in.
+        console.error('[WhatsApp] customer reply handling failed:', err.message);
+        await sendText(from, `Thanks — we've received your reply. Someone from our team will follow up with you shortly.`, {
+          clientId: thread.client_id,
+        });
+        if (thread.technician_whatsapp) {
+          await sendText(
+            thread.technician_whatsapp,
+            `⚠️ Couldn't process the customer's reply ("${String(body).slice(0, 60)}") automatically: ${err.message}\nPlease follow up with them directly.`,
+            { clientId: thread.client_id }
+          );
+        }
+      }
       return;
     }
 
