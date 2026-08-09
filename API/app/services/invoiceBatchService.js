@@ -1,6 +1,6 @@
 import db from '../../config/database.js';
 import { sendPdfEmail } from './emailService.js';
-import { sendDocument } from './whatsappService.js';
+import { sendTemplateDocument } from './whatsappService.js';
 import { generateInvoicePdf } from './pdfService.js';
 import { getInvoice } from './invoiceService.js';
 
@@ -43,9 +43,13 @@ const runMonthEndContractorBatch = async (now) => {
 
       let delivered = false;
       if (customer.whatsapp) {
-        const result = await sendDocument(
+        // Always a business-initiated send — this runs on a schedule, never
+        // in reply to the customer, so it can never rely on being inside
+        // their 24-hour window. Must use the approved template every time.
+        const total = Number(invoice.total_amount).toFixed(2);
+        const result = await sendTemplateDocument(
           customer.whatsapp,
-          { buffer: pdf, filename, caption: `Monthly invoice ${invoice.invoice_number} — total ${Number(invoice.total_amount).toFixed(2)} AED.` },
+          { templateName: 'invoice_ready', bodyParams: [customer.name, total], buffer: pdf, filename },
           { clientId: row.client_id }
         );
         delivered = Boolean(result?.ok);

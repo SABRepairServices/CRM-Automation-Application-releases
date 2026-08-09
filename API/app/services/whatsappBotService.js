@@ -1,5 +1,5 @@
 import db from '../../config/database.js';
-import { sendText, sendDocument } from './whatsappService.js';
+import { sendText, sendDocument, sendTemplateDocument, isWithin24HourWindow } from './whatsappService.js';
 import { sendPdfEmail } from './emailService.js';
 import { generateInspectionPdf, generateQuotationPdf, generateInvoicePdf } from './pdfService.js';
 import { createInspectionReport, getInspectionReport, updateInspectionReport } from './inspectionService.js';
@@ -103,13 +103,20 @@ const openThread = async ({ clientId, jobId, technicianId, stage, documentType, 
  *     recipient, rate limit), so the result has to be inspected and passed
  *     back up, or the technician is told "sent" about a message nobody got.
  */
-const deliverDocument = async ({ customer, buffer, filename, caption, subject, emailText, threadCtx }) => {
+const deliverDocument = async ({ customer, buffer, filename, caption, subject, emailText, threadCtx, template }) => {
   let whatsappSent = false;
   let whatsappError = null;
   let emailError = null;
 
   if (customer.whatsapp) {
-    const result = await sendDocument(customer.whatsapp, { buffer, filename, caption }, threadCtx);
+    const withinWindow = await isWithin24HourWindow(customer.whatsapp);
+    const result = withinWindow
+      ? await sendDocument(customer.whatsapp, { buffer, filename, caption }, threadCtx)
+      : await sendTemplateDocument(
+          customer.whatsapp,
+          { templateName: template.name, bodyParams: template.params, buffer, filename },
+          threadCtx
+        );
     whatsappSent = Boolean(result?.ok);
     if (!whatsappSent) whatsappError = result?.error?.message || 'WhatsApp rejected the message';
   }
@@ -149,6 +156,9 @@ const sendInspectionToCustomer = async (client, customer, job, report, threadCtx
     subject: `Inspection Report ${report.report_number}`,
     emailText: 'Please find your inspection report attached.',
     threadCtx,
+    // See WHATSAPP_TEMPLATES.md — must exist and be APPROVED in Meta
+    // Business Manager before this path can actually send anything.
+    template: { name: 'inspection_ready', params: [customer.name, job.appliance_type || 'appliance'] },
   });
 };
 
@@ -164,20 +174,24 @@ const sendQuotationToCustomer = async (client, customer, job, quotation, threadC
     subject: `Quotation ${quotation.quotation_number}`,
     emailText: 'Please find your quotation attached.',
     threadCtx,
+    template: { name: 'quotation_ready', params: [customer.name, job.appliance_type || 'appliance'] },
   });
 };
 
-const sendInvoiceToCustomer = async (client, customer, invoice) => {
+const sendInvoiceToCustomer = async (client, customer, invoice, threadCtx = {}) => {
   const full = await getInvoice(client.id, invoice.id);
   const pdf = await generateInvoicePdf({ client, invoice: full, customerName: customer.name, customerPhone: customer.phone });
+  const total = Number(invoice.total_amount).toFixed(2);
 
   return deliverDocument({
     customer,
     buffer: pdf,
     filename: `Invoice_${invoice.invoice_number}.pdf`,
-    caption: `Invoice ${invoice.invoice_number} — total ${Number(invoice.total_amount).toFixed(2)} AED.`,
+    caption: `Invoice ${invoice.invoice_number} — total ${total} AED.`,
     subject: `Invoice ${invoice.invoice_number}`,
     emailText: 'Please find your invoice attached.',
+    threadCtx,
+    template: { name: 'invoice_ready', params: [customer.name, total] },
   });
 };
 
@@ -245,7 +259,7 @@ const handleTechnicianMessage = async (technician, from, body) => {
       if (customer.billing_type === 'contractor') {
         await sendText(from, `Invoice ${invoice.invoice_number} created and queued — contractor invoices are batched and sent in the last 3 days of the month.`, threadCtx);
       } else {
-        const delivery = await sendInvoiceToCustomer(client, customer, invoice);
+        const delivery = await sendInvoiceToCustomer(client, customer, invoice, threadCtx);
         await sendText(
           from,
           `Invoice ${invoice.invoice_number} sent to ${customer.name}.${deliveryNote(delivery, customer.name)}`,
@@ -378,7 +392,7 @@ const handleTechnicianDone = async (technician, from) => {
   if (customer.billing_type === 'contractor') {
     await sendText(from, `Job marked complete. Invoice ${invoice.invoice_number} is queued — contractor invoices go out in a batch during the last 3 days of the month.`, { clientId: thread.client_id });
   } else {
-    const delivery = await sendInvoiceToCustomer(client, customer, invoice);
+    const delivery = await sendInvoiceToCustomer(client, customer, invoice, { clientId: thread.client_id });
     // Only mark it sent if it actually went out — otherwise the invoice looks
     // delivered in the UI while the customer never received anything.
     if (!delivery.hasWhatsapp || delivery.whatsappSent) {
