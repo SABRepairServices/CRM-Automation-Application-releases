@@ -7,19 +7,26 @@
   "main": "main.js",
   "scripts": {
     "start": "electron .",
-    "dist": "electron-builder"
+    "build-standalone": "node build-standalone.js",
+    "dist": "npm run build-standalone && electron-builder",
+    "release": "npm run build-standalone && electron-builder --publish always"
   },
   "devDependencies": {
     "electron": "^31.0.0",
     "electron-builder": "^24.13.3"
   },
   "dependencies": {
+    "electron-updater": "^6.8.9",
     "tree-kill": "^1.2.2"
   },
   "build": {
     "appId": "com.imranproservices.desktop",
     "productName": "Imran Pro Services",
-    "publish": null,
+    "publish": {
+      "provider": "github",
+      "owner": "SABRepairServices",
+      "repo": "CRM-Automation-Application-releases"
+    },
     "directories": {
       "output": "dist"
     },
@@ -31,9 +38,20 @@
       "splash.html",
       "icon.ico"
     ],
+    "extraResources": [
+      {
+        "from": "web-standalone",
+        "to": "web-standalone",
+        "filter": ["**/*"]
+      }
+    ],
     "win": {
       "target": "nsis",
       "icon": "icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
     }
   }
 }

@@ -1,23 +1,33 @@
 const { app, BrowserWindow, Menu, shell, dialog, ipcMain } = require('electron');
 const { spawn } = require('child_process');
 const path = require('path');
+const fs = require('fs');
 const http = require('http');
 const treeKill = require('tree-kill');
+const { autoUpdater } = require('electron-updater');
 const backupConfig = require('./backupConfig');
 const { saveDocumentPdf } = require('./pdfBackup');
 
-const ROOT = path.resolve(__dirname, '..');
-const API_DIR = path.join(ROOT, 'API');
-const WEB_DIR = path.join(ROOT, 'Web');
-
-const API_PORT = process.env.API_PORT || 5000;
+// The API is no longer bundled or spawned locally — it runs on Render
+// (see ../render.yaml) and every screen the UI shows talks to it over the
+// internet, same as any other web app. What ships in the .exe is only the
+// UI: a self-contained Next.js "standalone" server, staged into
+// web-standalone/ by build-standalone.js and packaged as an extraResource
+// so it lives outside the asar archive (see package.json's build.extraResources).
 const WEB_PORT = process.env.WEB_PORT || 3000;
-const API_URL = `http://localhost:${API_PORT}/api/health`;
 const WEB_URL = `http://localhost:${WEB_PORT}`;
+
+// app.isPackaged is false both in plain `node main.js` and in `electron .`
+// during development — in both cases the staged build next to this file is
+// what we want, so packaged vs dev only matters for locating that folder
+// relative to resourcesPath vs __dirname.
+const STANDALONE_DIR = app.isPackaged
+  ? path.join(process.resourcesPath, 'web-standalone')
+  : path.join(__dirname, 'web-standalone');
+const STANDALONE_SERVER = path.join(STANDALONE_DIR, 'server.js');
 
 let mainWindow;
 let splashWindow;
-let apiProcess;
 let webProcess;
 
 function log(...args) {
@@ -44,26 +54,29 @@ function waitForServer(url, timeoutMs = 60000, intervalMs = 500) {
   });
 }
 
-function startApiServer() {
-  log('Starting API server (Express)...');
-  apiProcess = spawn(process.execPath, [path.join(API_DIR, 'server.js')], {
-    cwd: API_DIR,
-    env: { ...process.env, NODE_ENV: 'production' },
-    windowsHide: true,
-  });
-  apiProcess.stdout.on('data', (d) => log('[API]', d.toString().trim()));
-  apiProcess.stderr.on('data', (d) => log('[API:ERR]', d.toString().trim()));
-  apiProcess.on('exit', (code) => log('API server exited with code', code));
-}
-
 function startWebServer() {
-  log('Starting Web server (Next.js)...');
-  const npxCmd = process.platform === 'win32' ? 'npx.cmd' : 'npx';
-  webProcess = spawn(npxCmd, ['next', 'start', '-p', String(WEB_PORT)], {
-    cwd: WEB_DIR,
-    env: { ...process.env, NODE_ENV: 'production' },
+  if (!fs.existsSync(STANDALONE_SERVER)) {
+    throw new Error(
+      `UI build not found at ${STANDALONE_SERVER}.\n\nRun "npm run build-standalone" in Desktop/ before "npm start" or packaging — the app has nothing to display without it.`
+    );
+  }
+  log('Starting bundled UI server...');
+  webProcess = spawn(process.execPath, [STANDALONE_SERVER], {
+    cwd: STANDALONE_DIR,
+    env: {
+      ...process.env,
+      NODE_ENV: 'production',
+      PORT: String(WEB_PORT),
+      // Without this, process.execPath in a PACKAGED build is the app's own
+      // .exe — spawning it "normally" re-launches the whole Electron app
+      // (which spawns another web server, which re-launches again...) into
+      // an unbounded fork bomb instead of running server.js as plain Node.
+      // This flag makes Electron's bundled Node runtime behave as a plain
+      // node.exe for this one child process — the documented way Electron
+      // apps run Node scripts without requiring Node installed separately.
+      ELECTRON_RUN_AS_NODE: '1',
+    },
     windowsHide: true,
-    shell: true,
   });
   webProcess.stdout.on('data', (d) => log('[WEB]', d.toString().trim()));
   webProcess.stderr.on('data', (d) => log('[WEB:ERR]', d.toString().trim()));
@@ -171,23 +184,53 @@ function registerIpcHandlers() {
   });
 }
 
+/**
+ * Checks a public GitHub Releases repo (configured in package.json's
+ * build.publish, and again below for the dev-mode config electron-updater
+ * needs since it otherwise reads app-update.yml, which only exists in a
+ * packaged build) for a newer version, downloads it silently in the
+ * background, and installs it the next time the app restarts — never
+ * interrupting whoever is mid-job. Only runs in packaged builds: in dev,
+ * electron-updater has nothing meaningful to check and would just log noise.
+ */
+function setupAutoUpdates() {
+  if (!app.isPackaged) {
+    log('Auto-update skipped (dev build).');
+    return;
+  }
+
+  autoUpdater.autoDownload = true;
+  autoUpdater.autoInstallOnAppQuit = true;
+
+  autoUpdater.on('checking-for-update', () => log('[Update] checking...'));
+  autoUpdater.on('update-not-available', () => log('[Update] already on the latest version.'));
+  autoUpdater.on('update-available', (info) => log('[Update] new version found:', info.version, '— downloading in the background.'));
+  autoUpdater.on('download-progress', (p) => log(`[Update] downloading: ${Math.round(p.percent)}%`));
+  autoUpdater.on('update-downloaded', (info) => {
+    log('[Update] version', info.version, 'downloaded — will install on next restart.');
+  });
+  autoUpdater.on('error', (err) => log('[Update] check failed (not fatal, app keeps running):', err.message));
+
+  autoUpdater.checkForUpdates().catch((err) => log('[Update] initial check failed:', err.message));
+  // Re-check periodically for anyone who leaves the app open for days.
+  setInterval(() => {
+    autoUpdater.checkForUpdates().catch((err) => log('[Update] periodic check failed:', err.message));
+  }, 4 * 60 * 60 * 1000);
+}
+
 async function boot() {
   createSplashWindow();
 
   try {
-    startApiServer();
     startWebServer();
 
-    log('Waiting for API server...');
-    await waitForServer(API_URL, 60000);
-    log('API server is up.');
-
-    log('Waiting for Web server...');
+    log('Waiting for the UI server...');
     await waitForServer(WEB_URL, 90000);
-    log('Web server is up.');
+    log('UI server is up.');
 
     createMainWindow();
     registerIpcHandlers();
+    setupAutoUpdates();
 
     mainWindow.once('ready-to-show', () => {
       // Runs after the window is visible so the folder-picker dialog has a
@@ -199,7 +242,7 @@ async function boot() {
     log('Startup failed:', err.message);
     dialog.showErrorBox(
       'Startup Error',
-      `Imran Pro Services failed to start.\n\n${err.message}\n\nCheck that Configs/.env is set up correctly and that ports ${API_PORT} / ${WEB_PORT} are free.`
+      `Imran Pro Services failed to start.\n\n${err.message}\n\nIf this keeps happening, reinstall the app or contact support.`
     );
     app.quit();
   }
@@ -217,10 +260,6 @@ app.on('before-quit', () => {
 });
 
 function shutdownChildProcesses() {
-  if (apiProcess && apiProcess.pid) {
-    treeKill(apiProcess.pid);
-    apiProcess = null;
-  }
   if (webProcess && webProcess.pid) {
     treeKill(webProcess.pid);
     webProcess = null;

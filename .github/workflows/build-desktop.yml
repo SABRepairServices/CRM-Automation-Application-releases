@@ -1,0 +1,49 @@
+name: Build & publish desktop app
+
+# Runs on every push to master. Builds the Windows .exe (UI bundled inside,
+# API calls point at the live Render service) and publishes it as a GitHub
+# Release on the separate PUBLIC releases repo — never this private source
+# repo — so electron-updater on installed machines can find and download it
+# without needing any credentials baked into the app.
+on:
+  push:
+    branches: [master]
+    paths-ignore:
+      - '**.md'
+      - 'FUTURE_WORK.md'
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install Web dependencies
+        working-directory: Web
+        run: npm ci
+
+      - name: Install Desktop dependencies
+        working-directory: Desktop
+        run: npm ci
+
+      # Bumps the patch version on every build so electron-updater always
+      # sees a newer version than whatever is currently installed. Skipped
+      # on manual re-runs of the same commit, which would otherwise fail
+      # trying to publish a version that already exists as a Release.
+      - name: Bump desktop version
+        working-directory: Desktop
+        shell: bash
+        run: npm version patch --no-git-tag-version
+
+      - name: Build and publish installer
+        working-directory: Desktop
+        # DESKTOP_API_URL is read by build-standalone.js; change it here (not
+        # in code) if the Render service URL ever changes.
+        env:
+          DESKTOP_API_URL: https://ips-api-uque.onrender.com/api
+          GH_TOKEN: ${{ secrets.RELEASE_TOKEN }}
+        run: npm run release

@@ -15,6 +15,7 @@ out/
 build/
 dist/
 Desktop/dist/
+Desktop/web-standalone/
 graphify-out/
 *.tsbuildinfo
 
