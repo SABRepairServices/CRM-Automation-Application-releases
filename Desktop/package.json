@@ -22,20 +22,12 @@
   "build": {
     "appId": "com.shamsalbarakat.desktop",
     "productName": "Shams Al Barakat CRM",
-    "publish": [
-      {
-        "provider": "github",
-        "owner": "Muhammadimranasif",
-        "repo": "shams-crm-releases",
-        "releaseType": "release"
-      },
-      {
-        "provider": "github",
-        "owner": "SABRepairServices",
-        "repo": "CRM-Automation-Application-releases",
-        "releaseType": "release"
-      }
-    ],
+    "publish": {
+      "provider": "github",
+      "owner": "Muhammadimranasif",
+      "repo": "shams-crm-releases",
+      "releaseType": "release"
+    },
     "directories": {
       "output": "dist"
     },
