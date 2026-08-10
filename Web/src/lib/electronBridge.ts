@@ -19,6 +19,7 @@ declare global {
       getBackupFolder: () => Promise<string>;
       chooseBackupFolder: () => Promise<string>;
       saveDocumentPdf: (meta: DocumentBackupMeta) => Promise<{ success: boolean; filePath?: string; error?: string }>;
+      openInBrowser: () => Promise<void>;
     };
   }
 }
@@ -51,5 +52,14 @@ export async function chooseBackupFolder(): Promise<string | null> {
     return await window.electronAPI!.chooseBackupFolder();
   } catch {
     return null;
+  }
+}
+
+export async function openInBrowser(): Promise<void> {
+  if (!isElectron()) return;
+  try {
+    await window.electronAPI!.openInBrowser();
+  } catch {
+    // ignore — non-critical convenience action
   }
 }

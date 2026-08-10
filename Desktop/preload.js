@@ -8,4 +8,5 @@ contextBridge.exposeInMainWorld('electronAPI', {
   getBackupFolder: () => ipcRenderer.invoke('get-backup-folder'),
   chooseBackupFolder: () => ipcRenderer.invoke('choose-backup-folder'),
   saveDocumentPdf: (meta) => ipcRenderer.invoke('save-document-pdf', meta),
+  openInBrowser: () => ipcRenderer.invoke('open-in-browser'),
 });

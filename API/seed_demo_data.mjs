@@ -7,16 +7,16 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 dotenv.config({ path: path.resolve(__dirname, '../Configs/.env') });
 
 const API_URL = `http://localhost:${process.env.API_PORT || 5000}/api`;
-const DEV_EMAIL = 'dev@local.test';
-const DEV_PASSWORD = 'dev-local-bypass-password';
+const DEV_EMAIL = 'dev-pin@local.test';
+const DEV_PIN = '135790';
 
 async function login() {
   try {
-    const res = await axios.post(`${API_URL}/auth/login`, { email: DEV_EMAIL, password: DEV_PASSWORD });
+    const res = await axios.post(`${API_URL}/auth/login`, { email: DEV_EMAIL, pin: DEV_PIN });
     return res.data.accessToken;
   } catch {
-    await axios.post(`${API_URL}/auth/register`, { email: DEV_EMAIL, password: DEV_PASSWORD, fullName: 'Dev User' });
-    const res = await axios.post(`${API_URL}/auth/login`, { email: DEV_EMAIL, password: DEV_PASSWORD });
+    await axios.post(`${API_URL}/auth/register`, { email: DEV_EMAIL, pin: DEV_PIN, fullName: 'Dev User' });
+    const res = await axios.post(`${API_URL}/auth/login`, { email: DEV_EMAIL, pin: DEV_PIN });
     return res.data.accessToken;
   }
 }

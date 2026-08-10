@@ -37,4 +37,24 @@ const sendPdfEmail = async ({ to, subject, text, filename, pdfBuffer }) => {
   });
 };
 
-export { sendPdfEmail, isConfigured };
+/**
+ * Sends a plain text email — used for the PIN-reset OTP code, which has no
+ * attachment. Same dry-run pattern as sendPdfEmail.
+ */
+const sendTextEmail = async ({ to, subject, text }) => {
+  if (!to) return { skipped: 'no recipient email on file' };
+
+  if (!isConfigured()) {
+    console.log(`[Email:DRY-RUN] -> ${to}: "${subject}" — ${text}`);
+    return { dryRun: true };
+  }
+
+  return getTransporter().sendMail({
+    from: process.env.SMTP_FROM || process.env.SMTP_USER,
+    to,
+    subject,
+    text,
+  });
+};
+
+export { sendPdfEmail, sendTextEmail, isConfigured };

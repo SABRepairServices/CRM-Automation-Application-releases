@@ -14,7 +14,6 @@ const STANDARD_TERMS = [
 export default function QuotesPage() {
   const router = useRouter();
   const { quotations, loading, error, listQuotations, createQuotation, updateQuotation } = useQuotations();
-  const [showForm, setShowForm] = useState(false);
   const [clientId, setClientId] = useState('');
   const [approveMessage, setApproveMessage] = useState('');
   const [formData, setFormData] = useState({
@@ -45,7 +44,6 @@ export default function QuotesPage() {
         notes: formData.notes,
       });
       setFormData({ job_id: '', items: [{ description: '', item_type: 'part', quantity: 1, unit_price: 0 }], discount_amount: 0, vat_percent: 5, notes: '' });
-      setShowForm(false);
     } catch (err) {
       console.error('Error creating quotation:', err);
     }
@@ -85,12 +83,6 @@ export default function QuotesPage() {
             <h1 className="text-2xl font-semibold text-white">Quotations</h1>
             <p className="text-sm text-slate-500 mt-1">Approving a quotation automatically generates its invoice</p>
           </div>
-          <ActionButton
-            text={showForm ? 'Cancel' : 'New Quote'}
-            variant={showForm ? 'ghost' : 'primary'}
-            showArrow={!showForm}
-            onClick={() => setShowForm(!showForm)}
-          />
         </div>
 
         {approveMessage && (
@@ -99,8 +91,7 @@ export default function QuotesPage() {
           </div>
         )}
 
-        {showForm && (
-          <div className="bg-slate-900 border border-slate-800 rounded-md mb-6">
+        <div className="bg-slate-900 border border-slate-800 rounded-md mb-6">
             <div className="px-5 py-3 border-b border-slate-800">
               <h2 className="text-sm font-semibold text-slate-300">New Quotation</h2>
             </div>
@@ -209,7 +200,6 @@ export default function QuotesPage() {
               <ActionButton type="submit" disabled={loading} text={loading ? 'Creating...' : 'Create Quotation'} />
             </form>
           </div>
-        )}
 
         {error && (
           <div className="bg-red-500/10 border border-red-200 text-red-400 text-sm px-4 py-3 rounded-md mb-6">{error}</div>

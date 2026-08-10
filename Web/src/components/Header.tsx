@@ -4,6 +4,8 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
+import { ClientSelector } from '@/components/ClientSelector';
+import { isElectron, openInBrowser } from '@/lib/electronBridge';
 
 const PAGE_TITLES: Record<string, string> = {
   '/dashboard': 'Dashboard',
@@ -25,7 +27,7 @@ export function Header() {
   const router = useRouter();
   const { user, logout } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
-  const title = PAGE_TITLES[pathname] || 'Imran Pro Services';
+  const title = PAGE_TITLES[pathname] || 'Shams Al Barakat Repair Services';
 
   const initials = user?.fullName
     ? user.fullName.split(' ').map((p) => p[0]).slice(0, 2).join('').toUpperCase()
@@ -41,6 +43,21 @@ export function Header() {
       <h2 className="text-lg font-semibold text-white">{title}</h2>
 
       <div className="flex items-center gap-3">
+        <ClientSelector />
+        {isElectron() && (
+          <button
+            onClick={() => openInBrowser()}
+            aria-label="Open in Browser"
+            title="Open in Browser"
+            className="w-10 h-10 flex items-center justify-center rounded-full text-slate-500 hover:bg-slate-800 hover:text-slate-300 hover:shadow-[0_0_12px_rgba(148,163,184,0.35)] transition-all duration-200"
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+              <path d="M15 3h6v6" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+              <path d="M10 14 21 3" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </button>
+        )}
         <Link
           href="/settings"
           aria-label="Settings"

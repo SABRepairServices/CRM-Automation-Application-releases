@@ -8,7 +8,6 @@ import { ActionButton } from '@/components/ui/action-button';
 export default function InspectionsPage() {
   const router = useRouter();
   const { reports, loading, error, listReports, createReport, updateReport } = useInspections();
-  const [showForm, setShowForm] = useState(false);
   const [clientId, setClientId] = useState('');
   const [finalizeMessage, setFinalizeMessage] = useState('');
   const [formData, setFormData] = useState({
@@ -50,7 +49,6 @@ export default function InspectionsPage() {
         tax_rate: 5,
         notes: '',
       });
-      setShowForm(false);
     } catch (err) {
       console.error('Error creating inspection report:', err);
     }
@@ -82,17 +80,10 @@ export default function InspectionsPage() {
               Finalizing a report automatically generates its quotation
             </p>
           </div>
-          <ActionButton
-            text={showForm ? 'Cancel' : 'New Inspection'}
-            variant={showForm ? 'ghost' : 'primary'}
-            showArrow={!showForm}
-            onClick={() => setShowForm(!showForm)}
-          />
         </div>
 
         {/* New report form — mirrors the original Excel Inspection Report layout */}
-        {showForm && (
-          <div className="bg-slate-900 border border-slate-800 rounded-md mb-6">
+        <div className="bg-slate-900 border border-slate-800 rounded-md mb-6">
             <div className="px-5 py-3 border-b border-slate-800">
               <h2 className="text-sm font-semibold text-slate-300">New Inspection Report</h2>
             </div>
@@ -205,7 +196,6 @@ export default function InspectionsPage() {
               <ActionButton type="submit" disabled={loading} text={loading ? 'Saving...' : 'Save Inspection Report'} />
             </form>
           </div>
-        )}
 
         {finalizeMessage && (
           <div className="bg-emerald-500/10 border border-emerald-200 text-emerald-300 text-sm px-4 py-3 rounded-md mb-6">

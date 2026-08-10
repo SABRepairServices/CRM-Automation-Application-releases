@@ -4,8 +4,8 @@
 // without manually signing in every time.
 export const BYPASS_AUTH = true;
 
-const DEV_EMAIL = 'dev@local.test';
-const DEV_PASSWORD = 'dev-local-bypass-password';
+const DEV_EMAIL = 'dev-pin@local.test';
+const DEV_PIN = '135790';
 const DEV_NAME = 'Dev User';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
@@ -23,7 +23,7 @@ export async function ensureDevSession(): Promise<void> {
   const axios = (await import('axios')).default;
 
   const login = async () => {
-    const res = await axios.post(`${API_URL}/auth/login`, { email: DEV_EMAIL, password: DEV_PASSWORD });
+    const res = await axios.post(`${API_URL}/auth/login`, { email: DEV_EMAIL, pin: DEV_PIN });
     localStorage.setItem('token', res.data.accessToken);
     localStorage.setItem('refreshToken', res.data.refreshToken);
   };
@@ -32,7 +32,7 @@ export async function ensureDevSession(): Promise<void> {
     await login();
   } catch {
     try {
-      await axios.post(`${API_URL}/auth/register`, { email: DEV_EMAIL, password: DEV_PASSWORD, fullName: DEV_NAME });
+      await axios.post(`${API_URL}/auth/register`, { email: DEV_EMAIL, pin: DEV_PIN, fullName: DEV_NAME });
       await login();
     } catch (err) {
       console.error('Dev auto-session failed — API may not be reachable yet.', err);

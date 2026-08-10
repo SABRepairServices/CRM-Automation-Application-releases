@@ -14,8 +14,8 @@ interface AuthContextType {
   user: User | null;
   token: string | null;
   loading: boolean;
-  login: (email: string, password: string) => Promise<void>;
-  register: (email: string, password: string, fullName: string) => Promise<void>;
+  login: (email: string, pin: string) => Promise<void>;
+  register: (email: string, pin: string, fullName: string) => Promise<void>;
   logout: () => void;
   isAuthenticated: boolean;
 }
@@ -57,10 +57,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     restore();
   }, []);
 
-  const login = async (email: string, password: string) => {
+  const login = async (email: string, pin: string) => {
     setLoading(true);
     try {
-      const response = await axios.post(`${API_URL}/auth/login`, { email, password });
+      const response = await axios.post(`${API_URL}/auth/login`, { email, pin });
       const { user: u, accessToken, refreshToken } = response.data;
       setUser({ id: u.id, email: u.email, fullName: u.fullName });
       setToken(accessToken);
@@ -71,11 +71,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const register = async (email: string, password: string, fullName: string) => {
+  const register = async (email: string, pin: string, fullName: string) => {
     setLoading(true);
     try {
-      await axios.post(`${API_URL}/auth/register`, { email, password, fullName });
-      await login(email, password);
+      await axios.post(`${API_URL}/auth/register`, { email, pin, fullName });
+      await login(email, pin);
     } finally {
       setLoading(false);
     }

@@ -41,11 +41,11 @@ export function Sidebar() {
       <div className="px-6 py-5 border-b border-white/5">
         <div className="flex items-center gap-2.5">
           <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-violet-600 flex items-center justify-center text-sm font-bold text-white shadow-lg shadow-blue-900/40">
-            IP
+            SB
           </div>
           <div>
-            <h1 className="text-sm font-semibold text-white leading-tight">Imran Pro</h1>
-            <p className="text-[11px] text-slate-500 leading-tight">Services CRM</p>
+            <h1 className="text-sm font-semibold text-white leading-tight">Shams Al Barakat</h1>
+            <p className="text-[11px] text-slate-500 leading-tight">Repair Services CRM</p>
           </div>
         </div>
       </div>
@@ -84,7 +84,7 @@ export function Sidebar() {
       <div className="px-4 py-4 border-t border-white/5">
         <div className="text-[11px] text-slate-600 text-center">
           <p>v1.0.0</p>
-          <p className="mt-1">© 2026 Imran Pro Services</p>
+          <p className="mt-1">© 2026 Shams Al Barakat Repair Services</p>
         </div>
       </div>
     </div>

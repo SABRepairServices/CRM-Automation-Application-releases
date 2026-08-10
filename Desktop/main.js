@@ -1,8 +1,19 @@
 const { app, BrowserWindow, Menu, shell, dialog, ipcMain } = require('electron');
+
+// Permanent fix for the black/blank-window bug: on some Windows machines
+// (older or driver-buggy GPUs, remote desktop sessions, certain laptop
+// hybrid-graphics setups) Electron's GPU compositor silently fails to paint
+// anything, leaving a window that loaded successfully but never renders a
+// pixel — confirmed in our own testing that the server and page were fine,
+// only the compositor wasn't drawing. Disabling GPU acceleration forces
+// software rendering, which is slower but always paints. Must be called
+// before app.whenReady().
+app.disableHardwareAcceleration();
 const { spawn } = require('child_process');
 const path = require('path');
 const fs = require('fs');
 const http = require('http');
+const net = require('net');
 const treeKill = require('tree-kill');
 const { autoUpdater } = require('electron-updater');
 const backupConfig = require('./backupConfig');
@@ -14,8 +25,30 @@ const { saveDocumentPdf } = require('./pdfBackup');
 // UI: a self-contained Next.js "standalone" server, staged into
 // web-standalone/ by build-standalone.js and packaged as an extraResource
 // so it lives outside the asar archive (see package.json's build.extraResources).
-const WEB_PORT = process.env.WEB_PORT || 3000;
-const WEB_URL = `http://localhost:${WEB_PORT}`;
+//
+// The actual root cause of the recurring blank-screen/crash: this used to be
+// hardcoded to port 3000. Any leftover server from a previous run (crashed,
+// force-closed, or killed via Task Manager instead of a clean quit) stays
+// bound to that port forever, since the cleanup in shutdownChildProcesses()
+// only runs on a graceful Electron quit. The next launch would then either
+// fail outright (EADDRINUSE) or — worse — silently connect the window to
+// that stale orphaned server instead of its own fresh one, which is what
+// produced the blank window. Picking a free ephemeral port on every launch
+// makes that class of collision impossible.
+let WEB_PORT = process.env.WEB_PORT ? Number(process.env.WEB_PORT) : null;
+let WEB_URL = null;
+
+function getFreePort() {
+  return new Promise((resolve, reject) => {
+    const server = net.createServer();
+    server.unref();
+    server.on('error', reject);
+    server.listen(0, '127.0.0.1', () => {
+      const { port } = server.address();
+      server.close(() => resolve(port));
+    });
+  });
+}
 
 // app.isPackaged is false both in plain `node main.js` and in `electron .`
 // during development — in both cases the staged build next to this file is
@@ -131,6 +164,26 @@ function createMainWindow() {
   mainWindow.on('closed', () => {
     mainWindow = null;
   });
+
+  // Self-heal instead of staying on a blank window: a crashed/killed
+  // renderer or a page that failed to load gets one automatic reload.
+  mainWindow.webContents.on('render-process-gone', (event, details) => {
+    log('Renderer process gone:', details.reason, '- reloading');
+    if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.reload();
+  });
+
+  mainWindow.webContents.on('unresponsive', () => {
+    log('Window became unresponsive - reloading');
+    if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.reload();
+  });
+
+  mainWindow.webContents.on('did-fail-load', (event, errorCode, errorDescription) => {
+    if (errorCode === -3) return; // ERR_ABORTED — normal on navigation, not a real failure
+    log('Page failed to load:', errorCode, errorDescription, '- retrying in 1s');
+    setTimeout(() => {
+      if (mainWindow && !mainWindow.isDestroyed()) mainWindow.loadURL(WEB_URL);
+    }, 1000);
+  });
 }
 
 async function ensureBackupFolder() {
@@ -169,6 +222,10 @@ function registerIpcHandlers() {
     });
     if (result.canceled || !result.filePaths[0]) return current;
     return backupConfig.setBackupFolder(result.filePaths[0]);
+  });
+
+  ipcMain.handle('open-in-browser', () => {
+    shell.openExternal(WEB_URL);
   });
 
   ipcMain.handle('save-document-pdf', async (event, meta) => {
@@ -222,6 +279,12 @@ async function boot() {
   createSplashWindow();
 
   try {
+    if (!WEB_PORT) {
+      WEB_PORT = await getFreePort();
+    }
+    WEB_URL = `http://localhost:${WEB_PORT}`;
+    log('Using UI server port', WEB_PORT);
+
     startWebServer();
 
     log('Waiting for the UI server...');
@@ -231,6 +294,12 @@ async function boot() {
     createMainWindow();
     registerIpcHandlers();
     setupAutoUpdates();
+
+    // Also open the CRM in the user's normal default browser (Chrome/Edge),
+    // not just the Electron window — some tasks (multiple tabs, browser
+    // bookmarks, printing) are easier there. The Electron window stays
+    // primary since only it has the local PDF backup / folder picker.
+    shell.openExternal(WEB_URL);
 
     mainWindow.once('ready-to-show', () => {
       // Runs after the window is visible so the folder-picker dialog has a

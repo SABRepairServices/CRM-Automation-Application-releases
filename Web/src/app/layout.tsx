@@ -9,7 +9,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Imran Pro Services - CRM & Automation",
+  title: "Shams Al Barakat Repair Services - CRM & Automation",
   description: "Complete business management: repair jobs, customer CRM, social media automation",
   keywords: ["crm", "repair", "jobs", "quotations", "invoices", "social media"],
 };

@@ -24,20 +24,18 @@ export function ClientSelector() {
   if (clients.length === 0) return null;
 
   return (
-    <div className="bg-slate-900 border-b border-slate-800 p-4">
-      <label className="block text-sm font-medium text-slate-300 mb-2">Select Client</label>
-      <select
-        value={selectedId}
-        onChange={(e) => handleChange(e.target.value)}
-        className="w-full px-4 py-2 border border-slate-700 bg-slate-950 rounded-lg text-white focus:outline-none focus:ring-1 focus:ring-blue-500"
-      >
-        <option value="">Choose a client...</option>
-        {clients.map((client) => (
-          <option key={client.id} value={client.id}>
-            {client.name}
-          </option>
-        ))}
-      </select>
-    </div>
+    <select
+      value={selectedId}
+      onChange={(e) => handleChange(e.target.value)}
+      className="px-3 py-1.5 text-sm border border-slate-700 bg-slate-950 rounded-lg text-white focus:outline-none focus:ring-1 focus:ring-blue-500 max-w-[180px]"
+      title="Select Client"
+    >
+      <option value="">Choose a client...</option>
+      {clients.map((client) => (
+        <option key={client.id} value={client.id}>
+          {client.name}
+        </option>
+      ))}
+    </select>
   );
 }

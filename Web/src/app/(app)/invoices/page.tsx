@@ -8,7 +8,6 @@ import { ActionButton } from '@/components/ui/action-button';
 export default function InvoicesPage() {
   const router = useRouter();
   const { invoices, loading, error, listInvoices, createInvoice, updateInvoice } = useInvoices();
-  const [showForm, setShowForm] = useState(false);
   const [clientId, setClientId] = useState('');
   const [formData, setFormData] = useState({
     customer_id: '',
@@ -31,7 +30,6 @@ export default function InvoicesPage() {
     try {
       await createInvoice(clientId, formData);
       setFormData({ customer_id: '', issue_date: new Date().toISOString().split('T')[0], due_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], notes: '' });
-      setShowForm(false);
     } catch (err) {
       console.error('Error creating invoice:', err);
     }
@@ -68,16 +66,16 @@ export default function InvoicesPage() {
               Most invoices generate automatically when a quotation is approved. Use this form only for one-off invoices.
             </p>
           </div>
-          <ActionButton
-            text={showForm ? 'Cancel' : 'New Manual Invoice'}
-            variant={showForm ? 'ghost' : 'primary'}
-            showArrow={!showForm}
-            onClick={() => setShowForm(!showForm)}
-          />
         </div>
 
-        {showForm && (
-          <div className="bg-slate-900 border border-slate-800 rounded-md mb-6">
+        <div
+          className="rounded-md mb-6 bg-slate-900"
+          style={{
+            border: '1px solid rgba(148,163,184,0.25)',
+            boxShadow:
+              'inset 0 1px 0 rgba(255,255,255,0.08), inset 0 -2px 4px rgba(0,0,0,0.5), 0 8px 20px rgba(0,0,0,0.45), 0 1px 0 rgba(255,255,255,0.04)',
+          }}
+        >
             <div className="px-5 py-3 border-b border-slate-800">
               <h2 className="text-sm font-semibold text-slate-300">New Manual Invoice</h2>
             </div>
@@ -103,7 +101,6 @@ export default function InvoicesPage() {
               <ActionButton type="submit" disabled={loading} text={loading ? 'Creating...' : 'Create Invoice'} />
             </form>
           </div>
-        )}
 
         {error && (
           <div className="bg-red-500/10 border border-red-200 text-red-400 text-sm px-4 py-3 rounded-md mb-6">{error}</div>

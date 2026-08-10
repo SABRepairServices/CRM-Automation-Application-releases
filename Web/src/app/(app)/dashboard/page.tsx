@@ -37,7 +37,7 @@ export default function DashboardPage() {
 
         <div className="mt-4">
           <h2 className="text-2xl font-bold text-white mb-10">
-            Why <span className="text-blue-400">Imran Pro Services</span>?
+            Why <span className="text-blue-400">Shams Al Barakat Repair Services</span>?
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {features.map((feature, i) => (

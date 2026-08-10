@@ -2,7 +2,6 @@ import { ReactNode } from 'react';
 import { Sidebar } from '@/components/Sidebar';
 import { Header } from '@/components/Header';
 import { AuthGuard } from '@/components/AuthGuard';
-import { ClientSelector } from '@/components/ClientSelector';
 
 export default function AppShellLayout({ children }: { children: ReactNode }) {
   return (
@@ -11,7 +10,6 @@ export default function AppShellLayout({ children }: { children: ReactNode }) {
         <Sidebar />
         <Header />
         <main className="ml-64 pt-16 min-h-screen">
-          <ClientSelector />
           {children}
         </main>
       </div>
