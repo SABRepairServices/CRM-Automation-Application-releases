@@ -140,7 +140,7 @@ export default function SettingsPage() {
           <label className="block text-xs font-medium text-slate-500 mb-2 text-center">Confirm New PIN</label>
           <PinInput length={6} value={confirmNewPin} onChange={setConfirmNewPin} onComplete={handleChangePin} />
         </div>
-        <p className="text-xs text-slate-500">Forgot your current PIN instead? Sign out and use &quot;Forgot PIN?&quot; on the login screen.</p>
+        <p className="text-xs text-slate-500">Forgot your current PIN? There&apos;s no self-service reset — contact your developer to reset it directly.</p>
         <ActionButton type="button" onClick={handleChangePin} disabled={changingPin} text={changingPin ? 'Changing...' : 'Change PIN'} />
       </div>
     </div>

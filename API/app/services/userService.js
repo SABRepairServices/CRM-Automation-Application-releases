@@ -2,7 +2,6 @@ import bcrypt from 'bcryptjs';
 import { v4 as uuidv4 } from 'uuid';
 import { query } from './database.js';
 import { generateToken, generateRefreshToken } from '../middleware/auth.js';
-import { sendTextEmail } from './emailService.js';
 
 /**
  * Create new user account
@@ -231,69 +230,13 @@ export const updateUserPreferences = async (userId, updates) => {
 };
 
 /**
- * Starts the "forgot PIN" flow: emails a 6-digit code valid for 10 minutes.
- * Always returns success even for an unknown email, so the endpoint can't
- * be used to enumerate registered accounts.
+ * Tells the login screen whether the internal identity behind the PIN pad
+ * already has a PIN set. There's no email-based recovery — a forgotten PIN
+ * is reset directly in the database.
  */
-export const requestPinReset = async (email) => {
+export const pinExists = async (email) => {
   const result = await query('SELECT id FROM users WHERE email = $1', [email]);
-  if (result.rows.length === 0) {
-    return { success: true };
-  }
-
-  const otp = String(Math.floor(100000 + Math.random() * 900000));
-  const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
-
-  await query('UPDATE users SET otp_code = $1, otp_expires_at = $2 WHERE id = $3', [
-    otp,
-    expiresAt,
-    result.rows[0].id,
-  ]);
-
-  await sendTextEmail({
-    to: email,
-    subject: 'Your PIN reset code',
-    text: `Your PIN reset code is ${otp}. It expires in 10 minutes. If you didn't request this, you can ignore this email.`,
-  });
-
-  return { success: true };
-};
-
-/**
- * Completes the "forgot PIN" flow: verifies the emailed code and sets a
- * new PIN. The code is only cleared on success, so a wrong attempt can be
- * retried until it expires.
- */
-export const resetPin = async (email, otp, newPin) => {
-  try {
-    const result = await query('SELECT id, otp_code, otp_expires_at FROM users WHERE email = $1', [email]);
-    if (result.rows.length === 0) {
-      throw new Error('Invalid or expired code');
-    }
-
-    const user = result.rows[0];
-    const isValidCode =
-      user.otp_code &&
-      user.otp_code === otp &&
-      user.otp_expires_at &&
-      new Date(user.otp_expires_at) > new Date();
-
-    if (!isValidCode) {
-      throw new Error('Invalid or expired code');
-    }
-
-    const salt = await bcrypt.genSalt(10);
-    const passwordHash = await bcrypt.hash(newPin, salt);
-
-    await query(
-      `UPDATE users SET password_hash = $1, otp_code = NULL, otp_expires_at = NULL, updated_at = NOW() WHERE id = $2`,
-      [passwordHash, user.id]
-    );
-
-    return { success: true, message: 'PIN reset successfully' };
-  } catch (error) {
-    return { success: false, message: error.message };
-  }
+  return result.rows.length > 0;
 };
 
 /**
@@ -330,7 +273,6 @@ export default {
   updateUserProfile,
   getUserPreferences,
   updateUserPreferences,
-  requestPinReset,
-  resetPin,
+  pinExists,
   changePin,
 };

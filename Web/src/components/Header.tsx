@@ -93,7 +93,7 @@ export function Header() {
           </button>
           {menuOpen && (
             <div className="absolute right-0 mt-2 w-48 bg-slate-900 border border-slate-800 rounded-lg shadow-lg py-2 z-40">
-              <div className="px-4 py-2 text-sm text-slate-500 border-b truncate">{user?.email}</div>
+              <div className="px-4 py-2 text-sm text-slate-500 border-b truncate">{user?.fullName || 'Signed in'}</div>
               <button
                 onClick={handleLogout}
                 className="w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-red-500/10"

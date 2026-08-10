@@ -1,8 +1,7 @@
-// Toggle in one place. Flip to false once real accounts are required —
-// the login/register pages and JWT flow are fully built and tested;
-// this just auto-provisions a dev session so you can use the app
-// without manually signing in every time.
-export const BYPASS_AUTH = true;
+// The app now has a real PIN gate (see app/login/page.tsx) that the owner
+// actually uses, so the auto-provisioned dev session must stay off — this
+// only exists for local development convenience when explicitly needed.
+export const BYPASS_AUTH = false;
 
 const DEV_EMAIL = 'dev-pin@local.test';
 const DEV_PIN = '135790';
