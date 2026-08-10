@@ -1,8 +1,8 @@
 {
   "name": "imran-pro-services-desktop",
   "version": "1.0.0",
-  "description": "Desktop application for Imran Pro Services CRM & Business Automation Platform",
-  "author": "Imran Pro Services",
+  "description": "Desktop application for Shams Al Barakat Repair Services CRM & Business Automation Platform",
+  "author": "Shams Al Barakat Repair Services",
   "private": true,
   "main": "main.js",
   "scripts": {
@@ -20,12 +20,12 @@
     "tree-kill": "^1.2.2"
   },
   "build": {
-    "appId": "com.imranproservices.desktop",
-    "productName": "Imran Pro Services",
+    "appId": "com.shamsalbarakat.desktop",
+    "productName": "Shams Al Barakat CRM",
     "publish": {
       "provider": "github",
-      "owner": "SABRepairServices",
-      "repo": "CRM-Automation-Application-releases"
+      "owner": "Muhammadimranasif",
+      "repo": "shams-crm-releases"
     },
     "directories": {
       "output": "dist"
