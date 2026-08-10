@@ -85,12 +85,12 @@ export default function SettingsPage() {
   const handleChangePin = async () => {
     setPinError('');
     setPinSuccess('');
-    if (currentPin.length !== 6) {
-      setPinError('Enter your current 6-digit PIN');
+    if (currentPin.length !== 4) {
+      setPinError('Enter your current 4-digit PIN');
       return;
     }
-    if (newPin.length !== 6) {
-      setPinError('New PIN must be 6 digits');
+    if (newPin.length !== 4) {
+      setPinError('New PIN must be 4 digits');
       return;
     }
     if (newPin !== confirmNewPin) {
@@ -130,15 +130,15 @@ export default function SettingsPage() {
         )}
         <div>
           <label className="block text-xs font-medium text-slate-500 mb-2 text-center">Current PIN</label>
-          <PinInput length={6} value={currentPin} onChange={setCurrentPin} />
+          <PinInput length={4} value={currentPin} onChange={setCurrentPin} />
         </div>
         <div>
           <label className="block text-xs font-medium text-slate-500 mb-2 text-center">New PIN</label>
-          <PinInput length={6} value={newPin} onChange={setNewPin} />
+          <PinInput length={4} value={newPin} onChange={setNewPin} />
         </div>
         <div>
           <label className="block text-xs font-medium text-slate-500 mb-2 text-center">Confirm New PIN</label>
-          <PinInput length={6} value={confirmNewPin} onChange={setConfirmNewPin} onComplete={handleChangePin} />
+          <PinInput length={4} value={confirmNewPin} onChange={setConfirmNewPin} onComplete={handleChangePin} />
         </div>
         <p className="text-xs text-slate-500">Forgot your current PIN? There&apos;s no self-service reset — contact your developer to reset it directly.</p>
         <ActionButton type="button" onClick={handleChangePin} disabled={changingPin} text={changingPin ? 'Changing...' : 'Change PIN'} />

@@ -4,7 +4,7 @@
 export const BYPASS_AUTH = false;
 
 const DEV_EMAIL = 'dev-pin@local.test';
-const DEV_PIN = '135790';
+const DEV_PIN = '1357';
 const DEV_NAME = 'Dev User';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';

@@ -3,7 +3,7 @@
 import { useRef, useEffect } from 'react';
 
 interface PinInputProps {
-  length: 4 | 5 | 6;
+  length: 4 | 6;
   value: string;
   onChange: (value: string) => void;
   onComplete?: (value: string) => void;

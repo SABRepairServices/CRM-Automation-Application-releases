@@ -21,10 +21,10 @@ router.post('/register', async (req, res) => {
       });
     }
 
-    if (!/^\d{6}$/.test(pin)) {
+    if (!/^\d{4}$/.test(pin)) {
       return res.status(400).json({
         status: 'error',
-        message: 'PIN must be exactly 6 digits',
+        message: 'PIN must be exactly 4 digits',
         timestamp: new Date().toISOString(),
       });
     }
@@ -150,10 +150,10 @@ router.put('/change-pin', authenticate, async (req, res) => {
       });
     }
 
-    if (!/^\d{6}$/.test(newPin)) {
+    if (!/^\d{4}$/.test(newPin)) {
       return res.status(400).json({
         status: 'error',
-        message: 'PIN must be exactly 6 digits',
+        message: 'PIN must be exactly 4 digits',
         timestamp: new Date().toISOString(),
       });
     }

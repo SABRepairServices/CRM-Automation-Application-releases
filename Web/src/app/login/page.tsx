@@ -70,7 +70,7 @@ export default function LoginPage() {
 
   const title = {
     checking: '',
-    create: 'Choose a 6-digit PIN',
+    create: 'Choose a 4-digit PIN',
     confirm: 'Confirm your PIN',
     enter: 'Enter your PIN',
   }[mode];
@@ -91,16 +91,16 @@ export default function LoginPage() {
 
         {mode === 'create' && (
           <div className="space-y-5">
-            <PinInput length={6} value={pin} onChange={setPin} onComplete={() => setMode('confirm')} autoFocus />
+            <PinInput length={4} value={pin} onChange={setPin} onComplete={() => setMode('confirm')} autoFocus />
           </div>
         )}
 
         {mode === 'confirm' && (
           <div className="space-y-5">
-            <PinInput length={6} value={confirmPin} onChange={setConfirmPin} onComplete={submitConfirm} autoFocus />
+            <PinInput length={4} value={confirmPin} onChange={setConfirmPin} onComplete={submitConfirm} autoFocus />
             <button
               type="button"
-              disabled={submitting || confirmPin.length !== 6}
+              disabled={submitting || confirmPin.length !== 4}
               onClick={() => submitConfirm(confirmPin)}
               className="w-full btn-premium text-white px-4 py-2 rounded-lg disabled:opacity-50"
             >
@@ -111,10 +111,10 @@ export default function LoginPage() {
 
         {mode === 'enter' && (
           <div className="space-y-5">
-            <PinInput length={6} value={pin} onChange={setPin} onComplete={submitEnter} autoFocus />
+            <PinInput length={4} value={pin} onChange={setPin} onComplete={submitEnter} autoFocus />
             <button
               type="button"
-              disabled={submitting || pin.length !== 6}
+              disabled={submitting || pin.length !== 4}
               onClick={() => submitEnter(pin)}
               className="w-full btn-premium text-white px-4 py-2 rounded-lg disabled:opacity-50"
             >

@@ -8,7 +8,7 @@ dotenv.config({ path: path.resolve(__dirname, '../Configs/.env') });
 
 const API_URL = `http://localhost:${process.env.API_PORT || 5000}/api`;
 const DEV_EMAIL = 'dev-pin@local.test';
-const DEV_PIN = '135790';
+const DEV_PIN = '1357';
 
 async function login() {
   try {
