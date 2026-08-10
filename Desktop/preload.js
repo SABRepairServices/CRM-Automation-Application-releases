@@ -9,4 +9,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
   chooseBackupFolder: () => ipcRenderer.invoke('choose-backup-folder'),
   saveDocumentPdf: (meta) => ipcRenderer.invoke('save-document-pdf', meta),
   openInBrowser: () => ipcRenderer.invoke('open-in-browser'),
+  installUpdate: () => ipcRenderer.invoke('install-update'),
+  onUpdateDownloaded: (callback) => {
+    const listener = (event, payload) => callback(payload);
+    ipcRenderer.on('update-downloaded', listener);
+    return () => ipcRenderer.removeListener('update-downloaded', listener);
+  },
 });

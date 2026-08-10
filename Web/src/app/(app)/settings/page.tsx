@@ -6,6 +6,8 @@ import { useClients, Client } from '@/hooks/useClients';
 import { ActionButton } from '@/components/ui/action-button';
 import { isElectron, getBackupFolder, chooseBackupFolder } from '@/lib/electronBridge';
 import { PinInput } from '@/components/ui/pin-input';
+import { useAuth } from '@/context/AuthContext';
+import { OWNER_EMAIL, OWNER_NAME } from '@/lib/authConstants';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 
@@ -22,6 +24,7 @@ const EMPTY_FORM = {
 
 export default function SettingsPage() {
   const { getClient, updateClient, loading, error } = useClients();
+  const { pinConfigured, register, refreshPinStatus } = useAuth();
   const [clientId, setClientId] = useState('');
   const [formData, setFormData] = useState(EMPTY_FORM);
   const [saved, setSaved] = useState(false);
@@ -33,6 +36,10 @@ export default function SettingsPage() {
   const [pinError, setPinError] = useState('');
   const [pinSuccess, setPinSuccess] = useState('');
   const [changingPin, setChangingPin] = useState(false);
+  const [setupPin, setSetupPin] = useState('');
+  const [setupConfirmPin, setSetupConfirmPin] = useState('');
+  const [setupError, setSetupError] = useState('');
+  const [settingUpPin, setSettingUpPin] = useState(false);
 
   useEffect(() => {
     const stored = localStorage.getItem('selectedClientId');
@@ -116,6 +123,64 @@ export default function SettingsPage() {
     }
   };
 
+  const handleSetPin = async (fullConfirmPin: string) => {
+    setSetupError('');
+    if (setupPin.length !== 4) {
+      setSetupError('PIN must be 4 digits');
+      return;
+    }
+    if (fullConfirmPin !== setupPin) {
+      setSetupError('PINs do not match — try again');
+      setSetupPin('');
+      setSetupConfirmPin('');
+      return;
+    }
+    setSettingUpPin(true);
+    try {
+      await register(OWNER_EMAIL, setupPin, OWNER_NAME);
+      await refreshPinStatus();
+      setSetupPin('');
+      setSetupConfirmPin('');
+    } catch (err: any) {
+      setSetupError(err?.response?.data?.message || 'Could not set PIN');
+      setSetupPin('');
+      setSetupConfirmPin('');
+    } finally {
+      setSettingUpPin(false);
+    }
+  };
+
+  const setPinSection = (
+    <div className="bg-slate-900 border border-slate-800 rounded-md mb-6">
+      <div className="px-5 py-3 border-b border-slate-800">
+        <h2 className="text-sm font-semibold text-slate-300">Set a PIN</h2>
+      </div>
+      <div className="p-5 space-y-5">
+        <p className="text-xs text-slate-500">
+          No PIN is set yet, so the app opens straight to the dashboard. Set one here to lock it —
+          it&apos;ll be required the next time the app starts.
+        </p>
+        {setupError && (
+          <div className="bg-red-500/10 border border-red-200 text-red-400 text-sm px-4 py-3 rounded-md">{setupError}</div>
+        )}
+        <div>
+          <label className="block text-xs font-medium text-slate-500 mb-2 text-center">New PIN</label>
+          <PinInput length={4} value={setupPin} onChange={setSetupPin} />
+        </div>
+        <div>
+          <label className="block text-xs font-medium text-slate-500 mb-2 text-center">Confirm PIN</label>
+          <PinInput length={4} value={setupConfirmPin} onChange={setSetupConfirmPin} onComplete={handleSetPin} />
+        </div>
+        <ActionButton
+          type="button"
+          onClick={() => handleSetPin(setupConfirmPin)}
+          disabled={settingUpPin || setupConfirmPin.length !== 4}
+          text={settingUpPin ? 'Setting...' : 'Set PIN'}
+        />
+      </div>
+    </div>
+  );
+
   const changePinSection = (
     <div className="bg-slate-900 border border-slate-800 rounded-md mb-6">
       <div className="px-5 py-3 border-b border-slate-800">
@@ -146,12 +211,14 @@ export default function SettingsPage() {
     </div>
   );
 
+  const pinSection = pinConfigured ? changePinSection : setPinSection;
+
   if (!clientId) {
     return (
       <div className="p-8 bg-slate-950 min-h-screen">
         <div className="max-w-3xl mx-auto">
           <h1 className="text-2xl font-semibold text-white mb-2">Settings</h1>
-          {changePinSection}
+          {pinSection}
           <div className="bg-slate-900 border border-slate-800 rounded-md px-5 py-12 text-center">
             <p className="text-sm text-slate-500">Select a client from the dropdown above for company profile settings.</p>
           </div>
@@ -177,7 +244,7 @@ export default function SettingsPage() {
           <div className="bg-red-500/10 border border-red-200 text-red-400 text-sm px-4 py-3 rounded-md mb-6">{error}</div>
         )}
 
-        {changePinSection}
+        {pinSection}
 
         <div className="bg-slate-900 border border-slate-800 rounded-md mb-6">
           <div className="px-5 py-3 border-b border-slate-800">

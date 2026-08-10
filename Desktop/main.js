@@ -228,6 +228,15 @@ function registerIpcHandlers() {
     shell.openExternal(WEB_URL);
   });
 
+  // Triggered by the "Restart Now" button on the in-app update card.
+  // quitAndInstall relaunches the app on the new version immediately;
+  // if the user instead dismisses with "Later", autoInstallOnAppQuit
+  // (set in setupAutoUpdates) installs it the next time they close the
+  // app normally, so it's never lost either way.
+  ipcMain.handle('install-update', () => {
+    autoUpdater.quitAndInstall();
+  });
+
   ipcMain.handle('save-document-pdf', async (event, meta) => {
     try {
       const backupRoot = backupConfig.getBackupFolder() || backupConfig.setBackupFolder(backupConfig.defaultBackupFolder());
@@ -264,7 +273,10 @@ function setupAutoUpdates() {
   autoUpdater.on('update-available', (info) => log('[Update] new version found:', info.version, '— downloading in the background.'));
   autoUpdater.on('download-progress', (p) => log(`[Update] downloading: ${Math.round(p.percent)}%`));
   autoUpdater.on('update-downloaded', (info) => {
-    log('[Update] version', info.version, 'downloaded — will install on next restart.');
+    log('[Update] version', info.version, 'downloaded — notifying the UI.');
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.webContents.send('update-downloaded', { version: info.version });
+    }
   });
   autoUpdater.on('error', (err) => log('[Update] check failed (not fatal, app keeps running):', err.message));
 

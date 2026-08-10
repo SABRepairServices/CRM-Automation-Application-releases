@@ -3,6 +3,7 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import axios from 'axios';
 import { BYPASS_AUTH, ensureDevSession } from '@/lib/devAuth';
+import { OWNER_EMAIL } from '@/lib/authConstants';
 
 interface User {
   id: string;
@@ -14,9 +15,14 @@ interface AuthContextType {
   user: User | null;
   token: string | null;
   loading: boolean;
+  // null while checking, then true/false — whether a PIN has ever been set.
+  // Until one is set, the app doesn't gate access at all (see AuthGuard);
+  // it's set for the first time from Settings, not at launch.
+  pinConfigured: boolean | null;
   login: (email: string, pin: string) => Promise<void>;
   register: (email: string, pin: string, fullName: string) => Promise<void>;
   logout: () => void;
+  refreshPinStatus: () => Promise<void>;
   isAuthenticated: boolean;
 }
 
@@ -28,9 +34,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [pinConfigured, setPinConfigured] = useState<boolean | null>(null);
+
+  const refreshPinStatus = async () => {
+    try {
+      const res = await axios.get(`${API_URL}/auth/pin-status`, { params: { email: OWNER_EMAIL } });
+      setPinConfigured(Boolean(res.data.exists));
+    } catch {
+      // Can't reach the API — don't lock people out of an app that has
+      // never had a PIN set just because of a network hiccup.
+      setPinConfigured(false);
+    }
+  };
 
   useEffect(() => {
     const restore = async () => {
+      await refreshPinStatus();
+
       if (BYPASS_AUTH) {
         await ensureDevSession();
       }
@@ -55,6 +75,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     };
     restore();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const login = async (email: string, pin: string) => {
@@ -76,6 +97,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       await axios.post(`${API_URL}/auth/register`, { email, pin, fullName });
       await login(email, pin);
+      setPinConfigured(true);
     } finally {
       setLoading(false);
     }
@@ -90,7 +112,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, token, loading, login, register, logout, isAuthenticated: !!user }}>
+    <AuthContext.Provider
+      value={{ user, token, loading, pinConfigured, login, register, logout, refreshPinStatus, isAuthenticated: !!user }}
+    >
       {children}
     </AuthContext.Provider>
   );

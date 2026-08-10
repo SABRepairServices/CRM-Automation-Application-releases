@@ -5,22 +5,23 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 
 export function AuthGuard({ children }: { children: ReactNode }) {
-  const { isAuthenticated, loading } = useAuth();
+  const { isAuthenticated, loading, pinConfigured } = useAuth();
   const router = useRouter();
 
-  // Always redirect to the real login page when unauthenticated, even in
-  // BYPASS_AUTH mode. The bypass only auto-provisions a session when it
-  // can succeed (see ensureDevSession) — if the API is briefly unreachable,
-  // a token expires, or the auto-login fails for any reason, this must
-  // still recover to a usable screen instead of the blank permanent
-  // dead-end this used to fall into when the redirect was suppressed.
+  // No PIN has ever been set — the app doesn't gate access at all until
+  // one is created (from Settings, not at launch). Only once a PIN exists
+  // does this behave like a real lock: redirect to /login when there's no
+  // valid session, recovering there instead of a blank dead-end if the
+  // API is briefly unreachable or a token expires.
+  const gateActive = pinConfigured === true;
+
   useEffect(() => {
-    if (!loading && !isAuthenticated) {
+    if (!loading && gateActive && !isAuthenticated) {
       router.replace('/login');
     }
-  }, [loading, isAuthenticated, router]);
+  }, [loading, gateActive, isAuthenticated, router]);
 
-  if (loading) {
+  if (loading || pinConfigured === null) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-950">
         <div className="w-8 h-8 border-2 border-slate-700 border-t-blue-600 rounded-full animate-spin" />
@@ -28,7 +29,7 @@ export function AuthGuard({ children }: { children: ReactNode }) {
     );
   }
 
-  if (!isAuthenticated) {
+  if (gateActive && !isAuthenticated) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-950">
         <div className="w-8 h-8 border-2 border-slate-700 border-t-blue-600 rounded-full animate-spin" />

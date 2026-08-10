@@ -20,6 +20,8 @@ declare global {
       chooseBackupFolder: () => Promise<string>;
       saveDocumentPdf: (meta: DocumentBackupMeta) => Promise<{ success: boolean; filePath?: string; error?: string }>;
       openInBrowser: () => Promise<void>;
+      installUpdate: () => Promise<void>;
+      onUpdateDownloaded: (callback: (payload: { version: string }) => void) => () => void;
     };
   }
 }
@@ -62,4 +64,19 @@ export async function openInBrowser(): Promise<void> {
   } catch {
     // ignore — non-critical convenience action
   }
+}
+
+export async function installUpdate(): Promise<void> {
+  if (!isElectron()) return;
+  try {
+    await window.electronAPI!.installUpdate();
+  } catch {
+    // ignore — the update installs on next normal quit either way
+  }
+}
+
+/** Returns an unsubscribe function. No-op subscription outside Electron. */
+export function onUpdateDownloaded(callback: (version: string) => void): () => void {
+  if (!isElectron()) return () => {};
+  return window.electronAPI!.onUpdateDownloaded((payload) => callback(payload.version));
 }
