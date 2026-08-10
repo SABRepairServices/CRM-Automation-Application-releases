@@ -295,12 +295,6 @@ async function boot() {
     registerIpcHandlers();
     setupAutoUpdates();
 
-    // Also open the CRM in the user's normal default browser (Chrome/Edge),
-    // not just the Electron window — some tasks (multiple tabs, browser
-    // bookmarks, printing) are easier there. The Electron window stays
-    // primary since only it has the local PDF backup / folder picker.
-    shell.openExternal(WEB_URL);
-
     mainWindow.once('ready-to-show', () => {
       // Runs after the window is visible so the folder-picker dialog has a
       // proper parent. Only prompts once — the choice is remembered from
