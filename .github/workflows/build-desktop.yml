@@ -2,9 +2,9 @@ name: Build & publish desktop app
 
 # Runs on every push to master. Builds the Windows .exe (UI bundled inside,
 # API calls point at the live Render service) and publishes it as a GitHub
-# Release on the separate PUBLIC releases repo — never this private source
-# repo — so electron-updater on installed machines can find and download it
-# without needing any credentials baked into the app.
+# Release right here on this repo, so electron-updater on installed
+# machines can find and download it without needing any credentials
+# baked into the app.
 on:
   push:
     branches: [master]

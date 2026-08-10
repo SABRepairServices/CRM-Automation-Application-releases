@@ -24,8 +24,8 @@
     "productName": "Shams Al Barakat CRM",
     "publish": {
       "provider": "github",
-      "owner": "Muhammadimranasif",
-      "repo": "shams-crm-releases",
+      "owner": "SABRepairServices",
+      "repo": "CRM-Automation-Application-releases",
       "releaseType": "release"
     },
     "directories": {
