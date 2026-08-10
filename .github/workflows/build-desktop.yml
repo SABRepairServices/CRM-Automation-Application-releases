@@ -5,6 +5,9 @@ name: Build & publish desktop app
 # Release on the separate PUBLIC releases repo — never this private source
 # repo — so electron-updater on installed machines can find and download it
 # without needing any credentials baked into the app.
+permissions:
+  contents: write
+
 on:
   push:
     branches: [master]
@@ -15,8 +18,15 @@ on:
 jobs:
   build:
     runs-on: windows-latest
+    # A push made by this job's own version-bump commit (below) re-triggers
+    # this workflow; without this guard every real push would build twice.
+    if: "!contains(github.event.head_commit.message, '[skip ci]')"
     steps:
       - uses: actions/checkout@v4
+        with:
+          # Need write access via a real token (not the default read-only
+          # GITHUB_TOKEN) to push the version bump back below.
+          token: ${{ secrets.RELEASE_TOKEN }}
 
       - uses: actions/setup-node@v4
         with:
@@ -31,13 +41,21 @@ jobs:
         run: npm ci
 
       # Bumps the patch version on every build so electron-updater always
-      # sees a newer version than whatever is currently installed. Skipped
-      # on manual re-runs of the same commit, which would otherwise fail
-      # trying to publish a version that already exists as a Release.
-      - name: Bump desktop version
+      # sees a newer version than whatever is currently installed. This has
+      # to be committed straight back to the repo — otherwise every run
+      # bumps from the same unchanged package.json and keeps re-publishing
+      # the exact same version forever, which silently breaks auto-update
+      # (installed clients never see anything newer).
+      - name: Bump desktop version and commit it back
         working-directory: Desktop
         shell: bash
-        run: npm version patch --no-git-tag-version
+        run: |
+          npm version patch --no-git-tag-version
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add package.json
+          git commit -m "chore: bump desktop version to $(node -p "require('./package.json').version") [skip ci]"
+          git push
 
       - name: Build and publish installer
         working-directory: Desktop
