@@ -5,9 +5,6 @@ name: Build & publish desktop app
 # Release on the separate PUBLIC releases repo — never this private source
 # repo — so electron-updater on installed machines can find and download it
 # without needing any credentials baked into the app.
-permissions:
-  contents: write
-
 on:
   push:
     branches: [master]
