@@ -1,7 +1,9 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { getAppVersion, isElectron } from '@/lib/electronBridge';
 import {
   LayoutDashboard,
   Building2,
@@ -35,6 +37,12 @@ const links = [
 export function Sidebar() {
   const pathname = usePathname();
   const isActive = (path: string) => pathname === path;
+  const [version, setVersion] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!isElectron()) return;
+    getAppVersion().then(setVersion);
+  }, []);
 
   return (
     <div className="fixed left-0 top-0 h-screen w-64 bg-[#0d1220] border-r border-white/5 z-40 flex flex-col">
@@ -83,7 +91,7 @@ export function Sidebar() {
 
       <div className="px-4 py-4 border-t border-white/5">
         <div className="text-[11px] text-slate-600 text-center">
-          <p>v1.0.0</p>
+          <p>{version ? `v${version}` : ' '}</p>
           <p className="mt-1">© 2026 Shams Al Barakat Repair Services</p>
         </div>
       </div>

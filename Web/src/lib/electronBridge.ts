@@ -21,6 +21,7 @@ declare global {
       saveDocumentPdf: (meta: DocumentBackupMeta) => Promise<{ success: boolean; filePath?: string; error?: string }>;
       openInBrowser: () => Promise<void>;
       installUpdate: () => Promise<void>;
+      getAppVersion: () => Promise<string>;
       onUpdateDownloaded: (callback: (payload: { version: string }) => void) => () => void;
     };
   }
@@ -63,6 +64,15 @@ export async function openInBrowser(): Promise<void> {
     await window.electronAPI!.openInBrowser();
   } catch {
     // ignore — non-critical convenience action
+  }
+}
+
+export async function getAppVersion(): Promise<string | null> {
+  if (!isElectron()) return null;
+  try {
+    return await window.electronAPI!.getAppVersion();
+  } catch {
+    return null;
   }
 }
 

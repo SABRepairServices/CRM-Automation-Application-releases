@@ -208,6 +208,8 @@ async function ensureBackupFolder() {
 }
 
 function registerIpcHandlers() {
+  ipcMain.handle('get-app-version', () => app.getVersion());
+
   ipcMain.handle('get-backup-folder', () => {
     return backupConfig.getBackupFolder() || backupConfig.defaultBackupFolder();
   });

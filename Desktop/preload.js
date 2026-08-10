@@ -9,6 +9,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   chooseBackupFolder: () => ipcRenderer.invoke('choose-backup-folder'),
   saveDocumentPdf: (meta) => ipcRenderer.invoke('save-document-pdf', meta),
   openInBrowser: () => ipcRenderer.invoke('open-in-browser'),
+  getAppVersion: () => ipcRenderer.invoke('get-app-version'),
   installUpdate: () => ipcRenderer.invoke('install-update'),
   onUpdateDownloaded: (callback) => {
     const listener = (event, payload) => callback(payload);
