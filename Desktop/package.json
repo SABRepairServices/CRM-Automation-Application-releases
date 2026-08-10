@@ -25,7 +25,8 @@
     "publish": {
       "provider": "github",
       "owner": "Muhammadimranasif",
-      "repo": "shams-crm-releases"
+      "repo": "shams-crm-releases",
+      "releaseType": "release"
     },
     "directories": {
       "output": "dist"
