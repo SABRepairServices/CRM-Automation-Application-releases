@@ -225,11 +225,12 @@ export const recordEngagementMetrics = async (postId, platform, engagementData) 
 export const getTopPerformingPosts = async (userId, limit = 10) => {
   try {
     const result = await query(
-      `SELECT p.id, p.content, p.platform, AVG(em.engagement_rate) as avg_engagement, SUM(em.likes) as total_likes, SUM(em.impressions) as total_impressions
+      `SELECT p.id, p.content, ARRAY_AGG(DISTINCT pp.platform) FILTER (WHERE pp.platform IS NOT NULL) as platforms, AVG(em.engagement_rate) as avg_engagement, SUM(em.likes) as total_likes, SUM(em.impressions) as total_impressions
        FROM posts p
+       LEFT JOIN post_platforms pp ON p.id = pp.post_id
        LEFT JOIN engagement_metrics em ON p.id = em.post_id
        WHERE p.user_id = $1 AND p.status = 'published'
-       GROUP BY p.id, p.content, p.platform
+       GROUP BY p.id, p.content
        ORDER BY avg_engagement DESC NULLS LAST
        LIMIT $2`,
       [userId, limit]
