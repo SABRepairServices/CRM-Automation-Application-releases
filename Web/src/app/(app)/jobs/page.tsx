@@ -2,12 +2,14 @@
 
 import { useEffect, useState } from 'react';
 import { useJobs } from '@/hooks/useJobs';
+import { useTechnicians } from '@/hooks/useTechnicians';
 import { ActionButton } from '@/components/ui/action-button';
 
 const STATUSES = ['new', 'scheduled', 'inspected', 'quoted', 'approved', 'rejected', 'in_progress', 'completed', 'cancelled'];
 
 export default function JobsPage() {
   const { jobs, loading, error, listJobs, createJob, updateJob } = useJobs();
+  const { technicians, listTechnicians } = useTechnicians();
   const [showForm, setShowForm] = useState(false);
   const [clientId, setClientId] = useState('');
   const [formData, setFormData] = useState({
@@ -22,8 +24,18 @@ export default function JobsPage() {
     if (stored) {
       setClientId(stored);
       listJobs(stored);
+      listTechnicians(stored);
     }
-  }, [listJobs]);
+  }, [listJobs, listTechnicians]);
+
+  const handleTechnicianChange = async (jobId: string, technicianId: string) => {
+    if (!clientId) return;
+    try {
+      await updateJob(clientId, jobId, { technician_id: technicianId || undefined });
+    } catch (err) {
+      console.error('Error assigning technician:', err);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -126,6 +138,7 @@ export default function JobsPage() {
                   <th className="px-5 py-2 font-medium">Customer</th>
                   <th className="px-5 py-2 font-medium">Reported Fault</th>
                   <th className="px-5 py-2 font-medium">Created</th>
+                  <th className="px-5 py-2 font-medium">Technician</th>
                   <th className="px-5 py-2 font-medium">Status</th>
                 </tr>
               </thead>
@@ -136,6 +149,18 @@ export default function JobsPage() {
                     <td className="px-5 py-3 text-slate-400">{job.customer_name || '—'}</td>
                     <td className="px-5 py-3 text-slate-400 max-w-xs truncate">{job.reported_fault || '—'}</td>
                     <td className="px-5 py-3 text-slate-400">{new Date(job.created_at).toLocaleDateString()}</td>
+                    <td className="px-5 py-3">
+                      <select
+                        value={job.technician_id || ''}
+                        onChange={(e) => handleTechnicianChange(job.id, e.target.value)}
+                        className="px-2 py-1 bg-slate-950 border border-slate-800 rounded-md text-xs text-slate-300 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      >
+                        <option value="">Unassigned</option>
+                        {technicians.map((t) => (
+                          <option key={t.id} value={t.id}>{t.name}</option>
+                        ))}
+                      </select>
+                    </td>
                     <td className="px-5 py-3">
                       <select
                         value={job.status}

@@ -3,11 +3,17 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useInspections, InspectionFinding } from '@/hooks/useInspections';
+import { useJobs } from '@/hooks/useJobs';
+import { useClients, Client } from '@/hooks/useClients';
 import { ActionButton } from '@/components/ui/action-button';
+import { InspectionPreview } from '@/components/documents/InspectionPreview';
 
 export default function InspectionsPage() {
   const router = useRouter();
   const { reports, loading, error, listReports, createReport, updateReport } = useInspections();
+  const { jobs, listJobs } = useJobs();
+  const { getClient } = useClients();
+  const [previewClient, setPreviewClient] = useState<Client | null>(null);
   const [clientId, setClientId] = useState('');
   const [finalizeMessage, setFinalizeMessage] = useState('');
   const [formData, setFormData] = useState({
@@ -25,8 +31,14 @@ export default function InspectionsPage() {
     if (stored) {
       setClientId(stored);
       listReports(stored);
+      // Jobs not yet inspected are the ones worth reporting on
+      listJobs(stored);
+      getClient(stored).then(setPreviewClient);
     }
-  }, [listReports]);
+  }, [listReports, listJobs, getClient]);
+
+  const inspectableJobs = jobs.filter((j) => !['inspected', 'quoted', 'approved', 'completed', 'cancelled'].includes(j.status));
+  const selectedJob = jobs.find((j) => j.id === formData.job_id);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -83,21 +95,31 @@ export default function InspectionsPage() {
         </div>
 
         {/* New report form — mirrors the original Excel Inspection Report layout */}
-        <div className="bg-slate-900 border border-slate-800 rounded-md mb-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6 items-start">
+        <div className="bg-slate-900 border border-slate-800 rounded-md">
             <div className="px-5 py-3 border-b border-slate-800">
               <h2 className="text-sm font-semibold text-slate-300">New Inspection Report</h2>
             </div>
             <form onSubmit={handleSubmit} className="p-5 space-y-5">
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div>
-                  <label className="block text-xs font-medium text-slate-500 mb-1">Job ID</label>
-                  <input
-                    type="text"
+                  <label className="block text-xs font-medium text-slate-500 mb-1">Job</label>
+                  <select
                     value={formData.job_id}
                     onChange={(e) => setFormData({ ...formData, job_id: e.target.value })}
                     required
-                    className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-md text-sm text-white placeholder:text-slate-600 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                  />
+                    className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-md text-sm text-white focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  >
+                    <option value="" disabled>Select a job to inspect…</option>
+                    {inspectableJobs.map((j) => (
+                      <option key={j.id} value={j.id}>
+                        {j.customer_name || 'Unassigned'} — {j.appliance_type}{j.reported_fault ? ` (${j.reported_fault})` : ''}
+                      </option>
+                    ))}
+                  </select>
+                  {inspectableJobs.length === 0 && (
+                    <p className="text-xs text-slate-600 mt-1">No open jobs waiting on inspection.</p>
+                  )}
                 </div>
                 <div>
                   <label className="block text-xs font-medium text-slate-500 mb-1">Inspected By</label>
@@ -196,6 +218,21 @@ export default function InspectionsPage() {
               <ActionButton type="submit" disabled={loading} text={loading ? 'Saving...' : 'Save Inspection Report'} />
             </form>
           </div>
+
+          <div className="lg:sticky lg:top-6">
+            <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-2">Live Preview</p>
+            <InspectionPreview
+              client={previewClient}
+              customerName={selectedJob?.customer_name}
+              inspectedBy={formData.inspected_by}
+              inspectedAt={formData.inspected_at}
+              findings={formData.findings}
+              taxableAmount={formData.taxable_amount}
+              taxRate={formData.tax_rate}
+              notes={formData.notes}
+            />
+          </div>
+        </div>
 
         {finalizeMessage && (
           <div className="bg-emerald-500/10 border border-emerald-200 text-emerald-300 text-sm px-4 py-3 rounded-md mb-6">

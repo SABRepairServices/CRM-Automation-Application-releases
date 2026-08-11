@@ -64,6 +64,28 @@ export const useTechnicians = () => {
     }
   }, [technicians]);
 
+  const updateTechnician = useCallback(async (id: string, data: Partial<Technician>, clientId?: string) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const client = clientId || localStorage.getItem('selectedClientId');
+      if (!client) throw new Error('No client selected');
+
+      const response = await axios.put(`${API_URL}/technicians/${id}?client_id=${client}`, data, {
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+      });
+      const updated = response.data.data;
+      setTechnicians(technicians.map(t => (t.id === id ? updated : t)));
+      return updated;
+    } catch (err) {
+      const msg = axios.isAxiosError(err) ? err.response?.data?.error : String(err);
+      setError(msg);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, [technicians]);
+
   const deleteTechnician = useCallback(async (id: string, clientId?: string) => {
     setLoading(true);
     setError(null);
@@ -84,5 +106,5 @@ export const useTechnicians = () => {
     }
   }, [technicians]);
 
-  return { technicians, loading, error, listTechnicians, createTechnician, deleteTechnician };
+  return { technicians, loading, error, listTechnicians, createTechnician, updateTechnician, deleteTechnician };
 };

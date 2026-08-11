@@ -1,22 +1,34 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useTechnicians } from '@/hooks/useTechnicians';
+import { useRouter } from 'next/navigation';
+import { useTechnicians, Technician } from '@/hooks/useTechnicians';
+import { useJobs } from '@/hooks/useJobs';
 import { ActionButton } from '@/components/ui/action-button';
 
+const ACTIVE_STATUSES = ['scheduled', 'inspected', 'quoted', 'approved', 'in_progress'];
+
 export default function TechniciansPage() {
-  const { technicians, loading, error, listTechnicians, createTechnician, deleteTechnician } = useTechnicians();
+  const router = useRouter();
+  const { technicians, loading, error, listTechnicians, createTechnician, updateTechnician, deleteTechnician } = useTechnicians();
+  const { jobs, listJobs } = useJobs();
   const [showForm, setShowForm] = useState(false);
   const [clientId, setClientId] = useState('');
   const [formData, setFormData] = useState({ name: '', phone: '', email: '', speciality: '' });
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editData, setEditData] = useState({ name: '', phone: '', email: '', speciality: '' });
 
   useEffect(() => {
     const stored = localStorage.getItem('selectedClientId');
     if (stored) {
       setClientId(stored);
       listTechnicians(stored);
+      listJobs(stored);
     }
-  }, [listTechnicians]);
+  }, [listTechnicians, listJobs]);
+
+  const activeJobCount = (techId: string) =>
+    jobs.filter((j) => j.technician_id === techId && ACTIVE_STATUSES.includes(j.status)).length;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -27,6 +39,21 @@ export default function TechniciansPage() {
       setShowForm(false);
     } catch (err) {
       console.error('Error creating technician:', err);
+    }
+  };
+
+  const startEdit = (tech: Technician) => {
+    setEditingId(tech.id);
+    setEditData({ name: tech.name, phone: tech.phone, email: tech.email || '', speciality: tech.speciality || '' });
+  };
+
+  const handleSaveEdit = async (id: string) => {
+    if (!clientId) return;
+    try {
+      await updateTechnician(id, editData, clientId);
+      setEditingId(null);
+    } catch (err) {
+      console.error('Error updating technician:', err);
     }
   };
 
@@ -134,26 +161,63 @@ export default function TechniciansPage() {
                   <th className="px-5 py-2 font-medium">Phone</th>
                   <th className="px-5 py-2 font-medium">Email</th>
                   <th className="px-5 py-2 font-medium">Speciality</th>
+                  <th className="px-5 py-2 font-medium">Workload</th>
                   <th className="px-5 py-2 font-medium"></th>
                 </tr>
               </thead>
               <tbody>
-                {technicians.map((tech) => (
-                  <tr key={tech.id} className="border-b border-slate-800 last:border-0">
-                    <td className="px-5 py-3 font-medium text-white">{tech.name}</td>
-                    <td className="px-5 py-3 text-slate-400">{tech.phone}</td>
-                    <td className="px-5 py-3 text-slate-400">{tech.email || '—'}</td>
-                    <td className="px-5 py-3 text-slate-400">{tech.speciality || '—'}</td>
-                    <td className="px-5 py-3 text-right">
-                      <button
-                        onClick={() => handleDelete(tech.id)}
-                        className="text-red-400 hover:text-red-400 text-xs font-medium"
-                      >
-                        Remove
-                      </button>
-                    </td>
-                  </tr>
-                ))}
+                {technicians.map((tech) => {
+                  const active = activeJobCount(tech.id);
+                  const isEditing = editingId === tech.id;
+                  return (
+                    <tr key={tech.id} className="border-b border-slate-800 last:border-0">
+                      {isEditing ? (
+                        <>
+                          <td className="px-5 py-2">
+                            <input value={editData.name} onChange={(e) => setEditData({ ...editData, name: e.target.value })} className="w-full px-2 py-1 bg-slate-950 border border-slate-800 rounded text-sm text-white" />
+                          </td>
+                          <td className="px-5 py-2">
+                            <input value={editData.phone} onChange={(e) => setEditData({ ...editData, phone: e.target.value })} className="w-full px-2 py-1 bg-slate-950 border border-slate-800 rounded text-sm text-white" />
+                          </td>
+                          <td className="px-5 py-2">
+                            <input value={editData.email} onChange={(e) => setEditData({ ...editData, email: e.target.value })} className="w-full px-2 py-1 bg-slate-950 border border-slate-800 rounded text-sm text-white" />
+                          </td>
+                          <td className="px-5 py-2">
+                            <input value={editData.speciality} onChange={(e) => setEditData({ ...editData, speciality: e.target.value })} className="w-full px-2 py-1 bg-slate-950 border border-slate-800 rounded text-sm text-white" />
+                          </td>
+                          <td className="px-5 py-3 text-slate-500">—</td>
+                          <td className="px-5 py-3 text-right space-x-3 whitespace-nowrap">
+                            <button onClick={() => handleSaveEdit(tech.id)} className="text-emerald-400 hover:text-emerald-300 text-xs font-medium">Save</button>
+                            <button onClick={() => setEditingId(null)} className="text-slate-400 hover:text-slate-300 text-xs font-medium">Cancel</button>
+                          </td>
+                        </>
+                      ) : (
+                        <>
+                          <td
+                            className="px-5 py-3 font-medium text-white cursor-pointer hover:underline"
+                            onClick={() => router.push(`/technicians/${tech.id}`)}
+                          >
+                            {tech.name}
+                          </td>
+                          <td className="px-5 py-3 text-slate-400">{tech.phone}</td>
+                          <td className="px-5 py-3 text-slate-400">{tech.email || '—'}</td>
+                          <td className="px-5 py-3 text-slate-400">{tech.speciality || '—'}</td>
+                          <td className="px-5 py-3">
+                            {active > 0 ? (
+                              <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-amber-500/10 text-amber-400">{active} active</span>
+                            ) : (
+                              <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-slate-800 text-slate-500">Free</span>
+                            )}
+                          </td>
+                          <td className="px-5 py-3 text-right space-x-3 whitespace-nowrap">
+                            <button onClick={() => startEdit(tech)} className="text-blue-400 hover:text-blue-300 text-xs font-medium">Edit</button>
+                            <button onClick={() => handleDelete(tech.id)} className="text-red-400 hover:text-red-400 text-xs font-medium">Remove</button>
+                          </td>
+                        </>
+                      )}
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           )}

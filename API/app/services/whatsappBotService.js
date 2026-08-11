@@ -1,5 +1,6 @@
 import db from '../../config/database.js';
 import { sendText, sendDocument, sendTemplateDocument, isWithin24HourWindow } from './whatsappService.js';
+import { parseTechnicianMessage } from './aiParserService.js';
 import { sendPdfEmail } from './emailService.js';
 import { generateInspectionPdf, generateQuotationPdf, generateInvoicePdf } from './pdfService.js';
 import { createInspectionReport, getInspectionReport, updateInspectionReport } from './inspectionService.js';
@@ -204,9 +205,25 @@ const handleTechnicianMessage = async (technician, from, body) => {
     return handleTechnicianDone(technician, from);
   }
 
-  const parsed = parseCommand(body);
+  // Try the AI free-text parser first (natural language, any order, any
+  // phrasing). Falls back to the rigid "Key: value" parser when no
+  // ANTHROPIC_API_KEY is configured, or when the AI call itself fails, so
+  // the bot never goes fully silent.
+  let parsed;
+  try {
+    parsed = await parseTechnicianMessage(body);
+  } catch (err) {
+    console.error('[WhatsAppBot] AI parse failed, falling back to structured parser:', err.message);
+    parsed = null;
+  }
+  if (!parsed) parsed = parseCommand(body);
+
+  if (parsed?.command === null) {
+    await sendText(from, parsed.clarification || `Didn't catch that — tell me the customer's phone number and whether this is an inspection, quotation, or invoice.`, { clientId: technician.client_id });
+    return;
+  }
   if (!parsed) {
-    await sendText(from, `Didn't recognize that. Start your message with INP, QOT, or INV — see the WhatsApp bot guide for the format.`, { clientId: technician.client_id });
+    await sendText(from, `Didn't recognize that. Tell me the customer, phone number, appliance, and what you found or the price — I'll work out the rest.`, { clientId: technician.client_id });
     return;
   }
 

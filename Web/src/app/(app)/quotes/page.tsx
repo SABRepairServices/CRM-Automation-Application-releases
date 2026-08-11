@@ -3,17 +3,17 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useQuotations } from '@/hooks/useQuotations';
+import { useJobs } from '@/hooks/useJobs';
+import { useClients, Client } from '@/hooks/useClients';
 import { ActionButton } from '@/components/ui/action-button';
-
-const STANDARD_TERMS = [
-  'The work shall commence after approval of this estimate/quotation.',
-  'This estimate is valid only for the job/service listed. Anything extra will be charged separately.',
-  'The date of completion of job is subject to our final confirmation.',
-];
+import { QuotationPreview } from '@/components/documents/QuotationPreview';
 
 export default function QuotesPage() {
   const router = useRouter();
   const { quotations, loading, error, listQuotations, createQuotation, updateQuotation } = useQuotations();
+  const { jobs, listJobs } = useJobs();
+  const { getClient } = useClients();
+  const [previewClient, setPreviewClient] = useState<Client | null>(null);
   const [clientId, setClientId] = useState('');
   const [approveMessage, setApproveMessage] = useState('');
   const [formData, setFormData] = useState({
@@ -29,8 +29,16 @@ export default function QuotesPage() {
     if (stored) {
       setClientId(stored);
       listQuotations(stored);
+      // Jobs without a quotation yet are the ones worth quoting — inspected
+      // jobs are the common case (findings already known), but "new"/
+      // "scheduled" jobs can be quoted directly too.
+      listJobs(stored);
+      getClient(stored).then(setPreviewClient);
     }
-  }, [listQuotations]);
+  }, [listQuotations, listJobs, getClient]);
+
+  const quotableJobs = jobs.filter((j) => !['quoted', 'approved', 'completed', 'cancelled'].includes(j.status));
+  const selectedJob = jobs.find((j) => j.id === formData.job_id);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -91,20 +99,35 @@ export default function QuotesPage() {
           </div>
         )}
 
-        <div className="bg-slate-900 border border-slate-800 rounded-md mb-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6 items-start">
+        <div className="bg-slate-900 border border-slate-800 rounded-md">
             <div className="px-5 py-3 border-b border-slate-800">
               <h2 className="text-sm font-semibold text-slate-300">New Quotation</h2>
             </div>
             <form onSubmit={handleSubmit} className="p-5 space-y-5">
               <div>
-                <label className="block text-xs font-medium text-slate-500 mb-1">Job ID</label>
-                <input
-                  type="text"
+                <label className="block text-xs font-medium text-slate-500 mb-1">Job</label>
+                <select
                   value={formData.job_id}
                   onChange={(e) => setFormData({ ...formData, job_id: e.target.value })}
                   required
-                  className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-md text-sm text-white placeholder:text-slate-600 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                />
+                  className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-md text-sm text-white focus:outline-none focus:ring-1 focus:ring-blue-500"
+                >
+                  <option value="" disabled>Select a job to quote…</option>
+                  {quotableJobs.map((j) => (
+                    <option key={j.id} value={j.id}>
+                      {j.customer_name || 'Unassigned'} — {j.appliance_type}{j.reported_fault ? ` (${j.reported_fault})` : ''}
+                    </option>
+                  ))}
+                </select>
+                {quotableJobs.length === 0 && (
+                  <p className="text-xs text-slate-600 mt-1">No open jobs waiting on a quotation. Create a job or complete an inspection first.</p>
+                )}
+                {selectedJob?.diagnosis && (
+                  <p className="text-xs text-slate-500 mt-2 bg-slate-950 border border-slate-800 rounded px-3 py-2">
+                    <span className="text-slate-400 font-medium">Inspection notes: </span>{selectedJob.diagnosis}
+                  </p>
+                )}
               </div>
 
               <div>
@@ -187,19 +210,24 @@ export default function QuotesPage() {
                 <textarea value={formData.notes} onChange={(e) => setFormData({ ...formData, notes: e.target.value })} rows={2} className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-md text-sm text-white placeholder:text-slate-600" />
               </div>
 
-              {/* Fixed terms, matching the original quotation template */}
-              <div className="bg-slate-950 border border-slate-800 rounded-md px-4 py-3">
-                <p className="text-xs font-semibold text-slate-400 mb-2">Terms &amp; Conditions</p>
-                <ol className="text-xs text-slate-500 list-decimal list-inside space-y-1">
-                  {STANDARD_TERMS.map((t, i) => (
-                    <li key={i}>{t}</li>
-                  ))}
-                </ol>
-              </div>
+              <p className="text-xs text-slate-600">Standard terms &amp; conditions are shown on the preview and applied automatically.</p>
 
               <ActionButton type="submit" disabled={loading} text={loading ? 'Creating...' : 'Create Quotation'} />
             </form>
           </div>
+
+          <div className="lg:sticky lg:top-6">
+            <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-2">Live Preview</p>
+            <QuotationPreview
+              client={previewClient}
+              customerName={selectedJob?.customer_name}
+              items={formData.items}
+              discountAmount={formData.discount_amount}
+              vatPercent={formData.vat_percent}
+              notes={formData.notes}
+            />
+          </div>
+        </div>
 
         {error && (
           <div className="bg-red-500/10 border border-red-200 text-red-400 text-sm px-4 py-3 rounded-md mb-6">{error}</div>

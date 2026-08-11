@@ -3,11 +3,17 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useInvoices } from '@/hooks/useInvoices';
+import { useCustomers } from '@/hooks/useCustomers';
+import { useClients, Client } from '@/hooks/useClients';
 import { ActionButton } from '@/components/ui/action-button';
+import { InvoicePreview } from '@/components/documents/InvoicePreview';
 
 export default function InvoicesPage() {
   const router = useRouter();
   const { invoices, loading, error, listInvoices, createInvoice, updateInvoice } = useInvoices();
+  const { customers, listCustomers } = useCustomers();
+  const { getClient } = useClients();
+  const [previewClient, setPreviewClient] = useState<Client | null>(null);
   const [clientId, setClientId] = useState('');
   const [formData, setFormData] = useState({
     customer_id: '',
@@ -21,8 +27,12 @@ export default function InvoicesPage() {
     if (stored) {
       setClientId(stored);
       listInvoices(stored);
+      listCustomers({ clientId: stored });
+      getClient(stored).then(setPreviewClient);
     }
-  }, [listInvoices]);
+  }, [listInvoices, listCustomers, getClient]);
+
+  const selectedCustomer = customers.find((c) => c.id === formData.customer_id);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -68,21 +78,30 @@ export default function InvoicesPage() {
           </div>
         </div>
 
-        <div
-          className="rounded-md mb-6 bg-slate-900"
-          style={{
-            border: '1px solid rgba(148,163,184,0.25)',
-            boxShadow:
-              'inset 0 1px 0 rgba(255,255,255,0.08), inset 0 -2px 4px rgba(0,0,0,0.5), 0 8px 20px rgba(0,0,0,0.45), 0 1px 0 rgba(255,255,255,0.04)',
-          }}
-        >
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6 items-start">
+        <div className="bg-slate-900 border border-slate-800 rounded-md">
             <div className="px-5 py-3 border-b border-slate-800">
               <h2 className="text-sm font-semibold text-slate-300">New Manual Invoice</h2>
             </div>
             <form onSubmit={handleSubmit} className="p-5 space-y-4">
               <div>
-                <label className="block text-xs font-medium text-slate-500 mb-1">Customer ID</label>
-                <input type="text" value={formData.customer_id} onChange={(e) => setFormData({ ...formData, customer_id: e.target.value })} required className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-md text-sm text-white placeholder:text-slate-600" />
+                <label className="block text-xs font-medium text-slate-500 mb-1">Customer</label>
+                <select
+                  value={formData.customer_id}
+                  onChange={(e) => setFormData({ ...formData, customer_id: e.target.value })}
+                  required
+                  className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-md text-sm text-white focus:outline-none focus:ring-1 focus:ring-blue-500"
+                >
+                  <option value="" disabled>Select a customer…</option>
+                  {customers.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name}{c.phone ? ` — ${c.phone}` : ''}
+                    </option>
+                  ))}
+                </select>
+                {customers.length === 0 && (
+                  <p className="text-xs text-slate-600 mt-1">No customers yet. Add one in the Customers section first.</p>
+                )}
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
@@ -101,6 +120,17 @@ export default function InvoicesPage() {
               <ActionButton type="submit" disabled={loading} text={loading ? 'Creating...' : 'Create Invoice'} />
             </form>
           </div>
+
+          <div className="lg:sticky lg:top-6">
+            <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-2">Live Preview</p>
+            <InvoicePreview
+              client={previewClient}
+              customerName={selectedCustomer?.name}
+              dueDate={formData.due_date}
+              notes={formData.notes}
+            />
+          </div>
+        </div>
 
         {error && (
           <div className="bg-red-500/10 border border-red-200 text-red-400 text-sm px-4 py-3 rounded-md mb-6">{error}</div>
