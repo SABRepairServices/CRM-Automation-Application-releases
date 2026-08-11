@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { getAppVersion, isElectron } from '@/lib/electronBridge';
+import { getAppVersion, installUpdate, isElectron, onUpdateDownloaded } from '@/lib/electronBridge';
 import {
   LayoutDashboard,
   Building2,
@@ -38,10 +38,12 @@ export function Sidebar() {
   const pathname = usePathname();
   const isActive = (path: string) => pathname === path;
   const [version, setVersion] = useState<string | null>(null);
+  const [updateReady, setUpdateReady] = useState<string | null>(null);
 
   useEffect(() => {
     if (!isElectron()) return;
     getAppVersion().then(setVersion);
+    return onUpdateDownloaded((newVersion) => setUpdateReady(newVersion));
   }, []);
 
   return (
@@ -88,6 +90,18 @@ export function Sidebar() {
           );
         })}
       </nav>
+
+      {updateReady && (
+        <div className="mx-3 mb-3 rounded-lg bg-blue-500/10 border border-blue-500/30 px-3 py-2.5">
+          <p className="text-xs text-blue-300 font-medium">Update ready — v{updateReady}</p>
+          <button
+            onClick={() => installUpdate()}
+            className="mt-1.5 w-full text-xs font-medium text-white bg-blue-600 hover:bg-blue-500 rounded-md px-2 py-1.5 transition-colors"
+          >
+            Restart to update
+          </button>
+        </div>
+      )}
 
       <div className="px-4 py-4 border-t border-white/5">
         <div className="text-[11px] text-slate-600 text-center">

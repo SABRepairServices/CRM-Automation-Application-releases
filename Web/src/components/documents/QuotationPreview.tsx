@@ -37,7 +37,7 @@ export function QuotationPreview({
   const visibleItems = items.filter((i) => i.description);
 
   return (
-    <div className="bg-slate-900 border border-slate-800 rounded-md p-8 text-slate-200">
+    <div className="doc-paper bg-slate-900 border border-slate-800 rounded-md p-8 text-slate-200">
       <DocumentHeader client={client} title="Quotation" />
 
       <div className="grid grid-cols-2 gap-6 mb-6 text-sm">

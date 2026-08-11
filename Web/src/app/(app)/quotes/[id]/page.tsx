@@ -97,7 +97,7 @@ export default function QuotationDocumentPage() {
           </div>
         </div>
 
-        <div className="print-document bg-slate-900 border border-slate-800 rounded-md p-8 text-slate-200 print:border-0 print:shadow-none">
+        <div className="doc-paper print-document bg-slate-900 border border-slate-800 rounded-md p-8 text-slate-200 print:border-0 print:shadow-none">
           <DocumentHeader client={client} title="Quotation" />
 
           <div className="grid grid-cols-2 gap-6 mb-6 text-sm">

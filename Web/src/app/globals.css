@@ -40,6 +40,35 @@ tbody tr {
   background-color: rgba(255, 255, 255, 0.02); /* subtle zebra for readability on dark */
 }
 
+/* Raised-paper 3D effect for document previews/printouts — layered shadows
+   simulate a physical sheet sitting above the page instead of a flat panel. */
+.doc-paper {
+  position: relative;
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.06) inset,
+    0 -1px 0 rgba(0, 0, 0, 0.4) inset,
+    0 2px 4px rgba(0, 0, 0, 0.3),
+    0 12px 28px rgba(0, 0, 0, 0.45),
+    0 28px 56px rgba(0, 0, 0, 0.3);
+  transform: perspective(1200px) rotateX(0.4deg);
+  transition: transform 200ms ease-out, box-shadow 200ms ease-out;
+}
+.doc-paper:hover {
+  transform: perspective(1200px) rotateX(0deg) translateY(-2px);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.08) inset,
+    0 -1px 0 rgba(0, 0, 0, 0.4) inset,
+    0 2px 4px rgba(0, 0, 0, 0.3),
+    0 16px 32px rgba(0, 0, 0, 0.5),
+    0 32px 64px rgba(0, 0, 0, 0.35);
+}
+@media print {
+  .doc-paper {
+    box-shadow: none !important;
+    transform: none !important;
+  }
+}
+
 :root {
   --primary: 59 130 246;
   --primary-foreground: 255 255 255;
