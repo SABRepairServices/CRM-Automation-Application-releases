@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useTechnicians, Technician } from '@/hooks/useTechnicians';
 import { useJobs } from '@/hooks/useJobs';
@@ -10,12 +10,10 @@ export default function TechnicianDetailPage() {
   const router = useRouter();
   const { technicians, listTechnicians } = useTechnicians();
   const { jobs, loading, listJobs } = useJobs();
-  const [clientId, setClientId] = useState('');
 
   useEffect(() => {
     const stored = localStorage.getItem('selectedClientId');
     if (!stored || !id) return;
-    setClientId(stored);
     listTechnicians(stored);
     listJobs(stored, { technician_id: id });
   }, [id, listTechnicians, listJobs]);
