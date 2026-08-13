@@ -15,6 +15,7 @@ export interface InspectionReport {
   customer_id?: string;
   customer_name?: string;
   customer_phone?: string;
+  customer_email?: string;
   customer_address?: string;
   appliance_type?: string;
   inspected_by?: string;
@@ -92,5 +93,10 @@ export const useInspections = () => {
     [reports]
   );
 
-  return { reports, loading, error, listReports, getReport, createReport, updateReport };
+  const sendReport = useCallback(async (clientId: string, reportId: string) => {
+    const response = await axios.post(`${API_URL}/inspections/${reportId}/send?client_id=${clientId}`, {}, authHeader());
+    return response.data.data as { whatsappSent: boolean; whatsappError: string | null; emailError: string | null; hasWhatsapp: boolean };
+  }, []);
+
+  return { reports, loading, error, listReports, getReport, createReport, updateReport, sendReport };
 };

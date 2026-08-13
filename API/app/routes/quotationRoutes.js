@@ -2,6 +2,7 @@ import express from 'express';
 import { authenticate } from '../middleware/auth.js';
 import verifyClientAccess from '../middleware/verifyClientAccess.js';
 import { listQuotations, getQuotation, createQuotation, updateQuotation, deleteQuotation, getQuotationStats } from '../services/quotationService.js';
+import { sendQuotationManually } from '../services/documentSendService.js';
 
 const router = express.Router();
 
@@ -64,6 +65,20 @@ router.delete('/:id', authenticate, verifyClientAccess, async (req, res) => {
 
     const quotation = await deleteQuotation(client_id, req.params.id);
     res.json({ data: quotation });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.post('/:id/send', authenticate, verifyClientAccess, async (req, res) => {
+  try {
+    const { client_id } = req.query;
+    if (!client_id) return res.status(400).json({ error: 'client_id required' });
+
+    const result = await sendQuotationManually(client_id, req.params.id);
+    if (result?.error) return res.status(400).json({ error: result.error });
+
+    res.json({ data: result });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

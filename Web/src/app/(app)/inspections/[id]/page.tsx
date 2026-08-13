@@ -6,12 +6,13 @@ import { useInspections, InspectionReport } from '@/hooks/useInspections';
 import { useClients, Client } from '@/hooks/useClients';
 import { DocumentHeader } from '@/components/DocumentHeader';
 import { ActionButton } from '@/components/ui/action-button';
+import { SendDocumentBar } from '@/components/SendDocumentBar';
 import { isElectron, saveDocumentBackup } from '@/lib/electronBridge';
 
 export default function InspectionDocumentPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
-  const { getReport } = useInspections();
+  const { getReport, sendReport } = useInspections();
   const { getClient } = useClients();
   const [report, setReport] = useState<InspectionReport | null>(null);
   const [client, setClient] = useState<Client | null>(null);
@@ -65,11 +66,11 @@ export default function InspectionDocumentPage() {
   return (
     <div className="p-8 bg-slate-950 min-h-screen print:bg-white print:p-0">
       <div className="max-w-3xl mx-auto">
-        <div className="flex items-center justify-between mb-4 print:hidden">
+        <div className="flex items-center justify-between mb-4 print:hidden flex-wrap gap-3">
           <button onClick={() => router.push('/inspections')} className="text-sm text-slate-500 hover:text-slate-300">
             ← Back to Inspection Reports
           </button>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 flex-wrap">
             {isElectron() && (
               <span className="text-xs text-slate-400">
                 {backupStatus === 'saving' && 'Saving local backup…'}
@@ -77,6 +78,13 @@ export default function InspectionDocumentPage() {
                 {backupStatus === 'failed' && 'Local backup failed'}
               </span>
             )}
+            <SendDocumentBar
+              documentLabel={`Inspection Report ${report.report_number}`}
+              customerName={report.customer_name}
+              customerPhone={report.customer_phone}
+              customerEmail={report.customer_email}
+              onSend={() => sendReport(localStorage.getItem('selectedClientId') || '', report.id)}
+            />
             <ActionButton
               text="Print"
               variant="ghost"

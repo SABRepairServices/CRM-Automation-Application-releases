@@ -24,7 +24,7 @@ const listInspectionReports = async (clientId, filters = {}) => {
 
 const getInspectionReport = async (clientId, reportId) => {
   const result = await db.query(
-    `SELECT ir.*, rj.customer_id, rj.job_number, c.name as customer_name, c.phone as customer_phone, c.address as customer_address, rj.appliance_type
+    `SELECT ir.*, rj.customer_id, rj.job_number, c.name as customer_name, c.phone as customer_phone, c.email as customer_email, c.address as customer_address, rj.appliance_type
      FROM inspection_reports ir
      LEFT JOIN repair_jobs rj ON ir.job_id = rj.id
      LEFT JOIN customers c ON rj.customer_id = c.id

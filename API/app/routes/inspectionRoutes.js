@@ -8,6 +8,7 @@ import {
   updateInspectionReport,
   deleteInspectionReport,
 } from '../services/inspectionService.js';
+import { sendInspectionManually } from '../services/documentSendService.js';
 
 const router = express.Router();
 
@@ -51,6 +52,20 @@ router.put('/:id', authenticate, verifyClientAccess, async (req, res) => {
     const { client_id } = req.query;
     const report = await updateInspectionReport(client_id, req.params.id, req.body);
     res.json({ data: report });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.post('/:id/send', authenticate, verifyClientAccess, async (req, res) => {
+  try {
+    const { client_id } = req.query;
+    if (!client_id) return res.status(400).json({ error: 'client_id required' });
+
+    const result = await sendInspectionManually(client_id, req.params.id);
+    if (result?.error) return res.status(400).json({ error: result.error });
+
+    res.json({ data: result });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

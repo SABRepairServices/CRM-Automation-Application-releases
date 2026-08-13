@@ -7,6 +7,8 @@ export interface Invoice {
   customer_id?: string;
   contract_id?: string;
   customer_name?: string;
+  customer_phone?: string;
+  customer_email?: string;
   invoice_number: string;
   issue_date: string;
   due_date: string;
@@ -116,5 +118,12 @@ export const useInvoices = () => {
     }
   }, [invoices]);
 
-  return { invoices, loading, error, listInvoices, getInvoice, createInvoice, updateInvoice, deleteInvoice };
+  const sendInvoice = useCallback(async (clientId: string, invoiceId: string) => {
+    const response = await axios.post(`${API_URL}/invoices/${invoiceId}/send?client_id=${clientId}`, {}, {
+      headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+    });
+    return response.data.data as { whatsappSent: boolean; whatsappError: string | null; emailError: string | null; hasWhatsapp: boolean };
+  }, []);
+
+  return { invoices, loading, error, listInvoices, getInvoice, createInvoice, updateInvoice, deleteInvoice, sendInvoice };
 };

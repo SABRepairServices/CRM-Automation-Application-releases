@@ -6,12 +6,13 @@ import { useInvoices, Invoice } from '@/hooks/useInvoices';
 import { useClients, Client } from '@/hooks/useClients';
 import { DocumentHeader } from '@/components/DocumentHeader';
 import { ActionButton } from '@/components/ui/action-button';
+import { SendDocumentBar } from '@/components/SendDocumentBar';
 import { isElectron, saveDocumentBackup } from '@/lib/electronBridge';
 
 export default function InvoiceDocumentPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
-  const { getInvoice } = useInvoices();
+  const { getInvoice, sendInvoice } = useInvoices();
   const { getClient } = useClients();
   const [invoice, setInvoice] = useState<Invoice | null>(null);
   const [client, setClient] = useState<Client | null>(null);
@@ -66,11 +67,11 @@ export default function InvoiceDocumentPage() {
   return (
     <div className="p-8 bg-slate-950 min-h-screen print:bg-white print:p-0">
       <div className="max-w-3xl mx-auto">
-        <div className="flex items-center justify-between mb-4 print:hidden">
+        <div className="flex items-center justify-between mb-4 print:hidden flex-wrap gap-3">
           <button onClick={() => router.push('/invoices')} className="text-sm text-slate-500 hover:text-slate-300">
             ← Back to Invoices
           </button>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 flex-wrap">
             {isElectron() && (
               <span className="text-xs text-slate-400">
                 {backupStatus === 'saving' && 'Saving local backup…'}
@@ -78,6 +79,13 @@ export default function InvoiceDocumentPage() {
                 {backupStatus === 'failed' && 'Local backup failed'}
               </span>
             )}
+            <SendDocumentBar
+              documentLabel={`Invoice ${invoice.invoice_number}`}
+              customerName={invoice.customer_name}
+              customerPhone={invoice.customer_phone}
+              customerEmail={invoice.customer_email}
+              onSend={() => sendInvoice(localStorage.getItem('selectedClientId') || '', invoice.id)}
+            />
             <ActionButton
               text="Print"
               variant="ghost"

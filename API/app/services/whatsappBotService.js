@@ -423,4 +423,12 @@ const handleTechnicianDone = async (technician, from) => {
   }
 };
 
-export { parseCommand, handleTechnicianMessage, handleCustomerReply };
+export {
+  parseCommand,
+  handleTechnicianMessage,
+  handleCustomerReply,
+  getClientById,
+  sendInspectionToCustomer,
+  sendQuotationToCustomer,
+  sendInvoiceToCustomer,
+};

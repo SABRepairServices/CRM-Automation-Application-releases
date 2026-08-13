@@ -6,6 +6,7 @@ import { useQuotations, Quotation } from '@/hooks/useQuotations';
 import { useClients, Client } from '@/hooks/useClients';
 import { DocumentHeader } from '@/components/DocumentHeader';
 import { ActionButton } from '@/components/ui/action-button';
+import { SendDocumentBar } from '@/components/SendDocumentBar';
 import { isElectron, saveDocumentBackup } from '@/lib/electronBridge';
 
 const STANDARD_TERMS = [
@@ -17,7 +18,7 @@ const STANDARD_TERMS = [
 export default function QuotationDocumentPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
-  const { getQuotation } = useQuotations();
+  const { getQuotation, sendQuotation } = useQuotations();
   const { getClient } = useClients();
   const [quotation, setQuotation] = useState<Quotation | null>(null);
   const [client, setClient] = useState<Client | null>(null);
@@ -73,11 +74,11 @@ export default function QuotationDocumentPage() {
   return (
     <div className="p-8 bg-slate-950 min-h-screen print:bg-white print:p-0">
       <div className="max-w-3xl mx-auto">
-        <div className="flex items-center justify-between mb-4 print:hidden">
+        <div className="flex items-center justify-between mb-4 print:hidden flex-wrap gap-3">
           <button onClick={() => router.push('/quotes')} className="text-sm text-slate-500 hover:text-slate-300">
             ← Back to Quotations
           </button>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 flex-wrap">
             {isElectron() && (
               <span className="text-xs text-slate-400">
                 {backupStatus === 'saving' && 'Saving local backup…'}
@@ -85,6 +86,13 @@ export default function QuotationDocumentPage() {
                 {backupStatus === 'failed' && 'Local backup failed'}
               </span>
             )}
+            <SendDocumentBar
+              documentLabel={`Quotation ${quotation.quotation_number}`}
+              customerName={quotation.customer_name}
+              customerPhone={quotation.customer_phone}
+              customerEmail={quotation.customer_email}
+              onSend={() => sendQuotation(localStorage.getItem('selectedClientId') || '', quotation.id)}
+            />
             <ActionButton
               text="Print"
               variant="ghost"

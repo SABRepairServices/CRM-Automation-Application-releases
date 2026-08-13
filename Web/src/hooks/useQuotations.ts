@@ -17,6 +17,8 @@ export interface Quotation {
   appliance_type?: string;
   customer_id?: string;
   customer_name?: string;
+  customer_phone?: string;
+  customer_email?: string;
   quotation_number: string;
   status: 'draft' | 'sent' | 'approved' | 'rejected' | 'expired';
   labour_amount: number;
@@ -126,5 +128,12 @@ export const useQuotations = () => {
     }
   }, [quotations]);
 
-  return { quotations, loading, error, listQuotations, getQuotation, createQuotation, updateQuotation, deleteQuotation };
+  const sendQuotation = useCallback(async (clientId: string, quotationId: string) => {
+    const response = await axios.post(`${API_URL}/quotations/${quotationId}/send?client_id=${clientId}`, {}, {
+      headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+    });
+    return response.data.data as { whatsappSent: boolean; whatsappError: string | null; emailError: string | null; hasWhatsapp: boolean };
+  }, []);
+
+  return { quotations, loading, error, listQuotations, getQuotation, createQuotation, updateQuotation, deleteQuotation, sendQuotation };
 };
