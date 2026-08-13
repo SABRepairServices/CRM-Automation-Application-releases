@@ -44,6 +44,26 @@ tbody tr {
 .max-w-6xl {
   max-width: 64rem;
 }
+
+/* Every "New X" form body uses p-5 + space-y-3/4/5 — the same oversized
+   spacing repeated across Quotes/Invoices/Inspections/Jobs/Customers/
+   Technicians/Settings/Posts. Tightening it once here shrinks every one of
+   those forms consistently instead of leaving each section's own "big tab"
+   feel untouched. Selectors mirror Tailwind's own generated ones exactly
+   (including the :not([hidden]) pair) so they win on source order without
+   needing !important. */
+.p-5 {
+  padding: 0.875rem;
+}
+.space-y-5 > :not([hidden]) ~ :not([hidden]) {
+  margin-top: 0.75rem;
+}
+.space-y-4 > :not([hidden]) ~ :not([hidden]) {
+  margin-top: 0.625rem;
+}
+.space-y-3 > :not([hidden]) ~ :not([hidden]) {
+  margin-top: 0.5rem;
+}
 @media print {
   nav, header, .print\:hidden {
     display: none !important;

@@ -79,15 +79,6 @@ export default function InvoiceDocumentPage() {
                 {backupStatus === 'failed' && 'Local backup failed'}
               </span>
             )}
-            <SendDocumentBar
-              documentLabel={`Invoice ${invoice.invoice_number}`}
-              customerName={invoice.customer_name}
-              customerPhone={invoice.customer_phone}
-              customerEmail={invoice.customer_email}
-              businessPhone={client?.phone}
-              businessEmail={client?.email}
-              onSend={() => sendInvoice(localStorage.getItem('selectedClientId') || '', invoice.id)}
-            />
             <ActionButton
               text="Print"
               variant="ghost"
@@ -98,6 +89,18 @@ export default function InvoiceDocumentPage() {
               }}
             />
           </div>
+        </div>
+
+        <div className="mb-4 print:hidden">
+          <SendDocumentBar
+            documentLabel={`Invoice ${invoice.invoice_number}`}
+            customerName={invoice.customer_name}
+            customerPhone={invoice.customer_phone}
+            customerEmail={invoice.customer_email}
+            businessPhone={client?.phone}
+            businessEmail={client?.email}
+            onSend={() => sendInvoice(localStorage.getItem('selectedClientId') || '', invoice.id)}
+          />
         </div>
 
         <div className="doc-paper print-document bg-slate-900 border border-slate-800 rounded-md p-8 text-slate-200 print:border-0 print:shadow-none">

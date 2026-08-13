@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { Send, MessageCircle, Mail } from 'lucide-react';
 import { ActionButton } from '@/components/ui/action-button';
 
 interface SendResult {
@@ -14,10 +15,12 @@ interface SendResult {
  * Shared "send to customer" control for the Quotation/Invoice/Inspection
  * detail pages. The primary button goes through the backend — same
  * WhatsApp(+template fallback)/email delivery path the bot already uses
- * automatically — for a real on-demand send. The two manual links are a
- * fallback for when that's not enough (no number/email on file yet, or the
+ * automatically — for a real on-demand send. The two manual icon buttons are
+ * a fallback for when that's not enough (no number/email on file yet, or the
  * technician wants to attach something custom): they just open WhatsApp Web
- * or the default mail client with the customer pre-filled.
+ * or the default mail client with the customer pre-filled. Rendered as a
+ * standalone bordered bar rather than inline text links so it can't be
+ * missed among the page's other controls.
  */
 export function SendDocumentBar({
   documentLabel,
@@ -71,45 +74,52 @@ export function SendDocumentBar({
   };
 
   return (
-    <div className="flex items-center gap-3 flex-wrap">
+    <div className="w-full flex items-center gap-3 flex-wrap bg-slate-900 border border-blue-500/30 rounded-md px-4 py-3 shadow-[0_0_16px_rgba(59,130,246,0.12)]">
+      <Send className="w-4 h-4 text-blue-400 shrink-0" strokeWidth={2} />
+      <span className="text-xs font-semibold text-slate-300 uppercase tracking-wide shrink-0">Send to Customer</span>
+
       <ActionButton
-        text={status === 'sending' ? 'Sending…' : 'Send to Customer'}
-        variant="ghost"
+        text={status === 'sending' ? 'Sending…' : 'Send Now'}
+        variant="primary"
         showArrow={false}
         disabled={status === 'sending'}
         onClick={handleSend}
+        className="ml-auto"
       />
+
       {waLink && (
         <a
           href={waLink}
           target="_blank"
           rel="noreferrer"
-          title={usingFallbackPhone ? 'No WhatsApp number on file for this customer — using the business number instead' : undefined}
-          className="text-xs text-emerald-400 hover:text-emerald-300 transition-colors"
+          title={usingFallbackPhone ? 'No WhatsApp number on file for this customer — using the business number instead' : 'Open WhatsApp with this document pre-filled'}
+          className="flex items-center gap-1.5 text-xs font-medium text-emerald-400 bg-emerald-500/10 border border-emerald-500/30 rounded-md px-2.5 py-1.5 hover:bg-emerald-500/20 transition-colors"
         >
-          WhatsApp manually{usingFallbackPhone && ' (business no.)'}
+          <MessageCircle className="w-3.5 h-3.5" strokeWidth={2} />
+          WhatsApp{usingFallbackPhone && ' (business)'}
         </a>
       )}
       {mailLink && (
         <a
           href={mailLink}
-          title={usingFallbackEmail ? 'No email on file for this customer — using the business email instead' : undefined}
-          className="text-xs text-blue-400 hover:text-blue-300 transition-colors"
+          title={usingFallbackEmail ? 'No email on file for this customer — using the business email instead' : 'Open your mail client with this document pre-filled'}
+          className="flex items-center gap-1.5 text-xs font-medium text-blue-400 bg-blue-500/10 border border-blue-500/30 rounded-md px-2.5 py-1.5 hover:bg-blue-500/20 transition-colors"
         >
-          Email manually{usingFallbackEmail && ' (business)'}
+          <Mail className="w-3.5 h-3.5" strokeWidth={2} />
+          Email{usingFallbackEmail && ' (business)'}
         </a>
       )}
       {!waLink && !mailLink && (
         <span className="text-xs text-slate-600">No WhatsApp/email on file for this customer, and no business contact set in Settings.</span>
       )}
       {status === 'done' && (
-        <span className="text-xs text-emerald-400">
+        <span className="w-full text-xs text-emerald-400">
           Sent{result?.emailError ? ' — email copy failed' : ''}
         </span>
       )}
       {status === 'failed' && (
-        <span className="text-xs text-red-400">
-          {errorMsg || result?.whatsappError || 'Could not send — try the manual links'}
+        <span className="w-full text-xs text-red-400">
+          {errorMsg || result?.whatsappError || 'Could not send — try WhatsApp/Email above'}
         </span>
       )}
     </div>

@@ -78,15 +78,6 @@ export default function InspectionDocumentPage() {
                 {backupStatus === 'failed' && 'Local backup failed'}
               </span>
             )}
-            <SendDocumentBar
-              documentLabel={`Inspection Report ${report.report_number}`}
-              customerName={report.customer_name}
-              customerPhone={report.customer_phone}
-              customerEmail={report.customer_email}
-              businessPhone={client?.phone}
-              businessEmail={client?.email}
-              onSend={() => sendReport(localStorage.getItem('selectedClientId') || '', report.id)}
-            />
             <ActionButton
               text="Print"
               variant="ghost"
@@ -97,6 +88,18 @@ export default function InspectionDocumentPage() {
               }}
             />
           </div>
+        </div>
+
+        <div className="mb-4 print:hidden">
+          <SendDocumentBar
+            documentLabel={`Inspection Report ${report.report_number}`}
+            customerName={report.customer_name}
+            customerPhone={report.customer_phone}
+            customerEmail={report.customer_email}
+            businessPhone={client?.phone}
+            businessEmail={client?.email}
+            onSend={() => sendReport(localStorage.getItem('selectedClientId') || '', report.id)}
+          />
         </div>
 
         <div className="doc-paper print-document bg-slate-900 border border-slate-800 rounded-md p-8 text-slate-200 print:border-0 print:shadow-none">

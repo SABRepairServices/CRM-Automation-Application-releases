@@ -86,15 +86,6 @@ export default function QuotationDocumentPage() {
                 {backupStatus === 'failed' && 'Local backup failed'}
               </span>
             )}
-            <SendDocumentBar
-              documentLabel={`Quotation ${quotation.quotation_number}`}
-              customerName={quotation.customer_name}
-              customerPhone={quotation.customer_phone}
-              customerEmail={quotation.customer_email}
-              businessPhone={client?.phone}
-              businessEmail={client?.email}
-              onSend={() => sendQuotation(localStorage.getItem('selectedClientId') || '', quotation.id)}
-            />
             <ActionButton
               text="Print"
               variant="ghost"
@@ -105,6 +96,18 @@ export default function QuotationDocumentPage() {
               }}
             />
           </div>
+        </div>
+
+        <div className="mb-4 print:hidden">
+          <SendDocumentBar
+            documentLabel={`Quotation ${quotation.quotation_number}`}
+            customerName={quotation.customer_name}
+            customerPhone={quotation.customer_phone}
+            customerEmail={quotation.customer_email}
+            businessPhone={client?.phone}
+            businessEmail={client?.email}
+            onSend={() => sendQuotation(localStorage.getItem('selectedClientId') || '', quotation.id)}
+          />
         </div>
 
         <div className="doc-paper print-document bg-slate-900 border border-slate-800 rounded-md p-8 text-slate-200 print:border-0 print:shadow-none">

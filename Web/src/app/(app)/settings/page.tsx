@@ -260,15 +260,32 @@ export default function SettingsPage() {
                   <span className="text-xs text-slate-400">No logo</span>
                 )}
               </div>
-              <div className="flex-1">
-                <label className="block text-xs font-medium text-slate-500 mb-1">Logo URL</label>
-                <input
-                  type="text"
-                  placeholder="https://..."
-                  value={formData.logo_url}
-                  onChange={(e) => setFormData({ ...formData, logo_url: e.target.value })}
-                  className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-md text-sm text-white placeholder:text-slate-600"
-                />
+              <div className="flex-1 space-y-2">
+                <div>
+                  <label className="block text-xs font-medium text-slate-500 mb-1">Upload Logo</label>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (!file) return;
+                      const reader = new FileReader();
+                      reader.onload = () => setFormData((prev) => ({ ...prev, logo_url: String(reader.result) }));
+                      reader.readAsDataURL(file);
+                    }}
+                    className="w-full text-xs text-slate-400 file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-medium file:bg-blue-600 file:text-white hover:file:bg-blue-500 file:cursor-pointer cursor-pointer"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-slate-500 mb-1">or paste a Logo URL</label>
+                  <input
+                    type="text"
+                    placeholder="https://..."
+                    value={formData.logo_url.startsWith('data:') ? '' : formData.logo_url}
+                    onChange={(e) => setFormData({ ...formData, logo_url: e.target.value })}
+                    className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-md text-sm text-white placeholder:text-slate-600"
+                  />
+                </div>
               </div>
             </div>
 

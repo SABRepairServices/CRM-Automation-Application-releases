@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { getAppVersion, installUpdate, isElectron, onUpdateDownloaded } from '@/lib/electronBridge';
+import { useSidebarWidth } from '@/context/SidebarContext';
 import {
   LayoutDashboard,
   Building2,
@@ -93,6 +94,15 @@ export function Sidebar() {
   const [hovering, setHovering] = useState(false);
   const suppressHoverRef = useRef(false);
   const wide = pinned || hovering;
+
+  // The main content area lives outside this component (in the shared app
+  // shell layout), so it needs to know the sidebar's current width too —
+  // otherwise expanding the sidebar just overlays it on top of the page
+  // instead of pushing the content over, hiding whatever was underneath.
+  const { setWide: setSidebarWide } = useSidebarWidth();
+  useEffect(() => {
+    setSidebarWide(wide);
+  }, [wide, setSidebarWide]);
 
   useEffect(() => {
     if (!isElectron()) return;
