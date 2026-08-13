@@ -9,7 +9,7 @@ export default function AppShellLayout({ children }: { children: ReactNode }) {
       <div className="min-h-screen bg-slate-950">
         <Sidebar />
         <Header />
-        <main className="ml-64 pt-16 min-h-screen">
+        <main className="ml-16 pt-16 min-h-screen">
           {children}
         </main>
       </div>

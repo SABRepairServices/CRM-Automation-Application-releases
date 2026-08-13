@@ -69,6 +69,23 @@ tbody tr {
   }
 }
 
+/* App-wide neon accent on the standard card shell (bg-slate-900 + border +
+   rounded-md) used across Dashboard/Quotes/Invoices/Inspections/Technicians/
+   etc. A single rule here decorates every one of those cards consistently
+   instead of hand-editing the same border/hover styling into each page. */
+.bg-slate-900.border.border-slate-800.rounded-md {
+  transition: border-color 200ms ease, box-shadow 200ms ease;
+}
+.bg-slate-900.border.border-slate-800.rounded-md:hover {
+  border-color: rgba(96, 165, 250, 0.45);
+  box-shadow: 0 0 0 1px rgba(96, 165, 250, 0.25), 0 0 20px rgba(96, 165, 250, 0.15);
+}
+@media print {
+  .bg-slate-900.border.border-slate-800.rounded-md:hover {
+    box-shadow: none;
+  }
+}
+
 :root {
   --primary: 59 130 246;
   --primary-foreground: 255 255 255;

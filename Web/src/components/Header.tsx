@@ -1,33 +1,23 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { ClientSelector } from '@/components/ClientSelector';
-import { isElectron, openInBrowser } from '@/lib/electronBridge';
-
-const PAGE_TITLES: Record<string, string> = {
-  '/dashboard': 'Dashboard',
-  '/clients': 'Clients',
-  '/customers': 'Customers',
-  '/technicians': 'Technicians',
-  '/jobs': 'Repair Jobs',
-  '/inspections': 'Inspection Reports',
-  '/quotes': 'Quotations',
-  '/invoices': 'Invoices',
-  '/social-accounts': 'Social Accounts',
-  '/social-posts': 'Social Posts',
-  '/call-agent': 'Call Agent',
-  '/settings': 'Settings',
-};
+import { getAppVersion, isElectron, openInBrowser } from '@/lib/electronBridge';
 
 export function Header() {
   const pathname = usePathname();
   const router = useRouter();
   const { user, logout } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
-  const title = PAGE_TITLES[pathname] || 'Shams Al Barakat Repair Services';
+  const [version, setVersion] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!isElectron()) return;
+    getAppVersion().then(setVersion);
+  }, []);
 
   const initials = user?.fullName
     ? user.fullName.split(' ').map((p) => p[0]).slice(0, 2).join('').toUpperCase()
@@ -39,8 +29,24 @@ export function Header() {
   };
 
   return (
-    <header className="fixed top-0 left-64 right-0 h-16 bg-slate-900 border-b border-slate-800 z-30 flex items-center justify-between px-8">
-      <h2 className="text-lg font-semibold text-white">{title}</h2>
+    <header className="fixed top-0 left-0 right-0 h-16 bg-slate-900 border-b border-slate-800 z-40 flex items-center justify-between px-5">
+      <div className="flex items-center gap-2.5 w-56 shrink-0">
+        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-violet-600 flex items-center justify-center text-sm font-bold text-white shadow-lg shadow-blue-900/40">
+          SB
+        </div>
+        <div>
+          <h1 className="text-sm font-semibold text-white leading-tight">Shams Al Barakat</h1>
+          <div className="flex items-center gap-1.5 leading-tight">
+            <p className="text-[10px] text-slate-500">Repair Services CRM</p>
+            {version && (
+              <span className="inline-flex items-center gap-1 text-[9px] font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/30 rounded-full px-1.5 py-px">
+                <span className="w-1 h-1 rounded-full bg-emerald-400 shadow-[0_0_5px_rgba(52,211,153,0.9)]" />
+                v{version}
+              </span>
+            )}
+          </div>
+        </div>
+      </div>
 
       <div className="flex items-center gap-3">
         <ClientSelector />
