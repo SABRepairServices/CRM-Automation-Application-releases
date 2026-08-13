@@ -125,7 +125,7 @@ export function Sidebar() {
     <aside
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
-      className={`fixed left-0 top-16 h-[calc(100vh-4rem)] bg-[#0d1220] border-r border-white/5 z-30 flex flex-col transition-[width] duration-200 ease-out ${
+      className={`fixed left-0 top-16 h-[calc(100vh-4rem)] bg-[#0d1220] border-r border-white/5 z-30 flex flex-col transition-[width] duration-500 ease-in-out ${
         wide ? 'w-56 shadow-[8px_0_24px_-8px_rgba(0,0,0,0.5)]' : 'w-16'
       }`}
     >
@@ -167,7 +167,7 @@ export function Sidebar() {
               >
                 <Icon className={`w-4 h-4 ${accent.text}`} strokeWidth={2} />
               </span>
-              <span className={`flex-1 whitespace-nowrap transition-opacity duration-150 ${wide ? 'opacity-100 delay-75' : 'opacity-0 w-0 overflow-hidden'}`}>
+              <span className={`flex-1 whitespace-nowrap transition-opacity duration-300 ${wide ? 'opacity-100 delay-200' : 'opacity-0 w-0 overflow-hidden'}`}>
                 {link.label}
               </span>
             </Link>
