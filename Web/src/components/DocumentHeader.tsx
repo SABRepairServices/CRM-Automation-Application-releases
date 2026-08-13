@@ -9,14 +9,14 @@ export function DocumentHeader({ client, title }: { client: Client | null; title
 
   return (
     <div className="mb-6">
-      <div className="flex items-start justify-between mb-5 pb-5 border-b-2 border-slate-800">
-        <div className="flex items-center">
+      <div className="flex items-center justify-between gap-4 mb-5">
+        <div className="flex items-center min-h-[4.5rem]">
           {showLogo ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
               src={client.logo_url}
               alt={client.name}
-              className="h-16 max-w-[220px] object-contain"
+              className="max-h-[4.5rem] max-w-[240px] object-contain"
               onError={() => setLogoFailed(true)}
             />
           ) : (

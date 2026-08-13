@@ -5,19 +5,43 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { ClientSelector } from '@/components/ClientSelector';
+import { useClients, Client } from '@/hooks/useClients';
 import { getAppVersion, isElectron, openInBrowser } from '@/lib/electronBridge';
 
 export function Header() {
   const pathname = usePathname();
   const router = useRouter();
   const { user, logout } = useAuth();
+  const { getClient } = useClients();
   const [menuOpen, setMenuOpen] = useState(false);
   const [version, setVersion] = useState<string | null>(null);
+  const [client, setClient] = useState<Client | null>(null);
+  const [badgeLogoFailed, setBadgeLogoFailed] = useState(false);
 
   useEffect(() => {
     if (!isElectron()) return;
     getAppVersion().then(setVersion);
   }, []);
+
+  useEffect(() => {
+    const clientId = localStorage.getItem('selectedClientId');
+    if (!clientId) return;
+    getClient(clientId).then(setClient);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pathname]);
+
+  const brandName = client?.name || 'Shams Al Barakat';
+  const brandWords = brandName.split(' ').filter(Boolean);
+  // First + last word (not first two) — "Shams Al Barakat" should read "SB",
+  // not "SA" from the middle "Al".
+  const brandInitials = (brandWords.length > 1
+    ? [brandWords[0], brandWords[brandWords.length - 1]]
+    : [brandWords[0], brandWords[0]?.[1]]
+  )
+    .map((w) => w?.[0])
+    .filter(Boolean)
+    .join('')
+    .toUpperCase();
 
   const initials = user?.fullName
     ? user.fullName.split(' ').map((p) => p[0]).slice(0, 2).join('').toUpperCase()
@@ -31,11 +55,21 @@ export function Header() {
   return (
     <header className="fixed top-0 left-0 right-0 h-16 bg-slate-900 border-b border-slate-800 z-40 flex items-center justify-between px-5">
       <div className="flex items-center gap-2.5 w-56 shrink-0">
-        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-violet-600 flex items-center justify-center text-sm font-bold text-white shadow-lg shadow-blue-900/40">
-          SB
+        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-violet-600 flex items-center justify-center text-sm font-bold text-white shadow-lg shadow-blue-900/40 overflow-hidden shrink-0">
+          {client?.logo_url && !badgeLogoFailed ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={client.logo_url}
+              alt={brandName}
+              className="w-full h-full object-contain bg-white"
+              onError={() => setBadgeLogoFailed(true)}
+            />
+          ) : (
+            brandInitials || 'SB'
+          )}
         </div>
         <div>
-          <h1 className="text-sm font-semibold text-white leading-tight">Shams Al Barakat</h1>
+          <h1 className="text-sm font-semibold text-white leading-tight truncate max-w-[150px]">{brandName}</h1>
           <div className="flex items-center gap-1.5 leading-tight">
             <p className="text-[10px] text-slate-500">Repair Services CRM</p>
             {version && (

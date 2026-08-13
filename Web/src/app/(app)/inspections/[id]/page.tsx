@@ -83,6 +83,8 @@ export default function InspectionDocumentPage() {
               customerName={report.customer_name}
               customerPhone={report.customer_phone}
               customerEmail={report.customer_email}
+              businessPhone={client?.phone}
+              businessEmail={client?.email}
               onSend={() => sendReport(localStorage.getItem('selectedClientId') || '', report.id)}
             />
             <ActionButton

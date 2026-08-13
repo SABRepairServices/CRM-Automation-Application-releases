@@ -84,6 +84,8 @@ export default function InvoiceDocumentPage() {
               customerName={invoice.customer_name}
               customerPhone={invoice.customer_phone}
               customerEmail={invoice.customer_email}
+              businessPhone={client?.phone}
+              businessEmail={client?.email}
               onSend={() => sendInvoice(localStorage.getItem('selectedClientId') || '', invoice.id)}
             />
             <ActionButton

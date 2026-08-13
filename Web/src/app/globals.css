@@ -37,6 +37,13 @@ tbody tr {
   font-size: 0.8125rem;
   line-height: 1.3;
 }
+
+/* Every list/form page wraps its content in max-w-6xl — tightening that one
+   utility narrows every "New X" form and its table below it at once, so
+   more of the page fits on screen without the form stretching edge to edge. */
+.max-w-6xl {
+  max-width: 64rem;
+}
 @media print {
   nav, header, .print\:hidden {
     display: none !important;

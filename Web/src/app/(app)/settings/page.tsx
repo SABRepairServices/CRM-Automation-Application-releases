@@ -232,7 +232,7 @@ export default function SettingsPage() {
       <div className="max-w-3xl mx-auto">
         <h1 className="text-2xl font-semibold text-white mb-1">Settings</h1>
         <p className="text-sm text-slate-500 mb-6">
-          This company profile appears on every generated Quotation, Invoice, and Inspection Report.
+          This company profile appears on every generated Quotation, Invoice, and Inspection Report — and the logo also replaces the &quot;SB&quot; badge in the sidebar and header once set.
         </p>
 
         {saved && (

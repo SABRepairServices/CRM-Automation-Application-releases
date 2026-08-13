@@ -24,24 +24,37 @@ export function SendDocumentBar({
   customerName,
   customerPhone,
   customerEmail,
+  businessPhone,
+  businessEmail,
   onSend,
 }: {
   documentLabel: string;
   customerName?: string;
   customerPhone?: string;
   customerEmail?: string;
+  /** Falls back to the company's own number/email (from Settings) when the
+   *  customer record has none on file, so the manual links are never just
+   *  silently missing — worst case you're messaging/emailing yourself the
+   *  document to forward on manually. */
+  businessPhone?: string;
+  businessEmail?: string;
   onSend: () => Promise<SendResult>;
 }) {
   const [status, setStatus] = useState<'idle' | 'sending' | 'done' | 'failed'>('idle');
   const [result, setResult] = useState<SendResult | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
+  const phoneForLink = customerPhone || businessPhone;
+  const usingFallbackPhone = !customerPhone && !!businessPhone;
+  const emailForLink = customerEmail || businessEmail;
+  const usingFallbackEmail = !customerEmail && !!businessEmail;
+
   const greeting = customerName ? `Hi ${customerName}, ` : 'Hi, ';
-  const waLink = customerPhone
-    ? `https://wa.me/${customerPhone.replace(/\D/g, '')}?text=${encodeURIComponent(`${greeting}please find your ${documentLabel} attached.`)}`
+  const waLink = phoneForLink
+    ? `https://wa.me/${phoneForLink.replace(/\D/g, '')}?text=${encodeURIComponent(`${greeting}please find your ${documentLabel} attached.`)}`
     : null;
-  const mailLink = customerEmail
-    ? `mailto:${customerEmail}?subject=${encodeURIComponent(documentLabel)}&body=${encodeURIComponent(`${greeting}please find your ${documentLabel} attached.`)}`
+  const mailLink = emailForLink
+    ? `mailto:${emailForLink}?subject=${encodeURIComponent(documentLabel)}&body=${encodeURIComponent(`${greeting}please find your ${documentLabel} attached.`)}`
     : null;
 
   const handleSend = async () => {
@@ -67,14 +80,27 @@ export function SendDocumentBar({
         onClick={handleSend}
       />
       {waLink && (
-        <a href={waLink} target="_blank" rel="noreferrer" className="text-xs text-emerald-400 hover:text-emerald-300 transition-colors">
-          WhatsApp manually
+        <a
+          href={waLink}
+          target="_blank"
+          rel="noreferrer"
+          title={usingFallbackPhone ? 'No WhatsApp number on file for this customer — using the business number instead' : undefined}
+          className="text-xs text-emerald-400 hover:text-emerald-300 transition-colors"
+        >
+          WhatsApp manually{usingFallbackPhone && ' (business no.)'}
         </a>
       )}
       {mailLink && (
-        <a href={mailLink} className="text-xs text-blue-400 hover:text-blue-300 transition-colors">
-          Email manually
+        <a
+          href={mailLink}
+          title={usingFallbackEmail ? 'No email on file for this customer — using the business email instead' : undefined}
+          className="text-xs text-blue-400 hover:text-blue-300 transition-colors"
+        >
+          Email manually{usingFallbackEmail && ' (business)'}
         </a>
+      )}
+      {!waLink && !mailLink && (
+        <span className="text-xs text-slate-600">No WhatsApp/email on file for this customer, and no business contact set in Settings.</span>
       )}
       {status === 'done' && (
         <span className="text-xs text-emerald-400">

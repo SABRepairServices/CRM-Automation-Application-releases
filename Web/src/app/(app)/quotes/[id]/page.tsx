@@ -91,6 +91,8 @@ export default function QuotationDocumentPage() {
               customerName={quotation.customer_name}
               customerPhone={quotation.customer_phone}
               customerEmail={quotation.customer_email}
+              businessPhone={client?.phone}
+              businessEmail={client?.email}
               onSend={() => sendQuotation(localStorage.getItem('selectedClientId') || '', quotation.id)}
             />
             <ActionButton
