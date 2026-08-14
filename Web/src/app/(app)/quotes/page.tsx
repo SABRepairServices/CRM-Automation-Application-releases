@@ -59,6 +59,7 @@ export default function QuotesPage() {
 
   const handleApprove = async (quotationId: string) => {
     if (!clientId) return;
+    if (!confirm('Approve this quotation? This automatically creates its invoice.')) return;
     setApproveMessage('');
     try {
       const updated = await updateQuotation(clientId, quotationId, { status: 'approved', approval_channel: 'app' });
@@ -69,6 +70,16 @@ export default function QuotesPage() {
       }
     } catch (err) {
       console.error('Error approving quotation:', err);
+    }
+  };
+
+  const handleReject = async (quotationId: string) => {
+    if (!clientId) return;
+    if (!confirm('Mark this quotation as rejected?')) return;
+    try {
+      await updateQuotation(clientId, quotationId, { status: 'rejected' });
+    } catch (err) {
+      console.error('Error rejecting quotation:', err);
     }
   };
 
@@ -272,13 +283,21 @@ export default function QuotesPage() {
                     </td>
                     <td className="px-5 py-3 text-right" onClick={(e) => e.stopPropagation()}>
                       {(q.status === 'draft' || q.status === 'sent') && (
-                        <ActionButton
-                          text="Approve"
-                          variant="success"
-                          showArrow={false}
-                          className="!px-3 !py-1 !text-xs"
-                          onClick={() => handleApprove(q.id)}
-                        />
+                        <div className="flex gap-2 justify-end">
+                          <ActionButton
+                            text="Approve"
+                            variant="success"
+                            showArrow={false}
+                            className="!px-3 !py-1 !text-xs"
+                            onClick={() => handleApprove(q.id)}
+                          />
+                          <button
+                            onClick={() => handleReject(q.id)}
+                            className="px-3 py-1 text-xs font-medium text-red-400 hover:text-red-300 border border-red-900/50 rounded-md"
+                          >
+                            Reject
+                          </button>
+                        </div>
                       )}
                     </td>
                   </tr>

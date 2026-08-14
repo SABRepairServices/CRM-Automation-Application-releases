@@ -29,6 +29,7 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+const PIN_STATUS_CACHE_KEY = 'pinConfiguredCache';
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
@@ -39,11 +40,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const refreshPinStatus = async () => {
     try {
       const res = await axios.get(`${API_URL}/auth/pin-status`, { params: { email: OWNER_EMAIL } });
-      setPinConfigured(Boolean(res.data.exists));
+      const exists = Boolean(res.data.exists);
+      setPinConfigured(exists);
+      localStorage.setItem(PIN_STATUS_CACHE_KEY, String(exists));
     } catch {
-      // Can't reach the API — don't lock people out of an app that has
-      // never had a PIN set just because of a network hiccup.
-      setPinConfigured(false);
+      // Can't reach the API — fail closed, not open. Falling back to
+      // "false" here used to mean a network hiccup would silently unlock
+      // an app that DOES have a PIN set. Instead fall back to the last
+      // confirmed status: a fresh install that's never checked in still
+      // opens unlocked (cache empty -> false), but a previously-secured
+      // install stays locked through a network blip.
+      const cached = localStorage.getItem(PIN_STATUS_CACHE_KEY);
+      setPinConfigured(cached === null ? false : cached === 'true');
     }
   };
 

@@ -367,6 +367,12 @@ textarea:focus {
   border: 1px solid rgba(34, 197, 94, 0.3);
 }
 
+.status-failed {
+  background: rgba(239, 68, 68, 0.2);
+  color: #fecaca;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
 .platform-tag {
   background: rgba(59, 130, 246, 0.2);
   color: #93c5fd;

@@ -18,11 +18,11 @@ interface ApplianceRecord {
 const JOB_STATUS_COLOR: Record<string, string> = {
   new: 'bg-red-500/10 text-red-400',
   scheduled: 'bg-amber-500/10 text-amber-400',
-  inspected: 'bg-blue-500/10 text-blue-700',
-  quoted: 'bg-purple-50 text-purple-700',
+  inspected: 'bg-blue-500/10 text-blue-400',
+  quoted: 'bg-purple-500/10 text-purple-400',
   approved: 'bg-emerald-500/10 text-emerald-400',
   rejected: 'bg-slate-800 text-slate-500',
-  in_progress: 'bg-orange-50 text-orange-700',
+  in_progress: 'bg-orange-500/10 text-orange-400',
   completed: 'bg-slate-800 text-slate-400',
   cancelled: 'bg-slate-800 text-slate-400',
 };
@@ -64,6 +64,7 @@ export default function CustomerDetailPage() {
   const [customer, setCustomer] = useState<Customer | null>(null);
   const [appliances, setAppliances] = useState<ApplianceRecord[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   // The list hooks (useJobs, useQuotations, etc.) set hook-internal state
   // rather than returning data directly, which doesn't compose well for a
@@ -77,37 +78,52 @@ export default function CustomerDetailPage() {
 
     (async () => {
       setLoading(true);
-      const axios = (await import('axios')).default;
+      setError(null);
+      try {
+        const axios = (await import('axios')).default;
 
-      const custRes = await axios.get(`${API_URL}/customers/${id}?client_id=${stored}`, authHeader);
-      setCustomer(custRes.data.data);
+        const custRes = await axios.get(`${API_URL}/customers/${id}?client_id=${stored}`, authHeader);
+        setCustomer(custRes.data.data);
 
-      const jobsRes = await axios.get(`${API_URL}/jobs?client_id=${stored}&customer_id=${id}`, authHeader);
-      const jobs: Job[] = jobsRes.data.data || [];
+        const jobsRes = await axios.get(`${API_URL}/jobs?client_id=${stored}&customer_id=${id}`, authHeader);
+        const jobs: Job[] = jobsRes.data.data || [];
 
-      const records = await Promise.all(
-        jobs.map(async (job) => {
-          const [qRes, iRes, insRes] = await Promise.all([
-            axios.get(`${API_URL}/quotations?client_id=${stored}&job_id=${job.id}`, authHeader),
-            axios.get(`${API_URL}/invoices?client_id=${stored}&job_id=${job.id}`, authHeader),
-            axios.get(`${API_URL}/inspections?client_id=${stored}&job_id=${job.id}`, authHeader),
-          ]);
-          return {
-            job,
-            quotation: qRes.data.data?.[0] || null,
-            invoice: iRes.data.data?.[0] || null,
-            inspection: insRes.data.data?.[0] || null,
-          };
-        })
-      );
+        const records = await Promise.all(
+          jobs.map(async (job) => {
+            const [qRes, iRes, insRes] = await Promise.all([
+              axios.get(`${API_URL}/quotations?client_id=${stored}&job_id=${job.id}`, authHeader),
+              axios.get(`${API_URL}/invoices?client_id=${stored}&job_id=${job.id}`, authHeader),
+              axios.get(`${API_URL}/inspections?client_id=${stored}&job_id=${job.id}`, authHeader),
+            ]);
+            return {
+              job,
+              quotation: qRes.data.data?.[0] || null,
+              invoice: iRes.data.data?.[0] || null,
+              inspection: insRes.data.data?.[0] || null,
+            };
+          })
+        );
 
-      setAppliances(records);
-      setLoading(false);
+        setAppliances(records);
+      } catch (err) {
+        console.error('Error loading customer:', err);
+        setError('Could not load this customer — check your connection and try again.');
+      } finally {
+        setLoading(false);
+      }
     })();
   }, [id]);
 
   if (loading) {
     return <div className="p-8 text-sm text-slate-500">Loading...</div>;
+  }
+
+  if (error) {
+    return (
+      <div className="p-8">
+        <p className="text-sm text-red-400">{error}</p>
+      </div>
+    );
   }
 
   if (!customer) {
@@ -139,7 +155,7 @@ export default function CustomerDetailPage() {
           <div className="flex flex-wrap gap-x-6 gap-y-1 mt-2 text-sm text-slate-500">
             <span>{customer.phone}</span>
             {customer.email && <span>{customer.email}</span>}
-            {(customer as any).area && <span>{(customer as any).area}</span>}
+            {customer.area && <span>{customer.area}</span>}
           </div>
         </div>
 

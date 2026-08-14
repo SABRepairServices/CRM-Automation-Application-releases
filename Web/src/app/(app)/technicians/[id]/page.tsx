@@ -24,11 +24,11 @@ export default function TechnicianDetailPage() {
     const colors: Record<string, string> = {
       new: 'bg-red-500/10 text-red-400',
       scheduled: 'bg-amber-500/10 text-amber-400',
-      inspected: 'bg-blue-500/10 text-blue-700',
-      quoted: 'bg-purple-50 text-purple-700',
+      inspected: 'bg-blue-500/10 text-blue-400',
+      quoted: 'bg-purple-500/10 text-purple-400',
       approved: 'bg-emerald-500/10 text-emerald-400',
       rejected: 'bg-slate-800 text-slate-500',
-      in_progress: 'bg-orange-50 text-orange-700',
+      in_progress: 'bg-orange-500/10 text-orange-400',
       completed: 'bg-slate-800 text-slate-400',
       cancelled: 'bg-slate-800 text-slate-400',
     };

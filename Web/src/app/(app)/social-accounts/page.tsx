@@ -1,11 +1,22 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
+import { Suspense, useEffect, useState, useRef } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useSocialAccounts } from '@/hooks/useSocialAccounts';
 import { InteractiveHoverButton } from '@/components/ui/interactive-hover-button';
 
+// useSearchParams() requires a Suspense boundary above it in the App
+// Router (a page that reads it can't be fully static) — without this,
+// `next build` fails outright instead of just warning.
 export default function SocialAccountsPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-slate-950" />}>
+      <SocialAccountsContent />
+    </Suspense>
+  );
+}
+
+function SocialAccountsContent() {
   const { accounts, listAccounts, createAccount, deleteAccount, connectFacebook, loading, error } = useSocialAccounts();
   const [showForm, setShowForm] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -85,6 +96,11 @@ export default function SocialAccountsPage() {
         {connectError && (
           <div className="mb-8 bg-red-500/10 border border-red-500/30 text-red-300 text-sm px-5 py-3 rounded-lg">
             Connection failed: {connectError}
+          </div>
+        )}
+        {error && !showForm && (
+          <div className="mb-8 bg-red-500/10 border border-red-500/30 text-red-300 text-sm px-5 py-3 rounded-lg">
+            {error}
           </div>
         )}
 
@@ -196,7 +212,7 @@ export default function SocialAccountsPage() {
                   <div className="text-gray-500 text-xs mt-2">Connected {new Date(account.created_at).toLocaleDateString()}</div>
                 </div>
                 <button
-                  onClick={() => deleteAccount(account.id)}
+                  onClick={() => confirm(`Disconnect ${account.account_name}? This cannot be undone.`) && deleteAccount(account.id)}
                   className="px-6 py-3 bg-red-500/20 hover:bg-red-500/40 text-red-300 font-semibold rounded-lg transition-all duration-300 opacity-0 group-hover:opacity-100 will-change-transform"
                 >
                   Delete

@@ -217,7 +217,7 @@ export default function CustomersPage() {
                           customer.status === 'done'
                             ? 'bg-emerald-500/10 text-emerald-400'
                             : customer.status === 'booked'
-                            ? 'bg-blue-500/10 text-blue-700'
+                            ? 'bg-blue-500/10 text-blue-400'
                             : customer.status === 'contacted'
                             ? 'bg-amber-500/10 text-amber-400'
                             : 'bg-slate-800 text-slate-400'

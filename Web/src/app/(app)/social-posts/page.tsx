@@ -17,6 +17,7 @@ export default function SocialPostsPage() {
     platforms: [] as string[],
     scheduledAt: '',
   });
+  const [formError, setFormError] = useState('');
 
   useEffect(() => {
     const timer = setTimeout(() => setIsLoading(false), 800);
@@ -27,13 +28,19 @@ export default function SocialPostsPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setFormError('');
     if (!formData.socialAccountId) {
-      alert('Select an account');
+      setFormError('Select an account.');
+      return;
+    }
+    if (formData.platforms.length === 0) {
+      setFormError('Select at least one platform.');
       return;
     }
     const result = await createPost({
+      social_account_id: formData.socialAccountId,
       content: formData.content,
-      platforms: formData.platforms.length > 0 ? formData.platforms : ['facebook'],
+      platforms: formData.platforms,
       scheduled_at: formData.scheduledAt || null,
     } as any);
     if (result) {
@@ -127,7 +134,7 @@ export default function SocialPostsPage() {
               <div>
                 <label className="block text-sm font-semibold text-gray-300 mb-4 uppercase tracking-wide">Platforms</label>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                  {['facebook', 'instagram', 'twitter', 'tiktok'].map(platform => (
+                  {['facebook', 'instagram', 'twitter', 'tiktok', 'linkedin', 'youtube'].map(platform => (
                     <label
                       key={platform}
                       className="flex items-center p-3 rounded-lg bg-slate-800/50 hover:bg-slate-800 border border-slate-700 cursor-pointer transition-all duration-300"
@@ -160,10 +167,12 @@ export default function SocialPostsPage() {
                 disabled={loading}
                 className="btn-premium w-full py-4 rounded-lg text-white font-semibold text-lg disabled:opacity-50"
               >
-                {loading ? 'Creating...' : 'Publish Post'}
+                {loading ? 'Saving...' : formData.scheduledAt ? 'Schedule Post' : 'Save as Draft'}
               </button>
 
-              {error && <div className="text-red-400 text-sm font-medium bg-red-500/10 p-4 rounded-lg">{error}</div>}
+              {(formError || error) && (
+                <div className="text-red-400 text-sm font-medium bg-red-500/10 p-4 rounded-lg">{formError || error}</div>
+              )}
             </div>
           </form>
         )}
@@ -198,7 +207,7 @@ export default function SocialPostsPage() {
                         {post.status}
                       </span>
                       <button
-                        onClick={() => deletePost(post.id)}
+                        onClick={() => confirm('Delete this post? This cannot be undone.') && deletePost(post.id)}
                         className="px-4 py-2 bg-red-500/20 hover:bg-red-500/40 text-red-300 font-semibold rounded-lg transition-all duration-300 will-change-transform"
                       >
                         Delete
