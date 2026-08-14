@@ -4,6 +4,8 @@ import { useEffect, useState } from 'react';
 import { useCalls } from '@/hooks/useCalls';
 import { useCustomers } from '@/hooks/useCustomers';
 import { useTechnicians } from '@/hooks/useTechnicians';
+import { useJobs } from '@/hooks/useJobs';
+import { useSelectedClientId } from '@/hooks/useSelectedClientId';
 import { ActionButton } from '@/components/ui/action-button';
 
 const PURPOSE_LABEL: Record<string, string> = {
@@ -17,12 +19,14 @@ const PURPOSE_LABEL: Record<string, string> = {
 
 export default function CallAgentPage() {
   const { calls, stats, loading, error, listCalls, getStats, createCall, deleteCall } = useCalls();
-  const { customers, listCustomers } = useCustomers();
-  const { technicians, listTechnicians } = useTechnicians();
-  const [clientId, setClientId] = useState('');
+  const { customers, listCustomers, error: customersError } = useCustomers();
+  const { technicians, listTechnicians, error: techniciansError } = useTechnicians();
+  const { jobs, listJobs } = useJobs();
+  const clientId = useSelectedClientId();
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState({
     customer_id: '',
+    job_id: '',
     technician_id: '',
     direction: 'outbound' as 'inbound' | 'outbound',
     purpose: 'follow_up',
@@ -31,16 +35,16 @@ export default function CallAgentPage() {
   });
 
   useEffect(() => {
-    const stored = localStorage.getItem('selectedClientId');
-    if (stored) {
-      setClientId(stored);
-      listCalls(stored);
-      getStats(stored);
-      listCustomers({ clientId: stored });
-      listTechnicians(stored);
-    }
+    if (!clientId) return;
+    listCalls(clientId);
+    getStats(clientId);
+    listCustomers({ clientId });
+    listTechnicians(clientId);
+    listJobs(clientId);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [clientId]);
+
+  const customerJobs = jobs.filter((j) => j.customer_id === formData.customer_id);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -48,13 +52,14 @@ export default function CallAgentPage() {
     try {
       await createCall(clientId, {
         customer_id: formData.customer_id,
+        job_id: formData.job_id || undefined,
         technician_id: formData.technician_id || undefined,
         direction: formData.direction,
         purpose: formData.purpose,
         notes: formData.notes,
         duration_minutes: formData.duration_minutes ? Number(formData.duration_minutes) : undefined,
       });
-      setFormData({ customer_id: '', technician_id: '', direction: 'outbound', purpose: 'follow_up', notes: '', duration_minutes: '' });
+      setFormData({ customer_id: '', job_id: '', technician_id: '', direction: 'outbound', purpose: 'follow_up', notes: '', duration_minutes: '' });
       setShowForm(false);
       await getStats(clientId);
     } catch (err) {
@@ -114,13 +119,27 @@ export default function CallAgentPage() {
                 <label className="block text-xs font-medium text-slate-500 mb-1">Customer</label>
                 <select
                   value={formData.customer_id}
-                  onChange={(e) => setFormData({ ...formData, customer_id: e.target.value })}
+                  onChange={(e) => setFormData({ ...formData, customer_id: e.target.value, job_id: '' })}
                   required
                   className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-md text-sm text-white"
                 >
                   <option value="">Choose a customer...</option>
                   {customers.map((c) => (
                     <option key={c.id} value={c.id}>{c.name} — {c.phone}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-slate-500 mb-1">Job (optional)</label>
+                <select
+                  value={formData.job_id}
+                  onChange={(e) => setFormData({ ...formData, job_id: e.target.value })}
+                  disabled={!formData.customer_id}
+                  className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-md text-sm text-white disabled:opacity-40"
+                >
+                  <option value="">Not about a specific job</option>
+                  {customerJobs.map((j) => (
+                    <option key={j.id} value={j.id}>{j.appliance_type}{j.reported_fault ? ` — ${j.reported_fault}` : ''}</option>
                   ))}
                 </select>
               </div>
@@ -187,8 +206,10 @@ export default function CallAgentPage() {
           </div>
         )}
 
-        {error && (
-          <div className="bg-red-500/10 border border-red-900 text-red-400 text-sm px-4 py-3 rounded-md mb-6">{error}</div>
+        {(error || customersError || techniciansError) && (
+          <div className="bg-red-500/10 border border-red-900 text-red-400 text-sm px-4 py-3 rounded-md mb-6">
+            {error || customersError || techniciansError}
+          </div>
         )}
 
         <div className="bg-slate-900 border border-slate-800 rounded-md overflow-hidden">
@@ -197,7 +218,15 @@ export default function CallAgentPage() {
             <span className="text-xs text-slate-400">{calls.length} total</span>
           </div>
 
-          {calls.length === 0 ? (
+          {!clientId ? (
+            <div className="px-5 py-12 text-center">
+              <p className="text-sm text-slate-500">Select a client from the dropdown in the header to see calls.</p>
+            </div>
+          ) : loading ? (
+            <div className="px-5 py-12 text-center">
+              <p className="text-sm text-slate-500">Loading...</p>
+            </div>
+          ) : calls.length === 0 ? (
             <div className="px-5 py-12 text-center">
               <p className="text-sm text-slate-500">No calls logged yet.</p>
             </div>
