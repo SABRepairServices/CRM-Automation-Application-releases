@@ -189,9 +189,9 @@ export function Sidebar() {
             <p className="text-xs text-blue-300 font-semibold">Update ready &mdash; v{updateReady.version}</p>
           </div>
           {updateReady.releaseNotes && (
-            <p className="text-[10.5px] text-slate-400 leading-relaxed line-clamp-3"
-               dangerouslySetInnerHTML={{ __html: String(updateReady.releaseNotes).replace(/<[^>]+>/g, ' ').trim() }}
-            />
+            <p className="text-[10.5px] text-slate-400 leading-relaxed line-clamp-3">
+              {String(updateReady.releaseNotes).replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim()}
+            </p>
           )}
           <button
             onClick={() => installUpdate()}
