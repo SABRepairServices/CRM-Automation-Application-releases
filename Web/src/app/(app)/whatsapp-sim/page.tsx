@@ -7,9 +7,9 @@ import { useWhatsappSim, SimMessage } from '@/hooks/useWhatsappSim';
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 
 const STAGE_LABEL: Record<string, string> = {
-  inspection_sent: 'Inspection sent â€” waiting on customer',
-  quotation_sent: 'Quotation sent â€” waiting on customer',
-  awaiting_completion: 'Approved â€” waiting for technician DONE',
+  inspection_sent: 'Inspection sent â€" waiting on customer',
+  quotation_sent: 'Quotation sent â€" waiting on customer',
+  awaiting_completion: 'Approved â€" waiting for technician DONE',
   invoice_sent: 'Invoice sent',
 };
 
@@ -152,7 +152,7 @@ export default function WhatsappSimPage() {
               WhatsApp Simulator
             </h1>
             <p className="text-sm text-slate-500 mt-1 max-w-2xl">
-              Type as the technician and as the customer. Every message goes through the real webhook and the real bot â€”
+              Type as the technician and as the customer. Every message goes through the real webhook and the real bot â€"
               the only thing switched off is the final hand-off to Meta.
             </p>
           </div>
@@ -177,7 +177,7 @@ export default function WhatsappSimPage() {
             {status.dryRun ? (
               <span>
                 <strong className="font-semibold">Dry-run mode.</strong> Documents are really generated and every
-                decision is really made â€” outbound messages are recorded instead of delivered. Add the Meta credentials
+                decision is really made â€" outbound messages are recorded instead of delivered. Add the Meta credentials
                 and this same code sends for real, with no changes.
               </span>
             ) : (
@@ -205,7 +205,7 @@ export default function WhatsappSimPage() {
             >
               {(status?.technicians || []).map((t) => (
                 <option key={t.id} value={digits(t.phone)}>
-                  {t.name} â€” {t.phone}
+                  {t.name} â€" {t.phone}
                 </option>
               ))}
               {(status?.technicians || []).length === 0 && <option value="">No technicians found</option>}
@@ -232,7 +232,7 @@ export default function WhatsappSimPage() {
         {activeThread && (
           <div className="bg-slate-900 border border-slate-800 rounded-md px-4 py-3 mb-5 flex flex-wrap items-center gap-x-6 gap-y-1">
             <div className="text-xs text-slate-500">
-              Job <span className="text-white font-mono">{activeThread.job_number || 'â€”'}</span>
+              Job <span className="text-white font-mono">{activeThread.job_number || 'â€"'}</span>
             </div>
             <div className="text-xs text-slate-500">
               Stage{' '}

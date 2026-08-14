@@ -116,41 +116,41 @@ export default function InvoicesPage() {
             </div>
             <form onSubmit={handleSubmit} className="p-5 space-y-4">
               <div>
-                <label className=”block text-xs font-medium text-slate-500 mb-1”>Customer Name</label>
+                <label className="block text-xs font-medium text-slate-500 mb-1">Customer Name</label>
                 <input
-                  type=”text”
+                  type="text"
                   value={formData.customer_name}
                   onChange={(e) => setFormData({ ...formData, customer_name: e.target.value })}
-                  placeholder=”e.g. Ahmed Al Rashidi”
-                  className=”w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-md text-sm text-white placeholder:text-slate-600 focus:outline-none focus:ring-1 focus:ring-blue-500”
+                  placeholder="e.g. Ahmed Al Rashidi"
+                  className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-md text-sm text-white placeholder:text-slate-600 focus:outline-none focus:ring-1 focus:ring-blue-500"
                 />
               </div>
 
               <div>
-                <label className=”block text-xs font-medium text-slate-500 mb-2”>Line Items</label>
-                <div className=”space-y-2”>
+                <label className="block text-xs font-medium text-slate-500 mb-2">Line Items</label>
+                <div className="space-y-2">
                   {lineItems.map((line, idx) => (
-                    <div key={idx} className=”flex gap-2”>
+                    <div key={idx} className="flex gap-2">
                       <input
-                        type=”text”
-                        placeholder=”Description”
+                        type="text"
+                        placeholder="Description"
                         value={line.description}
                         onChange={(e) => updateLine(idx, { description: e.target.value })}
-                        className=”flex-1 px-2 py-1.5 bg-slate-950 border border-slate-800 rounded text-sm text-white placeholder:text-slate-600”
+                        className="flex-1 px-2 py-1.5 bg-slate-950 border border-slate-800 rounded text-sm text-white placeholder:text-slate-600"
                       />
                       <input
-                        type=”number”
-                        placeholder=”AED”
+                        type="number"
+                        placeholder="AED"
                         value={line.amount || ''}
                         onChange={(e) => updateLine(idx, { amount: parseFloat(e.target.value) || 0 })}
                         min={0}
-                        className=”w-28 px-2 py-1.5 bg-slate-950 border border-slate-800 rounded text-sm text-white”
+                        className="w-28 px-2 py-1.5 bg-slate-950 border border-slate-800 rounded text-sm text-white"
                       />
-                      <button type=”button” onClick={() => removeLine(idx)} className=”text-xs text-red-400 hover:text-red-300 px-2”>✕</button>
+                      <button type="button" onClick={() => removeLine(idx)} className="text-xs text-red-400 hover:text-red-300 px-2">✕</button>
                     </div>
                   ))}
                 </div>
-                <button type=”button” onClick={addLine} className=”text-xs text-blue-400 font-medium mt-2”>
+                <button type="button" onClick={addLine} className="text-xs text-blue-400 font-medium mt-2">
                   + Add item
                 </button>
               </div>

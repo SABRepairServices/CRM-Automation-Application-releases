@@ -61,9 +61,9 @@ export default function QuotesPage() {
     try {
       const updated = await updateQuotation(clientId, quotationId, { status: 'approved', approval_channel: 'app' });
       if (updated.generated_invoice) {
-        setApproveMessage(`Approved â€” invoice ${updated.generated_invoice.invoice_number} was created automatically.`);
+        setApproveMessage(`Approved â€" invoice ${updated.generated_invoice.invoice_number} was created automatically.`);
       } else {
-        setApproveMessage('Approved â€” an invoice already existed for this job.');
+        setApproveMessage('Approved â€" an invoice already existed for this job.');
       }
     } catch (err) {
       console.error('Error approving quotation:', err);
@@ -123,13 +123,13 @@ export default function QuotesPage() {
             </div>
             <form onSubmit={handleSubmit} className="p-5 space-y-5">
               <div>
-                <label className=”block text-xs font-medium text-slate-500 mb-1”>Customer Name</label>
+                <label className="block text-xs font-medium text-slate-500 mb-1">Customer Name</label>
                 <input
-                  type=”text”
+                  type="text"
                   value={formData.customer_name}
                   onChange={(e) => setFormData({ ...formData, customer_name: e.target.value })}
-                  placeholder=”e.g. Ahmed Al Rashidi”
-                  className=”w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-md text-sm text-white placeholder:text-slate-600 focus:outline-none focus:ring-1 focus:ring-blue-500”
+                  placeholder="e.g. Ahmed Al Rashidi"
+                  className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-md text-sm text-white placeholder:text-slate-600 focus:outline-none focus:ring-1 focus:ring-blue-500"
                 />
               </div>
 

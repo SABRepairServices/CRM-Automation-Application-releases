@@ -10,7 +10,7 @@ import { PinInput } from '@/components/ui/pin-input';
 import { useAuth } from '@/context/AuthContext';
 import { OWNER_EMAIL, OWNER_NAME } from '@/lib/authConstants';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:5000/api';
 
 const EMPTY_FORM = {
   name: '',
@@ -82,7 +82,7 @@ export default function SettingsPage() {
 
   // Most installs only ever manage one business, so there's no reason to make
   // the owner hunt down the header's client dropdown just to edit their own
-  // company profile — pick it for them the moment we know there's only one.
+  // company profile -- pick it for them the moment we know there's only one.
   useEffect(() => {
     if (clientId || clients.length !== 1) return;
     handleSelectClient(clients[0].id);
@@ -122,9 +122,6 @@ export default function SettingsPage() {
   };
 
   const handleChangePin = async (freshConfirm?: string) => {
-    // freshConfirm is passed by onComplete before the React state update for
-    // confirmNewPin has propagated — if absent (button click), fall back to
-    // the already-current state value.
     const confirmToCheck = freshConfirm ?? confirmNewPin;
     setPinError('');
     setPinSuccess('');
@@ -171,7 +168,7 @@ export default function SettingsPage() {
       return;
     }
     if (fullConfirmPin !== setupPin) {
-      setSetupError('PINs do not match — try again');
+      setSetupError('PINs do not match -- try again');
       setSetupPin('');
       setSetupConfirmPin('');
       setSetupFailCount((n) => n + 1);
@@ -183,10 +180,6 @@ export default function SettingsPage() {
       await refreshPinStatus();
       setSetupPin('');
       setSetupConfirmPin('');
-      // pinConfigured flips true right after this, swapping this card out
-      // for changePinSection — set the shared success message now so it
-      // carries over and actually confirms the PIN was saved, instead of
-      // the card-swap being the only (easy to miss) feedback.
       setPinSuccess('PIN set successfully.');
     } catch (err: any) {
       setSetupError(err?.response?.data?.message || 'Could not set PIN');
@@ -203,19 +196,19 @@ export default function SettingsPage() {
         <h2 className="text-sm font-semibold text-slate-300">Set a PIN</h2>
       </div>
       <div className="p-5 space-y-5">
-        <p className=”text-xs text-slate-500”>
-          No PIN is set yet, so the app opens straight to the dashboard. Set one here to lock it —
+        <p className="text-xs text-slate-500">
+          No PIN is set yet, so the app opens straight to the dashboard. Set one here to lock it &mdash;
           it&apos;ll be required the next time the app starts.
         </p>
         {setupError && (
-          <div className=”bg-red-500/10 border border-red-200 text-red-400 text-sm px-4 py-3 rounded-md”>{setupError}</div>
+          <div className="bg-red-500/10 border border-red-200 text-red-400 text-sm px-4 py-3 rounded-md">{setupError}</div>
         )}
         <div>
-          <label className=”block text-xs font-medium text-slate-500 mb-2 text-center”>New PIN</label>
+          <label className="block text-xs font-medium text-slate-500 mb-2 text-center">New PIN</label>
           <PinInput key={`setup-${setupFailCount}`} length={4} value={setupPin} onChange={setSetupPin} />
         </div>
         <div>
-          <label className=”block text-xs font-medium text-slate-500 mb-2 text-center”>Confirm PIN</label>
+          <label className="block text-xs font-medium text-slate-500 mb-2 text-center">Confirm PIN</label>
           <PinInput key={`setupconfirm-${setupFailCount}`} length={4} value={setupConfirmPin} onChange={setSetupConfirmPin} onComplete={handleSetPin} />
         </div>
         <ActionButton
@@ -241,18 +234,18 @@ export default function SettingsPage() {
           <div className="bg-emerald-500/10 border border-emerald-200 text-emerald-300 text-sm px-4 py-3 rounded-md">{pinSuccess}</div>
         )}
         <div>
-          <label className=”block text-xs font-medium text-slate-500 mb-2 text-center”>Current PIN</label>
+          <label className="block text-xs font-medium text-slate-500 mb-2 text-center">Current PIN</label>
           <PinInput key={`cur-${changeFailCount}`} length={4} value={currentPin} onChange={setCurrentPin} />
         </div>
         <div>
-          <label className=”block text-xs font-medium text-slate-500 mb-2 text-center”>New PIN</label>
+          <label className="block text-xs font-medium text-slate-500 mb-2 text-center">New PIN</label>
           <PinInput key={`new-${changeFailCount}`} length={4} value={newPin} onChange={setNewPin} />
         </div>
         <div>
-          <label className=”block text-xs font-medium text-slate-500 mb-2 text-center”>Confirm New PIN</label>
+          <label className="block text-xs font-medium text-slate-500 mb-2 text-center">Confirm New PIN</label>
           <PinInput key={`confirm-${changeFailCount}`} length={4} value={confirmNewPin} onChange={setConfirmNewPin} onComplete={handleChangePin} />
         </div>
-        <p className=”text-xs text-slate-500”>Forgot your current PIN? There&apos;s no self-service reset — contact your developer to reset it directly.</p>
+        <p className="text-xs text-slate-500">Forgot your current PIN? There&apos;s no self-service reset &mdash; contact your developer to reset it directly.</p>
         <ActionButton type="button" onClick={handleChangePin} disabled={changingPin} text={changingPin ? 'Changing...' : 'Change PIN'} />
       </div>
     </div>
@@ -274,9 +267,9 @@ export default function SettingsPage() {
               {!clientsChecked ? (
                 <p className="text-sm text-slate-500 text-center py-8">Loading...</p>
               ) : clients.length === 0 ? (
-                <div className=”text-center py-8”>
-                  <p className=”text-sm text-slate-500 mb-4”>
-                    No company profile set up yet. Go to <strong className=”text-slate-300”>Clients</strong> in the sidebar to add your business details (name, logo, contact info).
+                <div className="text-center py-8">
+                  <p className="text-sm text-slate-500 mb-4">
+                    No company profile set up yet. Go to <strong className="text-slate-300">Clients</strong> in the sidebar to add your business details (name, logo, contact info).
                   </p>
                 </div>
               ) : (
@@ -287,7 +280,7 @@ export default function SettingsPage() {
                     onChange={(e) => handleSelectClient(e.target.value)}
                     className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-md text-sm text-white focus:outline-none focus:ring-1 focus:ring-blue-500"
                   >
-                    <option value="" disabled>Choose a company...</option>
+                    <option value="" disabled>Choose a company&hellip;</option>
                     {clients.map((c) => (
                       <option key={c.id} value={c.id}>{c.name}</option>
                     ))}
@@ -306,7 +299,7 @@ export default function SettingsPage() {
       <div className="max-w-3xl mx-auto">
         <h1 className="text-2xl font-semibold text-white mb-1">Settings</h1>
         <p className="text-sm text-slate-500 mb-6">
-          This company profile appears on every generated Quotation, Invoice, and Inspection Report — and the logo also replaces the &quot;SB&quot; badge in the sidebar and header once set.
+          This company profile appears on every generated Quotation, Invoice, and Inspection Report &mdash; and the logo also replaces the &quot;SB&quot; badge in the sidebar and header once set.
         </p>
 
         {saved && (
@@ -349,12 +342,12 @@ export default function SettingsPage() {
                         return;
                       }
                       if (file.size > 2 * 1024 * 1024) {
-                        setLogoError('Logo must be under 2MB — try a smaller image.');
+                        setLogoError('Logo must be under 2MB &mdash; try a smaller image.');
                         return;
                       }
                       const reader = new FileReader();
                       reader.onload = () => setFormData((prev) => ({ ...prev, logo_url: String(reader.result) }));
-                      reader.onerror = () => setLogoError('Could not read that file — try again.');
+                      reader.onerror = () => setLogoError('Could not read that file &mdash; try again.');
                       reader.readAsDataURL(file);
                     }}
                     className="w-full text-xs text-slate-400 file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-medium file:bg-blue-600 file:text-white hover:file:bg-blue-500 file:cursor-pointer cursor-pointer"
@@ -420,7 +413,7 @@ export default function SettingsPage() {
             </div>
             <div className="p-5">
               <p className="text-xs text-slate-500 mb-3">
-                Every Quotation, Invoice, and Inspection Report is automatically saved as a PDF here too —
+                Every Quotation, Invoice, and Inspection Report is automatically saved as a PDF here too &mdash;
                 independent of the cloud database, so nothing is lost even if internet or account access is
                 interrupted. Safe to point this at a shared drive so your boss always has a local copy.
               </p>
@@ -463,4 +456,3 @@ export default function SettingsPage() {
     </div>
   );
 }
-
