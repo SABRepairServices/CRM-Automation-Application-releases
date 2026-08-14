@@ -61,7 +61,7 @@ export const useInvoices = () => {
     }
   }, []);
 
-  const createInvoice = useCallback(async (clientId: string, data: { customer_id?: string; contract_id?: string; issue_date: string; due_date: string; job_amounts?: Array<{ job_id: string; amount: number }>; notes?: string }) => {
+  const createInvoice = useCallback(async (clientId: string, data: { customer_id?: string; customer_name?: string; contract_id?: string; issue_date: string; due_date: string; job_amounts?: Array<{ job_id: string; amount: number }>; line_items?: Array<{ description: string; amount: number }>; notes?: string }) => {
     setLoading(true);
     setError(null);
     try {

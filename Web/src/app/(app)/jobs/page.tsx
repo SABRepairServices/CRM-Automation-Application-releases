@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useEffect, useState } from 'react';
 import { useJobs } from '@/hooks/useJobs';
@@ -46,7 +46,7 @@ export default function JobsPage() {
     try {
       // `undefined` gets dropped by JSON.stringify before the request is
       // even sent, so the server never sees the field and the old
-      // assignment silently survives — `null` is required to actually
+      // assignment silently survives â€” `null` is required to actually
       // clear it.
       await updateJob(clientId, jobId, { technician_id: technicianId || (null as unknown as string) });
     } catch (err) {
@@ -101,12 +101,12 @@ export default function JobsPage() {
   };
 
   return (
-    <div className="p-8 bg-slate-950 min-h-screen">
+    <div className="px-4 py-4 bg-slate-950 min-h-screen">
       <div className="max-w-6xl mx-auto">
         <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="text-2xl font-semibold text-white">Repair Jobs</h1>
-            <p className="text-sm text-slate-500 mt-1">new → scheduled → inspected → quoted → approved → in_progress → completed</p>
+            <p className="text-sm text-slate-500 mt-1">new â†’ scheduled â†’ inspected â†’ quoted â†’ approved â†’ in_progress â†’ completed</p>
           </div>
           <ActionButton
             text={showForm ? 'Cancel' : 'New Job'}
@@ -136,9 +136,9 @@ export default function JobsPage() {
                       required
                       className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-md text-sm text-white focus:outline-none focus:ring-1 focus:ring-blue-500"
                     >
-                      <option value="" disabled>Select a customer…</option>
+                      <option value="" disabled>Select a customerâ€¦</option>
                       {customers.map((c) => (
-                        <option key={c.id} value={c.id}>{c.name}{c.phone ? ` — ${c.phone}` : ''}</option>
+                        <option key={c.id} value={c.id}>{c.name}{c.phone ? ` â€” ${c.phone}` : ''}</option>
                       ))}
                     </select>
                     {customers.length === 0 && (
@@ -245,8 +245,8 @@ export default function JobsPage() {
                             <div className="text-xs text-slate-500 font-normal">{[job.brand, job.model].filter(Boolean).join(' ')}</div>
                           )}
                         </td>
-                        <td className="px-5 py-3 text-slate-400">{job.customer_name || '—'}</td>
-                        <td className="px-5 py-3 text-slate-400 max-w-xs truncate">{job.reported_fault || '—'}</td>
+                        <td className="px-5 py-3 text-slate-400">{job.customer_name || 'â€”'}</td>
+                        <td className="px-5 py-3 text-slate-400 max-w-xs truncate">{job.reported_fault || 'â€”'}</td>
                         <td className="px-5 py-3 text-slate-400">{new Date(job.created_at).toLocaleDateString()}</td>
                         <td className="px-5 py-3">
                           <select
@@ -291,3 +291,4 @@ export default function JobsPage() {
     </div>
   );
 }
+

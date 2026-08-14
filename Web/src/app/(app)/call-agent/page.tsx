@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useEffect, useState } from 'react';
 import { useCalls } from '@/hooks/useCalls';
@@ -76,13 +76,13 @@ export default function CallAgentPage() {
   };
 
   return (
-    <div className="p-8 bg-slate-950 min-h-screen">
+    <div className="px-4 py-4 bg-slate-950 min-h-screen">
       <div className="max-w-5xl mx-auto">
         <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="text-2xl font-semibold text-white">Call Agent</h1>
             <p className="text-sm text-slate-500 mt-1">
-              Call log for now — AI-automated calling is planned once there&apos;s budget for a telephony provider (see FUTURE_WORK.md)
+              Call log for now â€” AI-automated calling is planned once there&apos;s budget for a telephony provider (see FUTURE_WORK.md)
             </p>
           </div>
           <ActionButton
@@ -125,7 +125,7 @@ export default function CallAgentPage() {
                 >
                   <option value="">Choose a customer...</option>
                   {customers.map((c) => (
-                    <option key={c.id} value={c.id}>{c.name} — {c.phone}</option>
+                    <option key={c.id} value={c.id}>{c.name} â€” {c.phone}</option>
                   ))}
                 </select>
               </div>
@@ -139,7 +139,7 @@ export default function CallAgentPage() {
                 >
                   <option value="">Not about a specific job</option>
                   {customerJobs.map((j) => (
-                    <option key={j.id} value={j.id}>{j.appliance_type}{j.reported_fault ? ` — ${j.reported_fault}` : ''}</option>
+                    <option key={j.id} value={j.id}>{j.appliance_type}{j.reported_fault ? ` â€” ${j.reported_fault}` : ''}</option>
                   ))}
                 </select>
               </div>
@@ -255,7 +255,7 @@ export default function CallAgentPage() {
                       </span>
                     </td>
                     <td className="px-5 py-3 text-slate-400">{PURPOSE_LABEL[call.purpose] || call.purpose}</td>
-                    <td className="px-5 py-3 text-slate-400">{call.technician_name || '—'}</td>
+                    <td className="px-5 py-3 text-slate-400">{call.technician_name || 'â€”'}</td>
                     <td className="px-5 py-3 text-slate-400">{new Date(call.called_at).toLocaleString()}</td>
                     <td className="px-5 py-3 text-right">
                       <button onClick={() => handleDelete(call.id)} className="text-xs font-medium text-red-400 hover:text-red-300">
@@ -272,3 +272,4 @@ export default function CallAgentPage() {
     </div>
   );
 }
+

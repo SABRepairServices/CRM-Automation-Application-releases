@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -80,7 +80,7 @@ export default function SettingsPage() {
 
   // Most installs only ever manage one business, so there's no reason to make
   // the owner hunt down the header's client dropdown just to edit their own
-  // company profile — pick it for them the moment we know there's only one.
+  // company profile â€” pick it for them the moment we know there's only one.
   useEffect(() => {
     if (clientId || clients.length !== 1) return;
     handleSelectClient(clients[0].id);
@@ -163,7 +163,7 @@ export default function SettingsPage() {
       return;
     }
     if (fullConfirmPin !== setupPin) {
-      setSetupError('PINs do not match — try again');
+      setSetupError('PINs do not match â€” try again');
       setSetupPin('');
       setSetupConfirmPin('');
       return;
@@ -175,7 +175,7 @@ export default function SettingsPage() {
       setSetupPin('');
       setSetupConfirmPin('');
       // pinConfigured flips true right after this, swapping this card out
-      // for changePinSection — set the shared success message now so it
+      // for changePinSection â€” set the shared success message now so it
       // carries over and actually confirms the PIN was saved, instead of
       // the card-swap being the only (easy to miss) feedback.
       setPinSuccess('PIN set successfully.');
@@ -195,7 +195,7 @@ export default function SettingsPage() {
       </div>
       <div className="p-5 space-y-5">
         <p className="text-xs text-slate-500">
-          No PIN is set yet, so the app opens straight to the dashboard. Set one here to lock it —
+          No PIN is set yet, so the app opens straight to the dashboard. Set one here to lock it â€”
           it&apos;ll be required the next time the app starts.
         </p>
         {setupError && (
@@ -243,7 +243,7 @@ export default function SettingsPage() {
           <label className="block text-xs font-medium text-slate-500 mb-2 text-center">Confirm New PIN</label>
           <PinInput length={4} value={confirmNewPin} onChange={setConfirmNewPin} onComplete={handleChangePin} />
         </div>
-        <p className="text-xs text-slate-500">Forgot your current PIN? There&apos;s no self-service reset — contact your developer to reset it directly.</p>
+        <p className="text-xs text-slate-500">Forgot your current PIN? There&apos;s no self-service reset â€” contact your developer to reset it directly.</p>
         <ActionButton type="button" onClick={handleChangePin} disabled={changingPin} text={changingPin ? 'Changing...' : 'Change PIN'} />
       </div>
     </div>
@@ -253,7 +253,7 @@ export default function SettingsPage() {
 
   if (!clientId) {
     return (
-      <div className="p-8 bg-slate-950 min-h-screen">
+      <div className="px-4 py-4 bg-slate-950 min-h-screen">
         <div className="max-w-3xl mx-auto">
           <h1 className="text-2xl font-semibold text-white mb-2">Settings</h1>
           {pinSection}
@@ -265,11 +265,10 @@ export default function SettingsPage() {
               {!clientsChecked ? (
                 <p className="text-sm text-slate-500 text-center py-8">Loading...</p>
               ) : clients.length === 0 ? (
-                <div className="text-center py-8">
-                  <p className="text-sm text-slate-500 mb-4">
-                    No company profile set up yet — add your business details (name, logo, contact info) to get started.
+                <div className=”text-center py-8”>
+                  <p className=”text-sm text-slate-500 mb-4”>
+                    No company profile set up yet. Go to <strong className=”text-slate-300”>Clients</strong> in the sidebar to add your business details (name, logo, contact info).
                   </p>
-                  <ActionButton text="Set Up Company Profile" onClick={() => router.push('/clients')} />
                 </div>
               ) : (
                 <div>
@@ -279,7 +278,7 @@ export default function SettingsPage() {
                     onChange={(e) => handleSelectClient(e.target.value)}
                     className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-md text-sm text-white focus:outline-none focus:ring-1 focus:ring-blue-500"
                   >
-                    <option value="" disabled>Choose a company…</option>
+                    <option value="" disabled>Choose a companyâ€¦</option>
                     {clients.map((c) => (
                       <option key={c.id} value={c.id}>{c.name}</option>
                     ))}
@@ -294,11 +293,11 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="p-8 bg-slate-950 min-h-screen">
+    <div className="px-4 py-4 bg-slate-950 min-h-screen">
       <div className="max-w-3xl mx-auto">
         <h1 className="text-2xl font-semibold text-white mb-1">Settings</h1>
         <p className="text-sm text-slate-500 mb-6">
-          This company profile appears on every generated Quotation, Invoice, and Inspection Report — and the logo also replaces the &quot;SB&quot; badge in the sidebar and header once set.
+          This company profile appears on every generated Quotation, Invoice, and Inspection Report â€” and the logo also replaces the &quot;SB&quot; badge in the sidebar and header once set.
         </p>
 
         {saved && (
@@ -341,12 +340,12 @@ export default function SettingsPage() {
                         return;
                       }
                       if (file.size > 2 * 1024 * 1024) {
-                        setLogoError('Logo must be under 2MB — try a smaller image.');
+                        setLogoError('Logo must be under 2MB â€” try a smaller image.');
                         return;
                       }
                       const reader = new FileReader();
                       reader.onload = () => setFormData((prev) => ({ ...prev, logo_url: String(reader.result) }));
-                      reader.onerror = () => setLogoError('Could not read that file — try again.');
+                      reader.onerror = () => setLogoError('Could not read that file â€” try again.');
                       reader.readAsDataURL(file);
                     }}
                     className="w-full text-xs text-slate-400 file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-medium file:bg-blue-600 file:text-white hover:file:bg-blue-500 file:cursor-pointer cursor-pointer"
@@ -412,7 +411,7 @@ export default function SettingsPage() {
             </div>
             <div className="p-5">
               <p className="text-xs text-slate-500 mb-3">
-                Every Quotation, Invoice, and Inspection Report is automatically saved as a PDF here too —
+                Every Quotation, Invoice, and Inspection Report is automatically saved as a PDF here too â€”
                 independent of the cloud database, so nothing is lost even if internet or account access is
                 interrupted. Safe to point this at a shared drive so your boss always has a local copy.
               </p>
@@ -455,3 +454,4 @@ export default function SettingsPage() {
     </div>
   );
 }
+

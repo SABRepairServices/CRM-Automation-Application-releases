@@ -63,7 +63,7 @@ export const useInspections = () => {
   const createReport = useCallback(
     async (
       clientId: string,
-      data: { job_id: string; inspected_by?: string; findings: InspectionFinding[]; taxable_amount?: number; tax_rate?: number; notes?: string }
+      data: { job_id?: string; customer_name?: string; inspected_by?: string; findings: InspectionFinding[]; taxable_amount?: number; tax_rate?: number; notes?: string }
     ) => {
       setLoading(true);
       setError(null);

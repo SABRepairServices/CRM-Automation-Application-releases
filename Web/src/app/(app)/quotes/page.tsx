@@ -1,9 +1,8 @@
-'use client';
+﻿'use client';
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useQuotations } from '@/hooks/useQuotations';
-import { useJobs } from '@/hooks/useJobs';
 import { useClients, Client } from '@/hooks/useClients';
 import { useSelectedClientId } from '@/hooks/useSelectedClientId';
 import { ActionButton } from '@/components/ui/action-button';
@@ -12,14 +11,13 @@ import { QuotationPreview } from '@/components/documents/QuotationPreview';
 export default function QuotesPage() {
   const router = useRouter();
   const { quotations, loading, error, listQuotations, createQuotation, updateQuotation, deleteQuotation } = useQuotations();
-  const { jobs, listJobs } = useJobs();
   const { getClient } = useClients();
   const [previewClient, setPreviewClient] = useState<Client | null>(null);
   const clientId = useSelectedClientId();
   const [approveMessage, setApproveMessage] = useState('');
   const [formError, setFormError] = useState('');
   const [formData, setFormData] = useState({
-    job_id: '',
+    customer_name: '',
     items: [{ description: '', item_type: 'part' as const, quantity: 1, unit_price: 0 }],
     discount_amount: 0,
     vat_percent: 5,
@@ -29,16 +27,9 @@ export default function QuotesPage() {
   useEffect(() => {
     if (!clientId) return;
     listQuotations(clientId);
-    // Jobs without a quotation yet are the ones worth quoting — inspected
-    // jobs are the common case (findings already known), but "new"/
-    // "scheduled" jobs can be quoted directly too.
-    listJobs(clientId);
     getClient(clientId).then(setPreviewClient);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [clientId]);
-
-  const quotableJobs = jobs.filter((j) => !['quoted', 'approved', 'completed', 'cancelled'].includes(j.status));
-  const selectedJob = jobs.find((j) => j.id === formData.job_id);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -51,13 +42,13 @@ export default function QuotesPage() {
     }
     try {
       await createQuotation(clientId, {
-        job_id: formData.job_id,
+        customer_name: formData.customer_name,
         items: validItems,
         discount_amount: formData.discount_amount,
         vat_percent: formData.vat_percent,
         notes: formData.notes,
       });
-      setFormData({ job_id: '', items: [{ description: '', item_type: 'part', quantity: 1, unit_price: 0 }], discount_amount: 0, vat_percent: 5, notes: '' });
+      setFormData({ customer_name: '', items: [{ description: '', item_type: 'part', quantity: 1, unit_price: 0 }], discount_amount: 0, vat_percent: 5, notes: '' });
     } catch (err) {
       console.error('Error creating quotation:', err);
     }
@@ -70,9 +61,9 @@ export default function QuotesPage() {
     try {
       const updated = await updateQuotation(clientId, quotationId, { status: 'approved', approval_channel: 'app' });
       if (updated.generated_invoice) {
-        setApproveMessage(`Approved — invoice ${updated.generated_invoice.invoice_number} was created automatically.`);
+        setApproveMessage(`Approved â€” invoice ${updated.generated_invoice.invoice_number} was created automatically.`);
       } else {
-        setApproveMessage('Approved — an invoice already existed for this job.');
+        setApproveMessage('Approved â€” an invoice already existed for this job.');
       }
     } catch (err) {
       console.error('Error approving quotation:', err);
@@ -111,7 +102,7 @@ export default function QuotesPage() {
   };
 
   return (
-    <div className="p-8 bg-slate-950 min-h-screen">
+    <div className="px-4 py-4 bg-slate-950 min-h-screen">
       <div className="max-w-6xl mx-auto">
         <div className="flex items-center justify-between mb-6">
           <div>
@@ -132,28 +123,14 @@ export default function QuotesPage() {
             </div>
             <form onSubmit={handleSubmit} className="p-5 space-y-5">
               <div>
-                <label className="block text-xs font-medium text-slate-500 mb-1">Job</label>
-                <select
-                  value={formData.job_id}
-                  onChange={(e) => setFormData({ ...formData, job_id: e.target.value })}
-                  required
-                  className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-md text-sm text-white focus:outline-none focus:ring-1 focus:ring-blue-500"
-                >
-                  <option value="" disabled>Select a job to quote…</option>
-                  {quotableJobs.map((j) => (
-                    <option key={j.id} value={j.id}>
-                      {j.customer_name || 'Unassigned'} — {j.appliance_type}{j.reported_fault ? ` (${j.reported_fault})` : ''}
-                    </option>
-                  ))}
-                </select>
-                {quotableJobs.length === 0 && (
-                  <p className="text-xs text-slate-600 mt-1">No open jobs waiting on a quotation. Create a job or complete an inspection first.</p>
-                )}
-                {selectedJob?.diagnosis && (
-                  <p className="text-xs text-slate-500 mt-2 bg-slate-950 border border-slate-800 rounded px-3 py-2">
-                    <span className="text-slate-400 font-medium">Inspection notes: </span>{selectedJob.diagnosis}
-                  </p>
-                )}
+                <label className=”block text-xs font-medium text-slate-500 mb-1”>Customer Name</label>
+                <input
+                  type=”text”
+                  value={formData.customer_name}
+                  onChange={(e) => setFormData({ ...formData, customer_name: e.target.value })}
+                  placeholder=”e.g. Ahmed Al Rashidi”
+                  className=”w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-md text-sm text-white placeholder:text-slate-600 focus:outline-none focus:ring-1 focus:ring-blue-500”
+                />
               </div>
 
               <div>
@@ -252,7 +229,7 @@ export default function QuotesPage() {
             <div className="p-5 lg:sticky lg:top-6">
               <QuotationPreview
                 client={previewClient}
-                customerName={selectedJob?.customer_name}
+                customerName={formData.customer_name}
                 items={formData.items}
                 discountAmount={formData.discount_amount}
                 vatPercent={formData.vat_percent}
@@ -336,3 +313,4 @@ export default function QuotesPage() {
     </div>
   );
 }
+

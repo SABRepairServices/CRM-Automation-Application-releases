@@ -73,7 +73,7 @@ export const useQuotations = () => {
     }
   }, []);
 
-  const createQuotation = useCallback(async (clientId: string, data: { job_id: string; items: QuotationItem[]; discount_amount?: number; vat_percent?: number; notes?: string }) => {
+  const createQuotation = useCallback(async (clientId: string, data: { job_id?: string; customer_name?: string; items: QuotationItem[]; discount_amount?: number; vat_percent?: number; notes?: string }) => {
     setLoading(true);
     setError(null);
     try {

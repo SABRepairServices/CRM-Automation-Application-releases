@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
@@ -13,7 +13,7 @@ export default function CustomersPage() {
   const clientId = useSelectedClientId();
   const { customers, stats, loading, error, listCustomers, createCustomer, updateCustomer, deleteCustomer, getStats } = useCustomers();
 
-  const [showForm, setShowForm] = useState(false);
+  const [showForm, setShowForm] = useState(true);
   const [formData, setFormData] = useState(EMPTY_FORM);
   const [editingId, setEditingId] = useState<string | null>(null);
 
@@ -72,7 +72,7 @@ export default function CustomersPage() {
   };
 
   return (
-    <div className="p-8 bg-slate-950 min-h-screen">
+    <div className="px-4 py-4 bg-slate-950 min-h-screen">
       <div className="max-w-6xl mx-auto">
         <div className="flex items-center justify-between mb-6">
           <div>
@@ -147,8 +147,8 @@ export default function CustomersPage() {
                   onChange={(e) => setFormData({ ...formData, billing_type: e.target.value as 'individual' | 'contractor' })}
                   className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-md text-sm text-white"
                 >
-                  <option value="individual">Individual — invoiced immediately</option>
-                  <option value="contractor">Contractor — invoiced monthly (batched)</option>
+                  <option value="individual">Individual â€” invoiced immediately</option>
+                  <option value="contractor">Contractor â€” invoiced monthly (batched)</option>
                 </select>
               </div>
               <div>
@@ -214,7 +214,7 @@ export default function CustomersPage() {
                   >
                     <td className="px-5 py-3 font-medium text-white">{customer.name}</td>
                     <td className="px-5 py-3 text-slate-400">{customer.phone}</td>
-                    <td className="px-5 py-3 text-slate-400">{customer.area || '—'}</td>
+                    <td className="px-5 py-3 text-slate-400">{customer.area || 'â€”'}</td>
                     <td className="px-5 py-3 text-slate-400 capitalize">{customer.source}</td>
                     <td className="px-5 py-3">
                       <span
@@ -260,3 +260,4 @@ export default function CustomersPage() {
     </div>
   );
 }
+

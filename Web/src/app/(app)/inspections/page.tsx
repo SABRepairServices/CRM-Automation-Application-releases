@@ -1,9 +1,8 @@
-'use client';
+﻿'use client';
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useInspections, InspectionFinding } from '@/hooks/useInspections';
-import { useJobs } from '@/hooks/useJobs';
 import { useClients, Client } from '@/hooks/useClients';
 import { useSelectedClientId } from '@/hooks/useSelectedClientId';
 import { ActionButton } from '@/components/ui/action-button';
@@ -12,14 +11,13 @@ import { InspectionPreview } from '@/components/documents/InspectionPreview';
 export default function InspectionsPage() {
   const router = useRouter();
   const { reports, loading, error, listReports, createReport, updateReport, deleteReport } = useInspections();
-  const { jobs, listJobs } = useJobs();
   const { getClient } = useClients();
   const [previewClient, setPreviewClient] = useState<Client | null>(null);
   const clientId = useSelectedClientId();
   const [finalizeMessage, setFinalizeMessage] = useState('');
   const [formError, setFormError] = useState('');
   const [formData, setFormData] = useState({
-    job_id: '',
+    customer_name: '',
     inspected_by: '',
     inspected_at: new Date().toISOString().split('T')[0],
     findings: [{ description: '' }] as InspectionFinding[],
@@ -31,14 +29,9 @@ export default function InspectionsPage() {
   useEffect(() => {
     if (!clientId) return;
     listReports(clientId);
-    // Jobs not yet inspected are the ones worth reporting on
-    listJobs(clientId);
     getClient(clientId).then(setPreviewClient);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [clientId]);
-
-  const inspectableJobs = jobs.filter((j) => !['inspected', 'quoted', 'approved', 'completed', 'cancelled'].includes(j.status));
-  const selectedJob = jobs.find((j) => j.id === formData.job_id);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -51,7 +44,7 @@ export default function InspectionsPage() {
     }
     try {
       await createReport(clientId, {
-        job_id: formData.job_id,
+        customer_name: formData.customer_name,
         inspected_by: formData.inspected_by,
         findings: validFindings,
         taxable_amount: formData.taxable_amount,
@@ -59,7 +52,7 @@ export default function InspectionsPage() {
         notes: formData.notes,
       });
       setFormData({
-        job_id: '',
+        customer_name: '',
         inspected_by: '',
         inspected_at: new Date().toISOString().split('T')[0],
         findings: [{ description: '' }],
@@ -79,9 +72,9 @@ export default function InspectionsPage() {
     try {
       const updated = await updateReport(clientId, reportId, { status: 'final' });
       if (updated.generated_quotation) {
-        setFinalizeMessage(`Finalized — quotation ${updated.generated_quotation.quotation_number} was created automatically.`);
+        setFinalizeMessage(`Finalized â€” quotation ${updated.generated_quotation.quotation_number} was created automatically.`);
       } else {
-        setFinalizeMessage('Finalized — a quotation already existed for this job.');
+        setFinalizeMessage('Finalized â€” a quotation already existed for this job.');
       }
     } catch (err) {
       console.error('Error finalizing inspection report:', err);
@@ -99,7 +92,7 @@ export default function InspectionsPage() {
   };
 
   return (
-    <div className="p-8 bg-slate-950 min-h-screen">
+    <div className="px-4 py-4 bg-slate-950 min-h-screen">
       <div className="max-w-5xl mx-auto">
         {/* Page header */}
         <div className="flex items-center justify-between mb-6">
@@ -108,7 +101,7 @@ export default function InspectionsPage() {
           </div>
         </div>
 
-        {/* New report form — mirrors the original Excel Inspection Report layout */}
+        {/* New report form â€” mirrors the original Excel Inspection Report layout */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6 items-stretch">
         <div className="bg-slate-900 border border-slate-800 rounded-md">
             <div className="px-5 py-3 border-b border-slate-800">
@@ -117,23 +110,14 @@ export default function InspectionsPage() {
             <form onSubmit={handleSubmit} className="p-5 space-y-5">
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div>
-                  <label className="block text-xs font-medium text-slate-500 mb-1">Job</label>
-                  <select
-                    value={formData.job_id}
-                    onChange={(e) => setFormData({ ...formData, job_id: e.target.value })}
-                    required
-                    className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-md text-sm text-white focus:outline-none focus:ring-1 focus:ring-blue-500"
-                  >
-                    <option value="" disabled>Select a job to inspect…</option>
-                    {inspectableJobs.map((j) => (
-                      <option key={j.id} value={j.id}>
-                        {j.customer_name || 'Unassigned'} — {j.appliance_type}{j.reported_fault ? ` (${j.reported_fault})` : ''}
-                      </option>
-                    ))}
-                  </select>
-                  {inspectableJobs.length === 0 && (
-                    <p className="text-xs text-slate-600 mt-1">No open jobs waiting on inspection.</p>
-                  )}
+                  <label className=”block text-xs font-medium text-slate-500 mb-1”>Customer Name</label>
+                  <input
+                    type=”text”
+                    value={formData.customer_name}
+                    onChange={(e) => setFormData({ ...formData, customer_name: e.target.value })}
+                    placeholder=”e.g. Ahmed Al Rashidi”
+                    className=”w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-md text-sm text-white placeholder:text-slate-600 focus:outline-none focus:ring-1 focus:ring-blue-500”
+                  />
                 </div>
                 <div>
                   <label className="block text-xs font-medium text-slate-500 mb-1">Inspected By</label>
@@ -197,7 +181,7 @@ export default function InspectionsPage() {
                 </button>
               </div>
 
-              {/* Tax summary block — matches the Excel "Tax Summary / Standard Rate (5%)" section */}
+              {/* Tax summary block â€” matches the Excel "Tax Summary / Standard Rate (5%)" section */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-medium text-slate-500 mb-1">Taxable Amount (AED)</label>
@@ -244,7 +228,7 @@ export default function InspectionsPage() {
             <div className="p-5 lg:sticky lg:top-6">
               <InspectionPreview
                 client={previewClient}
-                customerName={selectedJob?.customer_name}
+                customerName={formData.customer_name}
                 inspectedBy={formData.inspected_by}
                 inspectedAt={formData.inspected_at}
                 findings={formData.findings}
@@ -306,10 +290,10 @@ export default function InspectionsPage() {
                     className="border-b border-slate-800 last:border-0 cursor-pointer hover:bg-slate-950"
                   >
                     <td className="px-5 py-3 font-medium text-white">{r.report_number}</td>
-                    <td className="px-5 py-3 text-slate-400">{r.customer_name || '—'}</td>
-                    <td className="px-5 py-3 text-slate-400">{r.appliance_type || '—'}</td>
+                    <td className="px-5 py-3 text-slate-400">{r.customer_name || 'â€”'}</td>
+                    <td className="px-5 py-3 text-slate-400">{r.appliance_type || 'â€”'}</td>
                     <td className="px-5 py-3 text-slate-400">
-                      {r.inspected_at ? new Date(r.inspected_at).toLocaleDateString() : '—'}
+                      {r.inspected_at ? new Date(r.inspected_at).toLocaleDateString() : 'â€”'}
                     </td>
                     <td className="px-5 py-3 text-right text-slate-400">AED {Number(r.tax_amount).toFixed(2)}</td>
                     <td className="px-5 py-3">
@@ -347,3 +331,4 @@ export default function InspectionsPage() {
     </div>
   );
 }
+

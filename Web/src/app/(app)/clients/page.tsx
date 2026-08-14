@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useEffect, useState } from 'react';
 import { useClients } from '@/hooks/useClients';
@@ -6,7 +6,7 @@ import { ActionButton } from '@/components/ui/action-button';
 
 export default function ClientsPage() {
   const { clients, loading, error, listClients, createClient } = useClients();
-  const [showForm, setShowForm] = useState(false);
+  const [showForm, setShowForm] = useState(true);
   const [formData, setFormData] = useState({ name: '', email: '', phone: '', city: '' });
   const [selected, setSelected] = useState('');
 
@@ -37,7 +37,7 @@ export default function ClientsPage() {
   };
 
   return (
-    <div className="p-8 bg-slate-950 min-h-screen">
+    <div className="px-4 py-4 bg-slate-950 min-h-screen">
       <div className="max-w-6xl mx-auto">
         <div className="flex items-center justify-between mb-6">
           <div>
@@ -109,8 +109,8 @@ export default function ClientsPage() {
                 {clients.map((client) => (
                   <tr key={client.id} className="border-b border-slate-800 last:border-0">
                     <td className="px-5 py-3 font-medium text-white">{client.name}</td>
-                    <td className="px-5 py-3 text-slate-400">{client.email || '—'}</td>
-                    <td className="px-5 py-3 text-slate-400">{client.phone || '—'}</td>
+                    <td className="px-5 py-3 text-slate-400">{client.email || 'â€”'}</td>
+                    <td className="px-5 py-3 text-slate-400">{client.phone || 'â€”'}</td>
                     <td className="px-5 py-3 text-right">
                       {selected === client.id ? (
                         <span className="text-xs font-medium text-emerald-400">Active</span>
@@ -130,3 +130,4 @@ export default function ClientsPage() {
     </div>
   );
 }
+

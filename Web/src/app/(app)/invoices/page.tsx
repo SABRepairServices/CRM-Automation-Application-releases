@@ -1,17 +1,15 @@
-'use client';
+﻿'use client';
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useInvoices } from '@/hooks/useInvoices';
-import { useCustomers } from '@/hooks/useCustomers';
-import { useJobs } from '@/hooks/useJobs';
 import { useClients, Client } from '@/hooks/useClients';
 import { useSelectedClientId } from '@/hooks/useSelectedClientId';
 import { ActionButton } from '@/components/ui/action-button';
 import { InvoicePreview } from '@/components/documents/InvoicePreview';
 
 const EMPTY_FORM = {
-  customer_id: '',
+  customer_name: '',
   issue_date: new Date().toISOString().split('T')[0],
   due_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
   notes: '',
@@ -20,13 +18,11 @@ const EMPTY_FORM = {
 export default function InvoicesPage() {
   const router = useRouter();
   const { invoices, loading, error, listInvoices, createInvoice, updateInvoice, deleteInvoice } = useInvoices();
-  const { customers, listCustomers } = useCustomers();
-  const { jobs, listJobs } = useJobs();
   const { getClient } = useClients();
   const [previewClient, setPreviewClient] = useState<Client | null>(null);
   const clientId = useSelectedClientId();
   const [formData, setFormData] = useState(EMPTY_FORM);
-  const [jobAmounts, setJobAmounts] = useState<Array<{ job_id: string; amount: number }>>([]);
+  const [lineItems, setLineItems] = useState<Array<{ description: string; amount: number }>>([{ description: '', amount: 0 }]);
   const [formError, setFormError] = useState('');
   const [payingId, setPayingId] = useState<string | null>(null);
   const [payAmount, setPayAmount] = useState('');
@@ -34,34 +30,29 @@ export default function InvoicesPage() {
   useEffect(() => {
     if (!clientId) return;
     listInvoices(clientId);
-    listCustomers({ clientId });
-    listJobs(clientId);
     getClient(clientId).then(setPreviewClient);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [clientId]);
 
-  const selectedCustomer = customers.find((c) => c.id === formData.customer_id);
-  const customerJobs = jobs.filter((j) => j.customer_id === formData.customer_id);
-
-  const addJobLine = () => setJobAmounts([...jobAmounts, { job_id: '', amount: 0 }]);
-  const removeJobLine = (idx: number) => setJobAmounts(jobAmounts.filter((_, i) => i !== idx));
-  const updateJobLine = (idx: number, patch: Partial<{ job_id: string; amount: number }>) => {
-    setJobAmounts(jobAmounts.map((line, i) => (i === idx ? { ...line, ...patch } : line)));
+  const addLine = () => setLineItems([...lineItems, { description: '', amount: 0 }]);
+  const removeLine = (idx: number) => setLineItems(lineItems.filter((_, i) => i !== idx));
+  const updateLine = (idx: number, patch: Partial<{ description: string; amount: number }>) => {
+    setLineItems(lineItems.map((l, i) => (i === idx ? { ...l, ...patch } : l)));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setFormError('');
-    const validLines = jobAmounts.filter((l) => l.job_id && l.amount > 0);
+    const validLines = lineItems.filter((l) => l.description && l.amount > 0);
     if (validLines.length === 0) {
-      setFormError('Add at least one job with an amount — an invoice with no line items can\'t be sent.');
+      setFormError('Add at least one item with an amount.');
       return;
     }
     if (!clientId) return;
     try {
-      await createInvoice(clientId, { ...formData, job_amounts: validLines });
+      await createInvoice(clientId, { ...formData, line_items: validLines });
       setFormData(EMPTY_FORM);
-      setJobAmounts([]);
+      setLineItems([{ description: '', amount: 0 }]);
     } catch (err) {
       console.error('Error creating invoice:', err);
     }
@@ -110,7 +101,7 @@ export default function InvoicesPage() {
   };
 
   return (
-    <div className="p-8 bg-slate-950 min-h-screen">
+    <div className="px-4 py-4 bg-slate-950 min-h-screen">
       <div className="max-w-6xl mx-auto">
         <div className="flex items-center justify-between mb-6">
           <div>
@@ -125,61 +116,43 @@ export default function InvoicesPage() {
             </div>
             <form onSubmit={handleSubmit} className="p-5 space-y-4">
               <div>
-                <label className="block text-xs font-medium text-slate-500 mb-1">Customer</label>
-                <select
-                  value={formData.customer_id}
-                  onChange={(e) => setFormData({ ...formData, customer_id: e.target.value })}
-                  required
-                  className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-md text-sm text-white focus:outline-none focus:ring-1 focus:ring-blue-500"
-                >
-                  <option value="" disabled>Select a customer…</option>
-                  {customers.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.name}{c.phone ? ` — ${c.phone}` : ''}
-                    </option>
-                  ))}
-                </select>
-                {customers.length === 0 && (
-                  <p className="text-xs text-slate-600 mt-1">No customers yet. Add one in the Customers section first.</p>
-                )}
+                <label className=”block text-xs font-medium text-slate-500 mb-1”>Customer Name</label>
+                <input
+                  type=”text”
+                  value={formData.customer_name}
+                  onChange={(e) => setFormData({ ...formData, customer_name: e.target.value })}
+                  placeholder=”e.g. Ahmed Al Rashidi”
+                  className=”w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-md text-sm text-white placeholder:text-slate-600 focus:outline-none focus:ring-1 focus:ring-blue-500”
+                />
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-slate-500 mb-2">Jobs &amp; Amounts</label>
-                <div className="space-y-2">
-                  {jobAmounts.map((line, idx) => (
-                    <div key={idx} className="flex gap-2">
-                      <select
-                        value={line.job_id}
-                        onChange={(e) => updateJobLine(idx, { job_id: e.target.value })}
-                        className="flex-1 px-2 py-1.5 bg-slate-950 border border-slate-800 rounded text-sm text-white"
-                      >
-                        <option value="" disabled>Select a job…</option>
-                        {customerJobs.map((j) => (
-                          <option key={j.id} value={j.id}>{j.appliance_type}{j.reported_fault ? ` — ${j.reported_fault}` : ''}</option>
-                        ))}
-                      </select>
+                <label className=”block text-xs font-medium text-slate-500 mb-2”>Line Items</label>
+                <div className=”space-y-2”>
+                  {lineItems.map((line, idx) => (
+                    <div key={idx} className=”flex gap-2”>
                       <input
-                        type="number"
-                        placeholder="AED"
-                        value={line.amount || ''}
-                        onChange={(e) => updateJobLine(idx, { amount: parseFloat(e.target.value) || 0 })}
-                        min={0}
-                        className="w-28 px-2 py-1.5 bg-slate-950 border border-slate-800 rounded text-sm text-white"
+                        type=”text”
+                        placeholder=”Description”
+                        value={line.description}
+                        onChange={(e) => updateLine(idx, { description: e.target.value })}
+                        className=”flex-1 px-2 py-1.5 bg-slate-950 border border-slate-800 rounded text-sm text-white placeholder:text-slate-600”
                       />
-                      <button type="button" onClick={() => removeJobLine(idx)} className="text-xs text-red-400 hover:text-red-300 px-2">✕</button>
+                      <input
+                        type=”number”
+                        placeholder=”AED”
+                        value={line.amount || ''}
+                        onChange={(e) => updateLine(idx, { amount: parseFloat(e.target.value) || 0 })}
+                        min={0}
+                        className=”w-28 px-2 py-1.5 bg-slate-950 border border-slate-800 rounded text-sm text-white”
+                      />
+                      <button type=”button” onClick={() => removeLine(idx)} className=”text-xs text-red-400 hover:text-red-300 px-2”>✕</button>
                     </div>
                   ))}
                 </div>
-                {!formData.customer_id ? (
-                  <p className="text-xs text-slate-600 mt-2">Select a customer first to choose their jobs.</p>
-                ) : customerJobs.length === 0 ? (
-                  <p className="text-xs text-slate-600 mt-2">This customer has no jobs yet.</p>
-                ) : (
-                  <button type="button" onClick={addJobLine} className="text-xs text-blue-400 font-medium mt-2">
-                    + Add job
-                  </button>
-                )}
+                <button type=”button” onClick={addLine} className=”text-xs text-blue-400 font-medium mt-2”>
+                  + Add item
+                </button>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
@@ -208,7 +181,7 @@ export default function InvoicesPage() {
             <div className="p-5 lg:sticky lg:top-6">
               <InvoicePreview
                 client={previewClient}
-                customerName={selectedCustomer?.name}
+                customerName={formData.customer_name}
                 dueDate={formData.due_date}
                 notes={formData.notes}
               />
@@ -308,3 +281,4 @@ export default function InvoicesPage() {
     </div>
   );
 }
+

@@ -39,7 +39,7 @@ export default function TechnicianDetailPage() {
   const pastJobs = jobs.filter((j) => ['completed', 'cancelled', 'rejected'].includes(j.status));
 
   return (
-    <div className="p-8 bg-slate-950 min-h-screen">
+    <div className="px-4 py-4 bg-slate-950 min-h-screen">
       <div className="max-w-4xl mx-auto">
         <button onClick={() => router.push('/technicians')} className="text-xs text-slate-500 hover:text-slate-300 mb-4">
           ← Back to Technicians

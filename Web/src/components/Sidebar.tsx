@@ -13,8 +13,6 @@ import {
   ClipboardCheck,
   FileText,
   Receipt,
-  Link2,
-  MessagesSquare,
   Phone,
   UserCog,
   FlaskConical,
@@ -74,9 +72,7 @@ const links: { href: string; label: string; icon: typeof LayoutDashboard; accent
   { href: '/inspections', label: 'Inspections', icon: ClipboardCheck, accent: 'rose' },
   { href: '/quotes', label: 'Quotes', icon: FileText, accent: 'blue' },
   { href: '/invoices', label: 'Invoices', icon: Receipt, accent: 'violet' },
-  { href: '/social-accounts', label: 'Accounts', icon: Link2, accent: 'cyan' },
-  { href: '/social-posts', label: 'Posts', icon: MessagesSquare, accent: 'amber' },
-  { href: '/call-agent', label: 'Call Agent', icon: Phone, accent: 'emerald' },
+  { href: '/call-agent', label: 'Call Agent', icon: Phone, accent: 'cyan' },
   { href: '/whatsapp-sim', label: 'WhatsApp Sim', icon: FlaskConical, accent: 'rose' },
 ];
 

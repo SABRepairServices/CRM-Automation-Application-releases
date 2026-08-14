@@ -135,7 +135,7 @@ export default function CustomerDetailPage() {
   }
 
   return (
-    <div className="p-8 bg-slate-950 min-h-screen">
+    <div className="px-4 py-4 bg-slate-950 min-h-screen">
       <div className="max-w-5xl mx-auto">
         <button onClick={() => router.push('/customers')} className="text-sm text-slate-500 hover:text-slate-300 mb-4">
           ← Back to Customers
