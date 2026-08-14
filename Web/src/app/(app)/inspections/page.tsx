@@ -5,16 +5,17 @@ import { useRouter } from 'next/navigation';
 import { useInspections, InspectionFinding } from '@/hooks/useInspections';
 import { useJobs } from '@/hooks/useJobs';
 import { useClients, Client } from '@/hooks/useClients';
+import { useSelectedClientId } from '@/hooks/useSelectedClientId';
 import { ActionButton } from '@/components/ui/action-button';
 import { InspectionPreview } from '@/components/documents/InspectionPreview';
 
 export default function InspectionsPage() {
   const router = useRouter();
-  const { reports, loading, error, listReports, createReport, updateReport } = useInspections();
+  const { reports, loading, error, listReports, createReport, updateReport, deleteReport } = useInspections();
   const { jobs, listJobs } = useJobs();
   const { getClient } = useClients();
   const [previewClient, setPreviewClient] = useState<Client | null>(null);
-  const [clientId, setClientId] = useState('');
+  const clientId = useSelectedClientId();
   const [finalizeMessage, setFinalizeMessage] = useState('');
   const [formData, setFormData] = useState({
     job_id: '',
@@ -27,15 +28,13 @@ export default function InspectionsPage() {
   });
 
   useEffect(() => {
-    const stored = localStorage.getItem('selectedClientId');
-    if (stored) {
-      setClientId(stored);
-      listReports(stored);
-      // Jobs not yet inspected are the ones worth reporting on
-      listJobs(stored);
-      getClient(stored).then(setPreviewClient);
-    }
-  }, [listReports, listJobs, getClient]);
+    if (!clientId) return;
+    listReports(clientId);
+    // Jobs not yet inspected are the ones worth reporting on
+    listJobs(clientId);
+    getClient(clientId).then(setPreviewClient);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [clientId]);
 
   const inspectableJobs = jobs.filter((j) => !['inspected', 'quoted', 'approved', 'completed', 'cancelled'].includes(j.status));
   const selectedJob = jobs.find((j) => j.id === formData.job_id);
@@ -68,6 +67,7 @@ export default function InspectionsPage() {
 
   const handleFinalize = async (reportId: string) => {
     if (!clientId) return;
+    if (!confirm('Finalize this report? This automatically generates its quotation.')) return;
     setFinalizeMessage('');
     try {
       const updated = await updateReport(clientId, reportId, { status: 'final' });
@@ -78,6 +78,16 @@ export default function InspectionsPage() {
       }
     } catch (err) {
       console.error('Error finalizing inspection report:', err);
+    }
+  };
+
+  const handleDelete = async (reportId: string) => {
+    if (!clientId) return;
+    if (!confirm('Delete this draft inspection report? This cannot be undone.')) return;
+    try {
+      await deleteReport(clientId, reportId);
+    } catch (err) {
+      console.error('Error deleting inspection report:', err);
     }
   };
 
@@ -252,7 +262,15 @@ export default function InspectionsPage() {
             <span className="text-xs text-slate-400">{reports.length} total</span>
           </div>
 
-          {reports.length === 0 ? (
+          {!clientId ? (
+            <div className="px-5 py-12 text-center">
+              <p className="text-sm text-slate-500">Select a client from the dropdown in the header to see inspection reports.</p>
+            </div>
+          ) : loading ? (
+            <div className="px-5 py-12 text-center">
+              <p className="text-sm text-slate-500">Loading...</p>
+            </div>
+          ) : reports.length === 0 ? (
             <div className="px-5 py-12 text-center">
               <p className="text-sm text-slate-500">No inspection reports yet.</p>
             </div>
@@ -294,13 +312,18 @@ export default function InspectionsPage() {
                     </td>
                     <td className="px-5 py-3 text-right" onClick={(e) => e.stopPropagation()}>
                       {r.status === 'draft' && (
-                        <ActionButton
-                          text="Finalize"
-                          variant="success"
-                          showArrow={false}
-                          className="!px-3 !py-1 !text-xs"
-                          onClick={() => handleFinalize(r.id)}
-                        />
+                        <div className="flex gap-2 justify-end">
+                          <ActionButton
+                            text="Finalize"
+                            variant="success"
+                            showArrow={false}
+                            className="!px-3 !py-1 !text-xs"
+                            onClick={() => handleFinalize(r.id)}
+                          />
+                          <button onClick={() => handleDelete(r.id)} className="text-xs font-medium text-red-400 hover:text-red-300">
+                            Delete
+                          </button>
+                        </div>
                       )}
                     </td>
                   </tr>

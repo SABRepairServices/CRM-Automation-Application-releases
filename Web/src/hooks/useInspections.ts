@@ -98,5 +98,23 @@ export const useInspections = () => {
     return response.data.data as { whatsappSent: boolean; whatsappError: string | null; emailError: string | null; hasWhatsapp: boolean };
   }, []);
 
-  return { reports, loading, error, listReports, getReport, createReport, updateReport, sendReport };
+  const deleteReport = useCallback(
+    async (clientId: string, reportId: string) => {
+      setLoading(true);
+      setError(null);
+      try {
+        await axios.delete(`${API_URL}/inspections/${reportId}?client_id=${clientId}`, authHeader());
+        setReports(reports.filter((r) => r.id !== reportId));
+      } catch (err) {
+        const msg = axios.isAxiosError(err) ? err.response?.data?.error : String(err);
+        setError(msg);
+        throw err;
+      } finally {
+        setLoading(false);
+      }
+    },
+    [reports]
+  );
+
+  return { reports, loading, error, listReports, getReport, createReport, updateReport, deleteReport, sendReport };
 };

@@ -5,16 +5,17 @@ import { useRouter } from 'next/navigation';
 import { useQuotations } from '@/hooks/useQuotations';
 import { useJobs } from '@/hooks/useJobs';
 import { useClients, Client } from '@/hooks/useClients';
+import { useSelectedClientId } from '@/hooks/useSelectedClientId';
 import { ActionButton } from '@/components/ui/action-button';
 import { QuotationPreview } from '@/components/documents/QuotationPreview';
 
 export default function QuotesPage() {
   const router = useRouter();
-  const { quotations, loading, error, listQuotations, createQuotation, updateQuotation } = useQuotations();
+  const { quotations, loading, error, listQuotations, createQuotation, updateQuotation, deleteQuotation } = useQuotations();
   const { jobs, listJobs } = useJobs();
   const { getClient } = useClients();
   const [previewClient, setPreviewClient] = useState<Client | null>(null);
-  const [clientId, setClientId] = useState('');
+  const clientId = useSelectedClientId();
   const [approveMessage, setApproveMessage] = useState('');
   const [formData, setFormData] = useState({
     job_id: '',
@@ -25,17 +26,15 @@ export default function QuotesPage() {
   });
 
   useEffect(() => {
-    const stored = localStorage.getItem('selectedClientId');
-    if (stored) {
-      setClientId(stored);
-      listQuotations(stored);
-      // Jobs without a quotation yet are the ones worth quoting — inspected
-      // jobs are the common case (findings already known), but "new"/
-      // "scheduled" jobs can be quoted directly too.
-      listJobs(stored);
-      getClient(stored).then(setPreviewClient);
-    }
-  }, [listQuotations, listJobs, getClient]);
+    if (!clientId) return;
+    listQuotations(clientId);
+    // Jobs without a quotation yet are the ones worth quoting — inspected
+    // jobs are the common case (findings already known), but "new"/
+    // "scheduled" jobs can be quoted directly too.
+    listJobs(clientId);
+    getClient(clientId).then(setPreviewClient);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [clientId]);
 
   const quotableJobs = jobs.filter((j) => !['quoted', 'approved', 'completed', 'cancelled'].includes(j.status));
   const selectedJob = jobs.find((j) => j.id === formData.job_id);
@@ -80,6 +79,16 @@ export default function QuotesPage() {
       await updateQuotation(clientId, quotationId, { status: 'rejected' });
     } catch (err) {
       console.error('Error rejecting quotation:', err);
+    }
+  };
+
+  const handleDelete = async (quotationId: string) => {
+    if (!clientId) return;
+    if (!confirm('Delete this draft quotation? This cannot be undone.')) return;
+    try {
+      await deleteQuotation(clientId, quotationId);
+    } catch (err) {
+      console.error('Error deleting quotation:', err);
     }
   };
 
@@ -282,23 +291,30 @@ export default function QuotesPage() {
                       <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${statusColor(q.status)}`}>{q.status}</span>
                     </td>
                     <td className="px-5 py-3 text-right" onClick={(e) => e.stopPropagation()}>
-                      {(q.status === 'draft' || q.status === 'sent') && (
-                        <div className="flex gap-2 justify-end">
-                          <ActionButton
-                            text="Approve"
-                            variant="success"
-                            showArrow={false}
-                            className="!px-3 !py-1 !text-xs"
-                            onClick={() => handleApprove(q.id)}
-                          />
-                          <button
-                            onClick={() => handleReject(q.id)}
-                            className="px-3 py-1 text-xs font-medium text-red-400 hover:text-red-300 border border-red-900/50 rounded-md"
-                          >
-                            Reject
+                      <div className="flex gap-2 justify-end">
+                        {(q.status === 'draft' || q.status === 'sent') && (
+                          <>
+                            <ActionButton
+                              text="Approve"
+                              variant="success"
+                              showArrow={false}
+                              className="!px-3 !py-1 !text-xs"
+                              onClick={() => handleApprove(q.id)}
+                            />
+                            <button
+                              onClick={() => handleReject(q.id)}
+                              className="px-3 py-1 text-xs font-medium text-red-400 hover:text-red-300 border border-red-900/50 rounded-md"
+                            >
+                              Reject
+                            </button>
+                          </>
+                        )}
+                        {q.status === 'draft' && (
+                          <button onClick={() => handleDelete(q.id)} className="text-xs font-medium text-red-400 hover:text-red-300">
+                            Delete
                           </button>
-                        </div>
-                      )}
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))}
