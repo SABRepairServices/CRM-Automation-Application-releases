@@ -1,31 +1,32 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useCustomers } from '@/hooks/useCustomers';
 import { useJobs } from '@/hooks/useJobs';
 import { useQuotations } from '@/hooks/useQuotations';
 import { useInvoices } from '@/hooks/useInvoices';
+import { useSelectedClientId } from '@/hooks/useSelectedClientId';
 
 const ACTIVE_JOB_STATUSES = ['new', 'scheduled', 'inspected', 'quoted', 'approved', 'in_progress'];
 
 export default function DashboardPage() {
   const router = useRouter();
-  const { customers, listCustomers } = useCustomers();
-  const { jobs, listJobs } = useJobs();
-  const { quotations, listQuotations } = useQuotations();
-  const { invoices, listInvoices } = useInvoices();
-  const [clientId, setClientId] = useState('');
+  const { customers, listCustomers, loading: customersLoading } = useCustomers();
+  const { jobs, listJobs, loading: jobsLoading } = useJobs();
+  const { quotations, listQuotations, loading: quotationsLoading } = useQuotations();
+  const { invoices, listInvoices, loading: invoicesLoading } = useInvoices();
+  const clientId = useSelectedClientId();
+  const loading = customersLoading || jobsLoading || quotationsLoading || invoicesLoading;
 
   useEffect(() => {
-    const stored = localStorage.getItem('selectedClientId');
-    if (!stored) return;
-    setClientId(stored);
-    listCustomers({ clientId: stored });
-    listJobs(stored);
-    listQuotations(stored);
-    listInvoices(stored);
-  }, [listCustomers, listJobs, listQuotations, listInvoices]);
+    if (!clientId) return;
+    listCustomers({ clientId });
+    listJobs(clientId);
+    listQuotations(clientId);
+    listInvoices(clientId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [clientId]);
 
   const activeJobs = jobs.filter((j) => ACTIVE_JOB_STATUSES.includes(j.status));
   const pendingQuotes = quotations.filter((q) => q.status === 'draft' || q.status === 'sent');
@@ -75,7 +76,11 @@ export default function DashboardPage() {
           <div className="px-5 py-3 border-b border-slate-800">
             <h2 className="text-sm font-semibold text-slate-300">Recent Jobs</h2>
           </div>
-          {jobs.length === 0 ? (
+          {loading ? (
+            <div className="px-5 py-12 text-center">
+              <p className="text-sm text-slate-500">Loading...</p>
+            </div>
+          ) : jobs.length === 0 ? (
             <div className="px-5 py-12 text-center">
               <p className="text-sm text-slate-500">No jobs yet.</p>
             </div>

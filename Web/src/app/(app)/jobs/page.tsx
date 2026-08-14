@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useJobs } from '@/hooks/useJobs';
 import { useTechnicians } from '@/hooks/useTechnicians';
 import { useCustomers } from '@/hooks/useCustomers';
+import { useSelectedClientId } from '@/hooks/useSelectedClientId';
 import { ActionButton } from '@/components/ui/action-button';
 
 const STATUSES = ['new', 'scheduled', 'inspected', 'quoted', 'approved', 'rejected', 'in_progress', 'completed', 'cancelled'];
@@ -24,21 +25,10 @@ export default function JobsPage() {
   const { technicians, listTechnicians } = useTechnicians();
   const { customers, listCustomers } = useCustomers();
   const [showForm, setShowForm] = useState(false);
-  const [clientId, setClientId] = useState('');
+  const clientId = useSelectedClientId();
   const [statusFilter, setStatusFilter] = useState('');
   const [technicianFilter, setTechnicianFilter] = useState('');
   const [formData, setFormData] = useState(EMPTY_FORM);
-
-  useEffect(() => {
-    const stored = localStorage.getItem('selectedClientId');
-    if (stored) {
-      setClientId(stored);
-      listJobs(stored);
-      listTechnicians(stored);
-      listCustomers({ clientId: stored });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   useEffect(() => {
     if (!clientId) return;
@@ -46,8 +36,10 @@ export default function JobsPage() {
       status: statusFilter || undefined,
       technician_id: technicianFilter || undefined,
     });
+    listTechnicians(clientId);
+    listCustomers({ clientId });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [statusFilter, technicianFilter]);
+  }, [clientId, statusFilter, technicianFilter]);
 
   const handleTechnicianChange = async (jobId: string, technicianId: string) => {
     if (!clientId) return;

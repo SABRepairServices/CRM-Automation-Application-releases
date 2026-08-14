@@ -3,26 +3,24 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useCustomers } from '@/hooks/useCustomers';
+import { useSelectedClientId } from '@/hooks/useSelectedClientId';
 import { ActionButton } from '@/components/ui/action-button';
+
+const EMPTY_FORM = { name: '', phone: '', whatsapp: '', email: '', area: '', address: '', source: 'google', billing_type: 'individual' as 'individual' | 'contractor', notes: '' };
 
 export default function CustomersPage() {
   const router = useRouter();
-  const [clientId, setClientId] = useState('');
+  const clientId = useSelectedClientId();
   const { customers, stats, loading, error, listCustomers, createCustomer, updateCustomer, deleteCustomer, getStats } = useCustomers();
 
-  useEffect(() => {
-    const stored = localStorage.getItem('selectedClientId');
-    if (stored) setClientId(stored);
-  }, []);
-
   const [showForm, setShowForm] = useState(false);
-  const [formData, setFormData] = useState({ name: '', phone: '', email: '', area: '', address: '', source: 'google', billing_type: 'individual' as 'individual' | 'contractor' });
+  const [formData, setFormData] = useState(EMPTY_FORM);
   const [editingId, setEditingId] = useState<string | null>(null);
 
   useEffect(() => {
     if (clientId) {
       listCustomers({ clientId });
-      getStats();
+      getStats(clientId);
     }
   }, [clientId, listCustomers, getStats]);
 
@@ -36,7 +34,7 @@ export default function CustomersPage() {
       } else {
         await createCustomer({ ...formData, status: 'new' }, clientId);
       }
-      setFormData({ name: '', phone: '', email: '', area: '', address: '', source: 'google', billing_type: 'individual' });
+      setFormData(EMPTY_FORM);
       setShowForm(false);
       await listCustomers({ clientId });
       await getStats(clientId);
@@ -61,11 +59,13 @@ export default function CustomersPage() {
     setFormData({
       name: customer.name,
       phone: customer.phone,
+      whatsapp: customer.whatsapp || '',
       email: customer.email || '',
-      area: (customer as any).area || '',
-      address: (customer as any).address || '',
+      area: customer.area || '',
+      address: customer.address || '',
       source: customer.source,
       billing_type: customer.billing_type || 'individual',
+      notes: customer.notes || '',
     });
     setEditingId(customer.id);
     setShowForm(true);
@@ -86,7 +86,7 @@ export default function CustomersPage() {
             onClick={() => {
               setShowForm(!showForm);
               setEditingId(null);
-              setFormData({ name: '', phone: '', email: '', area: '', address: '', source: 'google', billing_type: 'individual' });
+              setFormData(EMPTY_FORM);
             }}
           />
         </div>
@@ -120,6 +120,10 @@ export default function CustomersPage() {
               <div>
                 <label className="block text-xs font-medium text-slate-500 mb-1">Phone</label>
                 <input type="tel" value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} required className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-md text-sm text-white placeholder:text-slate-600" />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-slate-500 mb-1">WhatsApp</label>
+                <input type="tel" placeholder="If different from phone" value={formData.whatsapp} onChange={(e) => setFormData({ ...formData, whatsapp: e.target.value })} className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-md text-sm text-white placeholder:text-slate-600" />
               </div>
               <div>
                 <label className="block text-xs font-medium text-slate-500 mb-1">Email</label>
@@ -156,6 +160,10 @@ export default function CustomersPage() {
                 <input type="text" value={formData.address} onChange={(e) => setFormData({ ...formData, address: e.target.value })} className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-md text-sm text-white placeholder:text-slate-600" />
               </div>
               <div className="sm:col-span-2">
+                <label className="block text-xs font-medium text-slate-500 mb-1">Notes</label>
+                <textarea value={formData.notes} onChange={(e) => setFormData({ ...formData, notes: e.target.value })} rows={2} className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-md text-sm text-white placeholder:text-slate-600" />
+              </div>
+              <div className="sm:col-span-2">
                 <ActionButton type="submit" disabled={loading} text={loading ? 'Saving...' : editingId ? 'Update Customer' : 'Create Customer'} />
               </div>
             </form>
@@ -172,7 +180,15 @@ export default function CustomersPage() {
             <span className="text-xs text-slate-400">{customers.length} total</span>
           </div>
 
-          {customers.length === 0 ? (
+          {!clientId ? (
+            <div className="px-5 py-12 text-center">
+              <p className="text-sm text-slate-500">Select a client from the dropdown in the header to see customers.</p>
+            </div>
+          ) : loading ? (
+            <div className="px-5 py-12 text-center">
+              <p className="text-sm text-slate-500">Loading...</p>
+            </div>
+          ) : customers.length === 0 ? (
             <div className="px-5 py-12 text-center">
               <p className="text-sm text-slate-500">No customers yet. Add one to get started.</p>
             </div>
@@ -198,7 +214,7 @@ export default function CustomersPage() {
                   >
                     <td className="px-5 py-3 font-medium text-white">{customer.name}</td>
                     <td className="px-5 py-3 text-slate-400">{customer.phone}</td>
-                    <td className="px-5 py-3 text-slate-400">{(customer as any).area || '—'}</td>
+                    <td className="px-5 py-3 text-slate-400">{customer.area || '—'}</td>
                     <td className="px-5 py-3 text-slate-400 capitalize">{customer.source}</td>
                     <td className="px-5 py-3">
                       <span
@@ -227,10 +243,10 @@ export default function CustomersPage() {
                       </span>
                     </td>
                     <td className="px-5 py-3 text-right space-x-3" onClick={(e) => e.stopPropagation()}>
-                      <button onClick={() => handleEdit(customer)} className="text-xs font-medium text-blue-400 hover:text-blue-700">
+                      <button onClick={() => handleEdit(customer)} className="text-xs font-medium text-blue-400 hover:text-blue-300">
                         Edit
                       </button>
-                      <button onClick={() => handleDelete(customer.id)} className="text-xs font-medium text-red-400 hover:text-red-400">
+                      <button onClick={() => handleDelete(customer.id)} className="text-xs font-medium text-red-400 hover:text-red-300">
                         Delete
                       </button>
                     </td>

@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTechnicians, Technician } from '@/hooks/useTechnicians';
 import { useJobs } from '@/hooks/useJobs';
+import { useSelectedClientId } from '@/hooks/useSelectedClientId';
 import { ActionButton } from '@/components/ui/action-button';
 
 const ACTIVE_STATUSES = ['scheduled', 'inspected', 'quoted', 'approved', 'in_progress'];
@@ -12,20 +13,18 @@ export default function TechniciansPage() {
   const router = useRouter();
   const { technicians, loading, error, listTechnicians, createTechnician, updateTechnician, deleteTechnician } = useTechnicians();
   const { jobs, listJobs } = useJobs();
+  const clientId = useSelectedClientId();
   const [showForm, setShowForm] = useState(false);
-  const [clientId, setClientId] = useState('');
   const [formData, setFormData] = useState({ name: '', phone: '', email: '', speciality: '' });
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editData, setEditData] = useState({ name: '', phone: '', email: '', speciality: '' });
 
   useEffect(() => {
-    const stored = localStorage.getItem('selectedClientId');
-    if (stored) {
-      setClientId(stored);
-      listTechnicians(stored);
-      listJobs(stored);
+    if (clientId) {
+      listTechnicians(clientId);
+      listJobs(clientId);
     }
-  }, [listTechnicians, listJobs]);
+  }, [clientId, listTechnicians, listJobs]);
 
   const activeJobCount = (techId: string) =>
     jobs.filter((j) => j.technician_id === techId && ACTIVE_STATUSES.includes(j.status)).length;
@@ -58,7 +57,21 @@ export default function TechniciansPage() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Remove this technician?')) return;
+    const active = activeJobCount(id);
+    if (active > 0) {
+      const deactivateInstead = confirm(
+        `This technician has ${active} active job${active === 1 ? '' : 's'}. Removing them won't reassign those jobs.\n\nClick OK to deactivate instead (keeps their history, hides them from new assignments), or Cancel to stop.`
+      );
+      if (deactivateInstead) {
+        try {
+          await updateTechnician(id, { is_active: false }, clientId);
+        } catch (err) {
+          console.error('Error deactivating technician:', err);
+        }
+      }
+      return;
+    }
+    if (!confirm('Remove this technician? This cannot be undone.')) return;
     try {
       await deleteTechnician(id, clientId);
     } catch (err) {
@@ -149,7 +162,15 @@ export default function TechniciansPage() {
             <span className="text-xs text-slate-400">{technicians.length} total</span>
           </div>
 
-          {technicians.length === 0 ? (
+          {!clientId ? (
+            <div className="px-5 py-12 text-center">
+              <p className="text-sm text-slate-500">Select a client from the dropdown in the header to see technicians.</p>
+            </div>
+          ) : loading ? (
+            <div className="px-5 py-12 text-center">
+              <p className="text-sm text-slate-500">Loading...</p>
+            </div>
+          ) : technicians.length === 0 ? (
             <div className="px-5 py-12 text-center">
               <p className="text-sm text-slate-500">No technicians yet. Add one to start assigning jobs.</p>
             </div>
@@ -203,7 +224,9 @@ export default function TechniciansPage() {
                           <td className="px-5 py-3 text-slate-400">{tech.email || '—'}</td>
                           <td className="px-5 py-3 text-slate-400">{tech.speciality || '—'}</td>
                           <td className="px-5 py-3">
-                            {active > 0 ? (
+                            {!tech.is_active ? (
+                              <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-slate-800 text-slate-500">Inactive</span>
+                            ) : active > 0 ? (
                               <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-amber-500/10 text-amber-400">{active} active</span>
                             ) : (
                               <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-slate-800 text-slate-500">Free</span>
@@ -211,7 +234,10 @@ export default function TechniciansPage() {
                           </td>
                           <td className="px-5 py-3 text-right space-x-3 whitespace-nowrap">
                             <button onClick={() => startEdit(tech)} className="text-blue-400 hover:text-blue-300 text-xs font-medium">Edit</button>
-                            <button onClick={() => handleDelete(tech.id)} className="text-red-400 hover:text-red-400 text-xs font-medium">Remove</button>
+                            {!tech.is_active && (
+                              <button onClick={() => updateTechnician(tech.id, { is_active: true }, clientId)} className="text-emerald-400 hover:text-emerald-300 text-xs font-medium">Reactivate</button>
+                            )}
+                            <button onClick={() => handleDelete(tech.id)} className="text-red-400 hover:text-red-300 text-xs font-medium">Remove</button>
                           </td>
                         </>
                       )}

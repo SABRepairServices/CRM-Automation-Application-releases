@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useClients } from '@/hooks/useClients';
+import { CLIENT_CHANGED_EVENT } from '@/hooks/useSelectedClientId';
 
 export function ClientSelector() {
   const { clients, listClients } = useClients();
@@ -19,6 +20,7 @@ export function ClientSelector() {
   const handleChange = (clientId: string) => {
     setSelectedId(clientId);
     localStorage.setItem('selectedClientId', clientId);
+    window.dispatchEvent(new CustomEvent(CLIENT_CHANGED_EVENT));
   };
 
   if (clients.length === 0) return null;
