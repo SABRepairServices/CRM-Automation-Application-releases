@@ -46,7 +46,7 @@ export default function JobsPage() {
     try {
       // `undefined` gets dropped by JSON.stringify before the request is
       // even sent, so the server never sees the field and the old
-      // assignment silently survives â€" `null` is required to actually
+      // assignment silently survives — `null` is required to actually
       // clear it.
       await updateJob(clientId, jobId, { technician_id: technicianId || (null as unknown as string) });
     } catch (err) {
@@ -136,9 +136,9 @@ export default function JobsPage() {
                       required
                       className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-md text-sm text-white focus:outline-none focus:ring-1 focus:ring-blue-500"
                     >
-                      <option value="" disabled>Select a customerâ€¦</option>
+                      <option value="" disabled>Select a customer…</option>
                       {customers.map((c) => (
-                        <option key={c.id} value={c.id}>{c.name}{c.phone ? ` â€" ${c.phone}` : ''}</option>
+                        <option key={c.id} value={c.id}>{c.name}{c.phone ? ` — ${c.phone}` : ''}</option>
                       ))}
                     </select>
                     {customers.length === 0 && (
@@ -245,8 +245,8 @@ export default function JobsPage() {
                             <div className="text-xs text-slate-500 font-normal">{[job.brand, job.model].filter(Boolean).join(' ')}</div>
                           )}
                         </td>
-                        <td className="px-5 py-3 text-slate-400">{job.customer_name || 'â€"'}</td>
-                        <td className="px-5 py-3 text-slate-400 max-w-xs truncate">{job.reported_fault || 'â€"'}</td>
+                        <td className="px-5 py-3 text-slate-400">{job.customer_name || '—'}</td>
+                        <td className="px-5 py-3 text-slate-400 max-w-xs truncate">{job.reported_fault || '—'}</td>
                         <td className="px-5 py-3 text-slate-400">{new Date(job.created_at).toLocaleDateString()}</td>
                         <td className="px-5 py-3">
                           <select

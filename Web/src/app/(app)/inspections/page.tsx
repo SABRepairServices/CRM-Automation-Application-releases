@@ -72,9 +72,9 @@ export default function InspectionsPage() {
     try {
       const updated = await updateReport(clientId, reportId, { status: 'final' });
       if (updated.generated_quotation) {
-        setFinalizeMessage(`Finalized â€" quotation ${updated.generated_quotation.quotation_number} was created automatically.`);
+        setFinalizeMessage(`Finalized — quotation ${updated.generated_quotation.quotation_number} was created automatically.`);
       } else {
-        setFinalizeMessage('Finalized â€" a quotation already existed for this job.');
+        setFinalizeMessage('Finalized — a quotation already existed for this job.');
       }
     } catch (err) {
       console.error('Error finalizing inspection report:', err);
@@ -101,7 +101,7 @@ export default function InspectionsPage() {
           </div>
         </div>
 
-        {/* New report form â€" mirrors the original Excel Inspection Report layout */}
+        {/* New report form — mirrors the original Excel Inspection Report layout */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6 items-stretch">
         <div className="bg-slate-900 border border-slate-800 rounded-md">
             <div className="px-5 py-3 border-b border-slate-800">
@@ -181,7 +181,7 @@ export default function InspectionsPage() {
                 </button>
               </div>
 
-              {/* Tax summary block â€" matches the Excel "Tax Summary / Standard Rate (5%)" section */}
+              {/* Tax summary block — matches the Excel "Tax Summary / Standard Rate (5%)" section */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-medium text-slate-500 mb-1">Taxable Amount (AED)</label>
@@ -290,10 +290,10 @@ export default function InspectionsPage() {
                     className="border-b border-slate-800 last:border-0 cursor-pointer hover:bg-slate-950"
                   >
                     <td className="px-5 py-3 font-medium text-white">{r.report_number}</td>
-                    <td className="px-5 py-3 text-slate-400">{r.customer_name || 'â€"'}</td>
-                    <td className="px-5 py-3 text-slate-400">{r.appliance_type || 'â€"'}</td>
+                    <td className="px-5 py-3 text-slate-400">{r.customer_name || '—'}</td>
+                    <td className="px-5 py-3 text-slate-400">{r.appliance_type || '—'}</td>
                     <td className="px-5 py-3 text-slate-400">
-                      {r.inspected_at ? new Date(r.inspected_at).toLocaleDateString() : 'â€"'}
+                      {r.inspected_at ? new Date(r.inspected_at).toLocaleDateString() : '—'}
                     </td>
                     <td className="px-5 py-3 text-right text-slate-400">AED {Number(r.tax_amount).toFixed(2)}</td>
                     <td className="px-5 py-3">

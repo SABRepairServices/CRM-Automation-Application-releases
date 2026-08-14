@@ -147,8 +147,8 @@ export default function CustomersPage() {
                   onChange={(e) => setFormData({ ...formData, billing_type: e.target.value as 'individual' | 'contractor' })}
                   className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-md text-sm text-white"
                 >
-                  <option value="individual">Individual â€" invoiced immediately</option>
-                  <option value="contractor">Contractor â€" invoiced monthly (batched)</option>
+                  <option value="individual">Individual — invoiced immediately</option>
+                  <option value="contractor">Contractor — invoiced monthly (batched)</option>
                 </select>
               </div>
               <div>
@@ -214,7 +214,7 @@ export default function CustomersPage() {
                   >
                     <td className="px-5 py-3 font-medium text-white">{customer.name}</td>
                     <td className="px-5 py-3 text-slate-400">{customer.phone}</td>
-                    <td className="px-5 py-3 text-slate-400">{customer.area || 'â€"'}</td>
+                    <td className="px-5 py-3 text-slate-400">{customer.area || '—'}</td>
                     <td className="px-5 py-3 text-slate-400 capitalize">{customer.source}</td>
                     <td className="px-5 py-3">
                       <span

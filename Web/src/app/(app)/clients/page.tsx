@@ -109,8 +109,8 @@ export default function ClientsPage() {
                 {clients.map((client) => (
                   <tr key={client.id} className="border-b border-slate-800 last:border-0">
                     <td className="px-5 py-3 font-medium text-white">{client.name}</td>
-                    <td className="px-5 py-3 text-slate-400">{client.email || 'â€"'}</td>
-                    <td className="px-5 py-3 text-slate-400">{client.phone || 'â€"'}</td>
+                    <td className="px-5 py-3 text-slate-400">{client.email || '—'}</td>
+                    <td className="px-5 py-3 text-slate-400">{client.phone || '—'}</td>
                     <td className="px-5 py-3 text-right">
                       {selected === client.id ? (
                         <span className="text-xs font-medium text-emerald-400">Active</span>

@@ -96,7 +96,7 @@ export default function TechniciansPage() {
           />
         </div>
 
-        {/* Add form â€" plain bordered box, no gradients/animation */}
+        {/* Add form — plain bordered box, no gradients/animation */}
         {showForm && (
           <div className="bg-slate-900 border border-slate-800 rounded-md mb-6">
             <div className="px-5 py-3 border-b border-slate-800">
@@ -155,7 +155,7 @@ export default function TechniciansPage() {
           </div>
         )}
 
-        {/* List â€" bordered rows inside a single box, table-like, no shadows/animation */}
+        {/* List — bordered rows inside a single box, table-like, no shadows/animation */}
         <div className="bg-slate-900 border border-slate-800 rounded-md overflow-hidden">
           <div className="px-5 py-3 border-b border-slate-800 flex items-center justify-between">
             <h2 className="text-sm font-semibold text-slate-300">All Technicians</h2>
@@ -206,7 +206,7 @@ export default function TechniciansPage() {
                           <td className="px-5 py-2">
                             <input value={editData.speciality} onChange={(e) => setEditData({ ...editData, speciality: e.target.value })} className="w-full px-2 py-1 bg-slate-950 border border-slate-800 rounded text-sm text-white" />
                           </td>
-                          <td className="px-5 py-3 text-slate-500">â€"</td>
+                          <td className="px-5 py-3 text-slate-500">—</td>
                           <td className="px-5 py-3 text-right space-x-3 whitespace-nowrap">
                             <button onClick={() => handleSaveEdit(tech.id)} className="text-emerald-400 hover:text-emerald-300 text-xs font-medium">Save</button>
                             <button onClick={() => setEditingId(null)} className="text-slate-400 hover:text-slate-300 text-xs font-medium">Cancel</button>
@@ -221,8 +221,8 @@ export default function TechniciansPage() {
                             {tech.name}
                           </td>
                           <td className="px-5 py-3 text-slate-400">{tech.phone}</td>
-                          <td className="px-5 py-3 text-slate-400">{tech.email || 'â€"'}</td>
-                          <td className="px-5 py-3 text-slate-400">{tech.speciality || 'â€"'}</td>
+                          <td className="px-5 py-3 text-slate-400">{tech.email || '—'}</td>
+                          <td className="px-5 py-3 text-slate-400">{tech.speciality || '—'}</td>
                           <td className="px-5 py-3">
                             {!tech.is_active ? (
                               <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-slate-800 text-slate-500">Inactive</span>

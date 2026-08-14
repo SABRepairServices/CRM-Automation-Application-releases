@@ -61,9 +61,9 @@ export default function QuotesPage() {
     try {
       const updated = await updateQuotation(clientId, quotationId, { status: 'approved', approval_channel: 'app' });
       if (updated.generated_invoice) {
-        setApproveMessage(`Approved â€" invoice ${updated.generated_invoice.invoice_number} was created automatically.`);
+        setApproveMessage(`Approved — invoice ${updated.generated_invoice.invoice_number} was created automatically.`);
       } else {
-        setApproveMessage('Approved â€" an invoice already existed for this job.');
+        setApproveMessage('Approved — an invoice already existed for this job.');
       }
     } catch (err) {
       console.error('Error approving quotation:', err);
