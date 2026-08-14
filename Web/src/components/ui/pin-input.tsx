@@ -45,14 +45,18 @@ export function PinInput({ length, value, onChange, onComplete, autoFocus }: Pin
       const chars = clean.split('');
       const next = digits.slice();
       let cursor = index;
+      let filledAnyEmpty = false;
       for (const c of chars) {
         if (cursor >= length) break;
+        if (!next[cursor]) filledAnyEmpty = true;
         next[cursor] = c;
         cursor += 1;
       }
       const joined = next.join('');
       onChange(joined);
-      if (joined.length === length) onComplete?.(joined);
+      // Same guard as single-digit: only complete if we filled at least one
+      // previously-empty slot and the PIN is now full.
+      if (filledAnyEmpty && joined.length === length) onComplete?.(joined);
       inputRefs.current[Math.min(cursor, length - 1)]?.focus();
       return;
     }
