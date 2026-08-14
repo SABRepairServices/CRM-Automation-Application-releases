@@ -17,6 +17,7 @@ export default function QuotesPage() {
   const [previewClient, setPreviewClient] = useState<Client | null>(null);
   const clientId = useSelectedClientId();
   const [approveMessage, setApproveMessage] = useState('');
+  const [formError, setFormError] = useState('');
   const [formData, setFormData] = useState({
     job_id: '',
     items: [{ description: '', item_type: 'part' as const, quantity: 1, unit_price: 0 }],
@@ -42,10 +43,16 @@ export default function QuotesPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!clientId) return;
+    setFormError('');
+    const validItems = formData.items.filter((i) => i.description);
+    if (validItems.length === 0) {
+      setFormError('Add at least one line item before saving.');
+      return;
+    }
     try {
       await createQuotation(clientId, {
         job_id: formData.job_id,
-        items: formData.items.filter((i) => i.description),
+        items: validItems,
         discount_amount: formData.discount_amount,
         vat_percent: formData.vat_percent,
         notes: formData.notes,
@@ -186,16 +193,18 @@ export default function QuotesPage() {
                           <td className="px-3 py-2">
                             <input
                               type="number"
+                              min={1}
                               value={item.quantity}
-                              onChange={(e) => { const next = [...formData.items]; next[idx] = { ...next[idx], quantity: parseInt(e.target.value) || 1 }; setFormData({ ...formData, items: next }); }}
+                              onChange={(e) => { const next = [...formData.items]; next[idx] = { ...next[idx], quantity: Math.max(1, parseInt(e.target.value) || 1) }; setFormData({ ...formData, items: next }); }}
                               className="w-full px-2 py-1 bg-slate-950 border border-slate-800 rounded text-sm text-white placeholder:text-slate-600"
                             />
                           </td>
                           <td className="px-3 py-2">
                             <input
                               type="number"
+                              min={0}
                               value={item.unit_price}
-                              onChange={(e) => { const next = [...formData.items]; next[idx] = { ...next[idx], unit_price: parseFloat(e.target.value) || 0 }; setFormData({ ...formData, items: next }); }}
+                              onChange={(e) => { const next = [...formData.items]; next[idx] = { ...next[idx], unit_price: Math.max(0, parseFloat(e.target.value) || 0) }; setFormData({ ...formData, items: next }); }}
                               className="w-full px-2 py-1 bg-slate-950 border border-slate-800 rounded text-sm text-white placeholder:text-slate-600"
                             />
                           </td>
@@ -216,11 +225,11 @@ export default function QuotesPage() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-medium text-slate-500 mb-1">Discount (AED)</label>
-                  <input type="number" value={formData.discount_amount} onChange={(e) => setFormData({ ...formData, discount_amount: parseFloat(e.target.value) || 0 })} className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-md text-sm text-white placeholder:text-slate-600" />
+                  <input type="number" min={0} value={formData.discount_amount} onChange={(e) => setFormData({ ...formData, discount_amount: Math.max(0, parseFloat(e.target.value) || 0) })} className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-md text-sm text-white placeholder:text-slate-600" />
                 </div>
                 <div>
                   <label className="block text-xs font-medium text-slate-500 mb-1">VAT %</label>
-                  <input type="number" value={formData.vat_percent} onChange={(e) => setFormData({ ...formData, vat_percent: parseFloat(e.target.value) || 0 })} className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-md text-sm text-white placeholder:text-slate-600" />
+                  <input type="number" min={0} max={100} value={formData.vat_percent} onChange={(e) => setFormData({ ...formData, vat_percent: Math.min(100, Math.max(0, parseFloat(e.target.value) || 0)) })} className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-md text-sm text-white placeholder:text-slate-600" />
                 </div>
               </div>
 
@@ -231,6 +240,7 @@ export default function QuotesPage() {
 
               <p className="text-xs text-slate-600">Standard terms &amp; conditions are shown on the preview and applied automatically.</p>
 
+              {formError && <p className="text-xs text-red-400">{formError}</p>}
               <ActionButton type="submit" disabled={loading} text={loading ? 'Creating...' : 'Create Quotation'} />
             </form>
           </div>

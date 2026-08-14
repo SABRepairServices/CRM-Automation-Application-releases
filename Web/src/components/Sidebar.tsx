@@ -135,7 +135,7 @@ export function Sidebar() {
     <aside
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
-      className={`fixed left-0 top-16 h-[calc(100vh-4rem)] bg-[#0d1220] border-r border-white/5 z-30 flex flex-col transition-[width] duration-500 ease-in-out ${
+      className={`fixed left-0 top-16 h-[calc(100vh-4rem)] bg-slate-900 border-r border-slate-800 z-30 flex flex-col transition-[width] duration-500 ease-in-out ${
         wide ? 'w-56 shadow-[8px_0_24px_-8px_rgba(0,0,0,0.5)]' : 'w-16'
       }`}
     >

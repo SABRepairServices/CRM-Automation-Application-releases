@@ -32,8 +32,10 @@ export default function SettingsPage() {
   const [clientsChecked, setClientsChecked] = useState(false);
   const [formData, setFormData] = useState(EMPTY_FORM);
   const [saved, setSaved] = useState(false);
+  const [logoError, setLogoError] = useState('');
   const [backupFolder, setBackupFolder] = useState<string | null>(null);
   const [changingFolder, setChangingFolder] = useState(false);
+  const [backupFolderSaved, setBackupFolderSaved] = useState(false);
   const [currentPin, setCurrentPin] = useState('');
   const [newPin, setNewPin] = useState('');
   const [confirmNewPin, setConfirmNewPin] = useState('');
@@ -94,7 +96,11 @@ export default function SettingsPage() {
     setChangingFolder(true);
     try {
       const folder = await chooseBackupFolder();
-      if (folder) setBackupFolder(folder);
+      if (folder) {
+        setBackupFolder(folder);
+        setBackupFolderSaved(true);
+        setTimeout(() => setBackupFolderSaved(false), 3000);
+      }
     } finally {
       setChangingFolder(false);
     }
@@ -142,6 +148,9 @@ export default function SettingsPage() {
       setConfirmNewPin('');
     } catch (err: any) {
       setPinError(err?.response?.data?.message || 'Could not change PIN');
+      setCurrentPin('');
+      setNewPin('');
+      setConfirmNewPin('');
     } finally {
       setChangingPin(false);
     }
@@ -165,6 +174,11 @@ export default function SettingsPage() {
       await refreshPinStatus();
       setSetupPin('');
       setSetupConfirmPin('');
+      // pinConfigured flips true right after this, swapping this card out
+      // for changePinSection — set the shared success message now so it
+      // carries over and actually confirms the PIN was saved, instead of
+      // the card-swap being the only (easy to miss) feedback.
+      setPinSuccess('PIN set successfully.');
     } catch (err: any) {
       setSetupError(err?.response?.data?.message || 'Could not set PIN');
       setSetupPin('');
@@ -321,12 +335,23 @@ export default function SettingsPage() {
                     onChange={(e) => {
                       const file = e.target.files?.[0];
                       if (!file) return;
+                      setLogoError('');
+                      if (!file.type.startsWith('image/')) {
+                        setLogoError('Please choose an image file.');
+                        return;
+                      }
+                      if (file.size > 2 * 1024 * 1024) {
+                        setLogoError('Logo must be under 2MB — try a smaller image.');
+                        return;
+                      }
                       const reader = new FileReader();
                       reader.onload = () => setFormData((prev) => ({ ...prev, logo_url: String(reader.result) }));
+                      reader.onerror = () => setLogoError('Could not read that file — try again.');
                       reader.readAsDataURL(file);
                     }}
                     className="w-full text-xs text-slate-400 file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-medium file:bg-blue-600 file:text-white hover:file:bg-blue-500 file:cursor-pointer cursor-pointer"
                   />
+                  {logoError && <p className="text-xs text-red-400 mt-1">{logoError}</p>}
                 </div>
                 <div>
                   <label className="block text-xs font-medium text-slate-500 mb-1">or paste a Logo URL</label>
@@ -403,6 +428,9 @@ export default function SettingsPage() {
                   onClick={handleChooseFolder}
                 />
               </div>
+              {backupFolderSaved && (
+                <p className="text-xs text-emerald-400 mt-2">Backup folder updated.</p>
+              )}
             </div>
           </div>
         )}

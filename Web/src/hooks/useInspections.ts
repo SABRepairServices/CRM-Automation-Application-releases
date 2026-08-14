@@ -24,7 +24,7 @@ export interface InspectionReport {
   tax_rate: number;
   tax_amount: number;
   notes?: string;
-  status: 'draft' | 'final';
+  status: 'draft' | 'final' | 'sent';
   findings?: InspectionFinding[];
   generated_quotation?: { id: string; quotation_number: string } | null;
   created_at: string;

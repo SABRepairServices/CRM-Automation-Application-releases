@@ -17,6 +17,7 @@ export default function InspectionsPage() {
   const [previewClient, setPreviewClient] = useState<Client | null>(null);
   const clientId = useSelectedClientId();
   const [finalizeMessage, setFinalizeMessage] = useState('');
+  const [formError, setFormError] = useState('');
   const [formData, setFormData] = useState({
     job_id: '',
     inspected_by: '',
@@ -42,11 +43,17 @@ export default function InspectionsPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!clientId) return;
+    setFormError('');
+    const validFindings = formData.findings.filter((f) => f.description);
+    if (validFindings.length === 0) {
+      setFormError('Add at least one finding before saving.');
+      return;
+    }
     try {
       await createReport(clientId, {
         job_id: formData.job_id,
         inspected_by: formData.inspected_by,
-        findings: formData.findings.filter((f) => f.description),
+        findings: validFindings,
         taxable_amount: formData.taxable_amount,
         tax_rate: formData.tax_rate,
         notes: formData.notes,
@@ -196,8 +203,9 @@ export default function InspectionsPage() {
                   <label className="block text-xs font-medium text-slate-500 mb-1">Taxable Amount (AED)</label>
                   <input
                     type="number"
+                    min={0}
                     value={formData.taxable_amount}
-                    onChange={(e) => setFormData({ ...formData, taxable_amount: parseFloat(e.target.value) || 0 })}
+                    onChange={(e) => setFormData({ ...formData, taxable_amount: Math.max(0, parseFloat(e.target.value) || 0) })}
                     className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-md text-sm text-white placeholder:text-slate-600 focus:outline-none focus:ring-1 focus:ring-blue-500"
                   />
                 </div>
@@ -205,8 +213,10 @@ export default function InspectionsPage() {
                   <label className="block text-xs font-medium text-slate-500 mb-1">Tax Rate (%)</label>
                   <input
                     type="number"
+                    min={0}
+                    max={100}
                     value={formData.tax_rate}
-                    onChange={(e) => setFormData({ ...formData, tax_rate: parseFloat(e.target.value) || 0 })}
+                    onChange={(e) => setFormData({ ...formData, tax_rate: Math.min(100, Math.max(0, parseFloat(e.target.value) || 0)) })}
                     className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-md text-sm text-white placeholder:text-slate-600 focus:outline-none focus:ring-1 focus:ring-blue-500"
                   />
                 </div>
@@ -222,6 +232,7 @@ export default function InspectionsPage() {
                 />
               </div>
 
+              {formError && <p className="text-xs text-red-400">{formError}</p>}
               <ActionButton type="submit" disabled={loading} text={loading ? 'Saving...' : 'Save Inspection Report'} />
             </form>
           </div>
