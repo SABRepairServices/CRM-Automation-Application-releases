@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { getAppVersion, installUpdate, isElectron, onUpdateDownloaded } from '@/lib/electronBridge';
+import { getAppVersion, installUpdate, isElectron, onUpdateDownloaded, UpdateInfo } from '@/lib/electronBridge';
 import { useSidebarWidth } from '@/context/SidebarContext';
 import {
   LayoutDashboard,
@@ -80,7 +80,7 @@ export function Sidebar() {
   const pathname = usePathname();
   const isActive = (path: string) => pathname === path;
   const [version, setVersion] = useState<string | null>(null);
-  const [updateReady, setUpdateReady] = useState<string | null>(null);
+  const [updateReady, setUpdateReady] = useState<UpdateInfo | null>(null);
 
   // Three-state expand logic: collapsed icon rail by default, hover
   // previews it wide, and pinning locks it wide until unpinned. Closing it
@@ -103,7 +103,7 @@ export function Sidebar() {
   useEffect(() => {
     if (!isElectron()) return;
     getAppVersion().then(setVersion);
-    return onUpdateDownloaded((newVersion) => setUpdateReady(newVersion));
+    return onUpdateDownloaded((info) => setUpdateReady(info));
   }, []);
 
   const handleMouseEnter = () => {
@@ -183,11 +183,19 @@ export function Sidebar() {
       </nav>
 
       {updateReady && wide && (
-        <div className="mx-2.5 mb-2.5 rounded-lg bg-blue-500/10 border border-blue-500/30 px-3 py-2.5">
-          <p className="text-xs text-blue-300 font-medium">Update ready — v{updateReady}</p>
+        <div className="mx-2.5 mb-2.5 rounded-lg bg-blue-500/10 border border-blue-500/30 px-3 py-2.5 space-y-1.5">
+          <div className="flex items-center gap-1.5">
+            <span className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse shrink-0" />
+            <p className="text-xs text-blue-300 font-semibold">Update ready &mdash; v{updateReady.version}</p>
+          </div>
+          {updateReady.releaseNotes && (
+            <p className="text-[10.5px] text-slate-400 leading-relaxed line-clamp-3"
+               dangerouslySetInnerHTML={{ __html: String(updateReady.releaseNotes).replace(/<[^>]+>/g, ' ').trim() }}
+            />
+          )}
           <button
             onClick={() => installUpdate()}
-            className="mt-1.5 w-full text-xs font-medium text-white bg-blue-600 hover:bg-blue-500 rounded-md px-2 py-1.5 transition-colors"
+            className="w-full text-xs font-medium text-white bg-blue-600 hover:bg-blue-500 rounded-md px-2 py-1.5 transition-colors"
           >
             Restart to update
           </button>

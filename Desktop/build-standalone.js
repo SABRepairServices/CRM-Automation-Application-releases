@@ -18,6 +18,10 @@ const WEB_DIR = path.join(ROOT, 'Web');
 const STAGE_DIR = path.join(__dirname, 'web-standalone');
 
 const API_URL = process.env.DESKTOP_API_URL || 'https://ips-api-uque.onrender.com/api';
+// Read straight from Desktop/package.json so the version badge always
+// matches whatever electron-updater will report — no separate file to keep
+// in sync by hand.
+const APP_VERSION = require('./package.json').version;
 
 function copyDir(src, dest) {
   fs.mkdirSync(dest, { recursive: true });
@@ -29,11 +33,11 @@ function copyDir(src, dest) {
   }
 }
 
-console.log(`[build-standalone] Building Web UI with NEXT_PUBLIC_API_URL=${API_URL}`);
+console.log(`[build-standalone] Building Web UI with NEXT_PUBLIC_API_URL=${API_URL}, NEXT_PUBLIC_APP_VERSION=${APP_VERSION}`);
 execSync('npm run build', {
   cwd: WEB_DIR,
   stdio: 'inherit',
-  env: { ...process.env, NEXT_PUBLIC_API_URL: API_URL },
+  env: { ...process.env, NEXT_PUBLIC_API_URL: API_URL, NEXT_PUBLIC_APP_VERSION: APP_VERSION },
 });
 
 console.log('[build-standalone] Staging standalone server...');

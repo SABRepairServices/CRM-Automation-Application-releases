@@ -22,7 +22,7 @@ declare global {
       openInBrowser: () => Promise<void>;
       installUpdate: () => Promise<void>;
       getAppVersion: () => Promise<string>;
-      onUpdateDownloaded: (callback: (payload: { version: string }) => void) => () => void;
+      onUpdateDownloaded: (callback: (payload: { version: string; releaseNotes?: string | null }) => void) => () => void;
     };
   }
 }
@@ -85,8 +85,13 @@ export async function installUpdate(): Promise<void> {
   }
 }
 
+export interface UpdateInfo {
+  version: string;
+  releaseNotes?: string | null;
+}
+
 /** Returns an unsubscribe function. No-op subscription outside Electron. */
-export function onUpdateDownloaded(callback: (version: string) => void): () => void {
+export function onUpdateDownloaded(callback: (info: UpdateInfo) => void): () => void {
   if (!isElectron()) return () => {};
-  return window.electronAPI!.onUpdateDownloaded((payload) => callback(payload.version));
+  return window.electronAPI!.onUpdateDownloaded((payload) => callback(payload));
 }

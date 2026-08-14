@@ -289,16 +289,19 @@ function setupAutoUpdates() {
   autoUpdater.on('update-downloaded', (info) => {
     log('[Update] version', info.version, 'downloaded — notifying the UI.');
     if (mainWindow && !mainWindow.isDestroyed()) {
-      mainWindow.webContents.send('update-downloaded', { version: info.version });
+      mainWindow.webContents.send('update-downloaded', {
+        version: info.version,
+        releaseNotes: info.releaseNotes || info.releaseName || null,
+      });
     }
   });
   autoUpdater.on('error', (err) => log('[Update] check failed (not fatal, app keeps running):', err.message));
 
   autoUpdater.checkForUpdates().catch((err) => log('[Update] initial check failed:', err.message));
-  // Re-check periodically for anyone who leaves the app open for days.
+  // Re-check every 3 minutes so updates land quickly after a release.
   setInterval(() => {
     autoUpdater.checkForUpdates().catch((err) => log('[Update] periodic check failed:', err.message));
-  }, 4 * 60 * 60 * 1000);
+  }, 3 * 60 * 1000);
 }
 
 async function boot() {
