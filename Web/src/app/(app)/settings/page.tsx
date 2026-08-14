@@ -42,9 +42,11 @@ export default function SettingsPage() {
   const [pinError, setPinError] = useState('');
   const [pinSuccess, setPinSuccess] = useState('');
   const [changingPin, setChangingPin] = useState(false);
+  const [changeFailCount, setChangeFailCount] = useState(0);
   const [setupPin, setSetupPin] = useState('');
   const [setupConfirmPin, setSetupConfirmPin] = useState('');
   const [setupError, setSetupError] = useState('');
+  const [setupFailCount, setSetupFailCount] = useState(0);
   const [settingUpPin, setSettingUpPin] = useState(false);
 
   const applyClient = (c: Client) => {
@@ -119,7 +121,11 @@ export default function SettingsPage() {
     }
   };
 
-  const handleChangePin = async () => {
+  const handleChangePin = async (freshConfirm?: string) => {
+    // freshConfirm is passed by onComplete before the React state update for
+    // confirmNewPin has propagated — if absent (button click), fall back to
+    // the already-current state value.
+    const confirmToCheck = freshConfirm ?? confirmNewPin;
     setPinError('');
     setPinSuccess('');
     if (currentPin.length !== 4) {
@@ -130,8 +136,10 @@ export default function SettingsPage() {
       setPinError('New PIN must be 4 digits');
       return;
     }
-    if (newPin !== confirmNewPin) {
+    if (newPin !== confirmToCheck) {
       setPinError('New PINs do not match');
+      setConfirmNewPin('');
+      setChangeFailCount((n) => n + 1);
       return;
     }
     setChangingPin(true);
@@ -163,9 +171,10 @@ export default function SettingsPage() {
       return;
     }
     if (fullConfirmPin !== setupPin) {
-      setSetupError('PINs do not match â€” try again');
+      setSetupError('PINs do not match — try again');
       setSetupPin('');
       setSetupConfirmPin('');
+      setSetupFailCount((n) => n + 1);
       return;
     }
     setSettingUpPin(true);
@@ -194,20 +203,20 @@ export default function SettingsPage() {
         <h2 className="text-sm font-semibold text-slate-300">Set a PIN</h2>
       </div>
       <div className="p-5 space-y-5">
-        <p className="text-xs text-slate-500">
-          No PIN is set yet, so the app opens straight to the dashboard. Set one here to lock it â€”
+        <p className=”text-xs text-slate-500”>
+          No PIN is set yet, so the app opens straight to the dashboard. Set one here to lock it —
           it&apos;ll be required the next time the app starts.
         </p>
         {setupError && (
-          <div className="bg-red-500/10 border border-red-200 text-red-400 text-sm px-4 py-3 rounded-md">{setupError}</div>
+          <div className=”bg-red-500/10 border border-red-200 text-red-400 text-sm px-4 py-3 rounded-md”>{setupError}</div>
         )}
         <div>
-          <label className="block text-xs font-medium text-slate-500 mb-2 text-center">New PIN</label>
-          <PinInput length={4} value={setupPin} onChange={setSetupPin} />
+          <label className=”block text-xs font-medium text-slate-500 mb-2 text-center”>New PIN</label>
+          <PinInput key={`setup-${setupFailCount}`} length={4} value={setupPin} onChange={setSetupPin} />
         </div>
         <div>
-          <label className="block text-xs font-medium text-slate-500 mb-2 text-center">Confirm PIN</label>
-          <PinInput length={4} value={setupConfirmPin} onChange={setSetupConfirmPin} onComplete={handleSetPin} />
+          <label className=”block text-xs font-medium text-slate-500 mb-2 text-center”>Confirm PIN</label>
+          <PinInput key={`setupconfirm-${setupFailCount}`} length={4} value={setupConfirmPin} onChange={setSetupConfirmPin} onComplete={handleSetPin} />
         </div>
         <ActionButton
           type="button"
@@ -232,18 +241,18 @@ export default function SettingsPage() {
           <div className="bg-emerald-500/10 border border-emerald-200 text-emerald-300 text-sm px-4 py-3 rounded-md">{pinSuccess}</div>
         )}
         <div>
-          <label className="block text-xs font-medium text-slate-500 mb-2 text-center">Current PIN</label>
-          <PinInput length={4} value={currentPin} onChange={setCurrentPin} />
+          <label className=”block text-xs font-medium text-slate-500 mb-2 text-center”>Current PIN</label>
+          <PinInput key={`cur-${changeFailCount}`} length={4} value={currentPin} onChange={setCurrentPin} />
         </div>
         <div>
-          <label className="block text-xs font-medium text-slate-500 mb-2 text-center">New PIN</label>
-          <PinInput length={4} value={newPin} onChange={setNewPin} />
+          <label className=”block text-xs font-medium text-slate-500 mb-2 text-center”>New PIN</label>
+          <PinInput key={`new-${changeFailCount}`} length={4} value={newPin} onChange={setNewPin} />
         </div>
         <div>
-          <label className="block text-xs font-medium text-slate-500 mb-2 text-center">Confirm New PIN</label>
-          <PinInput length={4} value={confirmNewPin} onChange={setConfirmNewPin} onComplete={handleChangePin} />
+          <label className=”block text-xs font-medium text-slate-500 mb-2 text-center”>Confirm New PIN</label>
+          <PinInput key={`confirm-${changeFailCount}`} length={4} value={confirmNewPin} onChange={setConfirmNewPin} onComplete={handleChangePin} />
         </div>
-        <p className="text-xs text-slate-500">Forgot your current PIN? There&apos;s no self-service reset â€” contact your developer to reset it directly.</p>
+        <p className=”text-xs text-slate-500”>Forgot your current PIN? There&apos;s no self-service reset — contact your developer to reset it directly.</p>
         <ActionButton type="button" onClick={handleChangePin} disabled={changingPin} text={changingPin ? 'Changing...' : 'Change PIN'} />
       </div>
     </div>

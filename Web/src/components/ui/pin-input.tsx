@@ -24,11 +24,14 @@ export function PinInput({ length, value, onChange, onComplete, autoFocus }: Pin
   }, [autoFocus]);
 
   const setDigit = (index: number, char: string) => {
+    const wasEmpty = !digits[index];
     const next = digits.slice();
     next[index] = char;
     const joined = next.join('');
     onChange(joined);
-    if (joined.length === length) onComplete?.(joined);
+    // Only complete when filling a previously-empty slot — not when correcting
+    // an already-filled box, which would fire submit mid-edit.
+    if (char && wasEmpty && joined.length === length) onComplete?.(joined);
   };
 
   const handleChange = (index: number, raw: string) => {
