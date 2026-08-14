@@ -109,7 +109,8 @@ export default function InspectionDocumentPage() {
             <div>
               <p className="text-xs font-semibold text-slate-500 uppercase mb-1">Report No</p>
               <p className="text-white font-medium">{report.report_number}</p>
-              <p className="text-xs text-slate-500 mt-2">
+              <p className="text-xs font-semibold text-slate-500 uppercase mt-2 mb-1">Date</p>
+              <p className="text-white font-medium">
                 {report.inspected_at ? new Date(report.inspected_at).toLocaleDateString() : '—'}
               </p>
             </div>

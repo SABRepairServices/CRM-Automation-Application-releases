@@ -17,10 +17,17 @@ export function Header() {
   const [version, setVersion] = useState<string | null>(null);
   const [client, setClient] = useState<Client | null>(null);
   const [badgeLogoFailed, setBadgeLogoFailed] = useState(false);
+  // Starts false so server and client agree on first paint (SSR has no
+  // window, so isElectron() is always false there) — computing this inline
+  // in JSX instead would disagree with the server render as soon as the
+  // Electron preload script injects window.electronAPI, triggering a
+  // hydration mismatch on this button.
+  const [showOpenInBrowser, setShowOpenInBrowser] = useState(false);
 
   useEffect(() => {
     if (!isElectron()) return;
     getAppVersion().then(setVersion);
+    setShowOpenInBrowser(true);
   }, []);
 
   useEffect(() => {
@@ -84,7 +91,7 @@ export function Header() {
 
       <div className="flex items-center gap-3">
         <ClientSelector />
-        {isElectron() && (
+        {showOpenInBrowser && (
           <button
             onClick={() => openInBrowser()}
             aria-label="Open in Browser"

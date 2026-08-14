@@ -145,6 +145,18 @@ function createMainWindow() {
 
   mainWindow.setMenuBarVisibility(false);
 
+  // The menu bar (and with it, the usual View > Toggle DevTools) is hidden,
+  // so without this there's no way to see renderer console errors in a
+  // packaged build — every UI bug report becomes a guessing game. F12 /
+  // Ctrl+Shift+I work the same as any normal browser.
+  mainWindow.webContents.on('before-input-event', (event, input) => {
+    const isDevToolsShortcut =
+      input.key === 'F12' || (input.control && input.shift && input.key.toLowerCase() === 'i');
+    if (isDevToolsShortcut) {
+      mainWindow.webContents.toggleDevTools();
+    }
+  });
+
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
     shell.openExternal(url);
     return { action: 'deny' };

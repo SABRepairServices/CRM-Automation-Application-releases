@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import axios from 'axios';
 import { useClients, Client } from '@/hooks/useClients';
 import { ActionButton } from '@/components/ui/action-button';
@@ -23,9 +24,11 @@ const EMPTY_FORM = {
 };
 
 export default function SettingsPage() {
-  const { getClient, updateClient, loading, error } = useClients();
+  const router = useRouter();
+  const { clients, listClients, getClient, updateClient, loading, error } = useClients();
   const { pinConfigured, register, refreshPinStatus } = useAuth();
   const [clientId, setClientId] = useState('');
+  const [clientsChecked, setClientsChecked] = useState(false);
   const [formData, setFormData] = useState(EMPTY_FORM);
   const [saved, setSaved] = useState(false);
   const [backupFolder, setBackupFolder] = useState<string | null>(null);
@@ -41,25 +44,44 @@ export default function SettingsPage() {
   const [setupError, setSetupError] = useState('');
   const [settingUpPin, setSettingUpPin] = useState(false);
 
+  const applyClient = (c: Client) => {
+    setFormData({
+      name: c.name || '',
+      logo_url: c.logo_url || '',
+      email: c.email || '',
+      phone: c.phone || '',
+      address: c.address || '',
+      city: c.city || '',
+      country: c.country || '',
+      billing_email: c.billing_email || '',
+    });
+  };
+
+  const handleSelectClient = (id: string) => {
+    if (!id) return;
+    localStorage.setItem('selectedClientId', id);
+    setClientId(id);
+    getClient(id).then((c: Client | null) => c && applyClient(c));
+  };
+
   useEffect(() => {
     const stored = localStorage.getItem('selectedClientId');
-    if (!stored) return;
-    setClientId(stored);
-    getClient(stored).then((c: Client | null) => {
-      if (!c) return;
-      setFormData({
-        name: c.name || '',
-        logo_url: c.logo_url || '',
-        email: c.email || '',
-        phone: c.phone || '',
-        address: c.address || '',
-        city: c.city || '',
-        country: c.country || '',
-        billing_email: c.billing_email || '',
-      });
-    });
+    if (stored) {
+      setClientId(stored);
+      getClient(stored).then((c: Client | null) => c && applyClient(c));
+    }
+    listClients().then(() => setClientsChecked(true));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Most installs only ever manage one business, so there's no reason to make
+  // the owner hunt down the header's client dropdown just to edit their own
+  // company profile — pick it for them the moment we know there's only one.
+  useEffect(() => {
+    if (clientId || clients.length !== 1) return;
+    handleSelectClient(clients[0].id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [clients, clientId]);
 
   useEffect(() => {
     if (!isElectron()) return;
@@ -219,8 +241,36 @@ export default function SettingsPage() {
         <div className="max-w-3xl mx-auto">
           <h1 className="text-2xl font-semibold text-white mb-2">Settings</h1>
           {pinSection}
-          <div className="bg-slate-900 border border-slate-800 rounded-md px-5 py-12 text-center">
-            <p className="text-sm text-slate-500">Select a client from the dropdown above for company profile settings.</p>
+          <div className="bg-slate-900 border border-slate-800 rounded-md">
+            <div className="px-5 py-3 border-b border-slate-800">
+              <h2 className="text-sm font-semibold text-slate-300">Company Profile</h2>
+            </div>
+            <div className="p-5">
+              {!clientsChecked ? (
+                <p className="text-sm text-slate-500 text-center py-8">Loading...</p>
+              ) : clients.length === 0 ? (
+                <div className="text-center py-8">
+                  <p className="text-sm text-slate-500 mb-4">
+                    No company profile set up yet — add your business details (name, logo, contact info) to get started.
+                  </p>
+                  <ActionButton text="Set Up Company Profile" onClick={() => router.push('/clients')} />
+                </div>
+              ) : (
+                <div>
+                  <p className="text-sm text-slate-500 mb-3">Choose which company profile to edit:</p>
+                  <select
+                    defaultValue=""
+                    onChange={(e) => handleSelectClient(e.target.value)}
+                    className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-md text-sm text-white focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  >
+                    <option value="" disabled>Choose a company…</option>
+                    {clients.map((c) => (
+                      <option key={c.id} value={c.id}>{c.name}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>

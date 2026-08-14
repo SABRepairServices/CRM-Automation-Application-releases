@@ -33,7 +33,8 @@ export function InspectionPreview({
         <div>
           <p className="text-xs font-semibold text-slate-500 uppercase mb-1">Report No</p>
           <p className="text-white font-medium">Draft</p>
-          <p className="text-xs text-slate-500 mt-2">{inspectedAt ? new Date(inspectedAt).toLocaleDateString() : '—'}</p>
+          <p className="text-xs font-semibold text-slate-500 uppercase mt-2 mb-1">Date</p>
+          <p className="text-white font-medium">{inspectedAt ? new Date(inspectedAt).toLocaleDateString() : '—'}</p>
         </div>
         <div className="text-right">
           <p className="text-xs font-semibold text-slate-500 uppercase mb-1">Client</p>

@@ -89,7 +89,6 @@ export default function QuotesPage() {
         <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="text-2xl font-semibold text-white">Quotations</h1>
-            <p className="text-sm text-slate-500 mt-1">Approving a quotation automatically generates its invoice</p>
           </div>
         </div>
 
@@ -99,7 +98,7 @@ export default function QuotesPage() {
           </div>
         )}
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6 items-start">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6 items-stretch">
         <div className="bg-slate-900 border border-slate-800 rounded-md">
             <div className="px-5 py-3 border-b border-slate-800">
               <h2 className="text-sm font-semibold text-slate-300">New Quotation</h2>
@@ -216,16 +215,20 @@ export default function QuotesPage() {
             </form>
           </div>
 
-          <div className="lg:sticky lg:top-6">
-            <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-2">Live Preview</p>
-            <QuotationPreview
-              client={previewClient}
-              customerName={selectedJob?.customer_name}
-              items={formData.items}
-              discountAmount={formData.discount_amount}
-              vatPercent={formData.vat_percent}
-              notes={formData.notes}
-            />
+          <div className="bg-slate-900 border border-slate-800 rounded-md">
+            <div className="px-5 py-3 border-b border-slate-800">
+              <h2 className="text-sm font-semibold text-slate-300">Live Preview</h2>
+            </div>
+            <div className="p-5 lg:sticky lg:top-6">
+              <QuotationPreview
+                client={previewClient}
+                customerName={selectedJob?.customer_name}
+                items={formData.items}
+                discountAmount={formData.discount_amount}
+                vatPercent={formData.vat_percent}
+                notes={formData.notes}
+              />
+            </div>
           </div>
         </div>
 
