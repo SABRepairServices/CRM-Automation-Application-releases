@@ -14,6 +14,9 @@ export function Header() {
   const { user, logout } = useAuth();
   const { getClient } = useClients();
   const [menuOpen, setMenuOpen] = useState(false);
+  // Start null so SSR and client agree on the first paint (isElectron() is
+  // false during SSR because there's no window). The env-var fallback and
+  // any Electron-supplied version both slot in via the effect below.
   const [version, setVersion] = useState<string | null>(null);
   const [client, setClient] = useState<Client | null>(null);
   const [badgeLogoFailed, setBadgeLogoFailed] = useState(false);
@@ -25,9 +28,17 @@ export function Header() {
   const [showOpenInBrowser, setShowOpenInBrowser] = useState(false);
 
   useEffect(() => {
-    if (!isElectron()) return;
-    getAppVersion().then(setVersion);
-    setShowOpenInBrowser(true);
+    if (isElectron()) {
+      // Electron knows its own packaged version — use that (source of truth)
+      getAppVersion().then(setVersion);
+      setShowOpenInBrowser(true);
+    } else {
+      // Plain browser (dev server, or "Open in Browser") — fall back to the
+      // env-baked version so the badge still shows and the user can see
+      // which release they're looking at.
+      const envVersion = process.env.NEXT_PUBLIC_APP_VERSION;
+      if (envVersion) setVersion(envVersion);
+    }
   }, []);
 
   useEffect(() => {

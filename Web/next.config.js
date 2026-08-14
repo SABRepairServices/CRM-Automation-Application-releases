@@ -1,3 +1,11 @@
+// The version shown in the header badge should always match whatever
+// Desktop/package.json currently says, so it stays in lockstep with the
+// CI-bumped desktop release without anyone remembering to update an env
+// file. Read once at build/dev-server-start time and inject as a public
+// env var; NEXT_PUBLIC_APP_VERSION in .env.local can still override.
+const desktopPackage = require('../Desktop/package.json');
+const APP_VERSION = process.env.NEXT_PUBLIC_APP_VERSION || desktopPackage.version;
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
@@ -16,6 +24,7 @@ const nextConfig = {
   },
   env: {
     NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api',
+    NEXT_PUBLIC_APP_VERSION: APP_VERSION,
   },
   webpack: (config, { dev }) => {
     // This dev machine runs low on RAM; webpack's persistent disk cache
