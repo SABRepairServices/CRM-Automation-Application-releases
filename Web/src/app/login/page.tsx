@@ -15,6 +15,7 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [companyName, setCompanyName] = useState('');
+  const [failCount, setFailCount] = useState(0);
 
   useEffect(() => {
     const clientId = localStorage.getItem('selectedClientId');
@@ -45,6 +46,7 @@ export default function LoginPage() {
     } catch (err: any) {
       setError(err?.response?.data?.message || 'Incorrect PIN');
       setPin('');
+      setFailCount((n) => n + 1);
     } finally {
       setSubmitting(false);
     }
@@ -67,7 +69,14 @@ export default function LoginPage() {
         {error && <div className="bg-red-500/10 border border-red-200 text-red-400 text-sm p-3 rounded-md mb-4">{error}</div>}
 
         <div className="space-y-5">
-          <PinInput length={4} value={pin} onChange={setPin} onComplete={submitEnter} autoFocus />
+          <PinInput
+            key={failCount}
+            length={4}
+            value={pin}
+            onChange={submitting ? () => {} : setPin}
+            onComplete={submitting ? undefined : submitEnter}
+            autoFocus
+          />
         </div>
       </div>
     </div>
