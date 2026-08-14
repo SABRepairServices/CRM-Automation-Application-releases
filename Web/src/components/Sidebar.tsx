@@ -139,10 +139,11 @@ export function Sidebar() {
         wide ? 'w-56 shadow-[8px_0_24px_-8px_rgba(0,0,0,0.5)]' : 'w-16'
       }`}
     >
-      <div className={`flex items-center h-9 shrink-0 ${wide ? 'justify-end px-2 pt-2' : 'justify-center pt-2 opacity-0 pointer-events-none'}`}>
+      <div className={`flex items-center h-9 shrink-0 ${wide ? 'justify-end px-2 pt-2' : 'justify-center pt-2'}`}>
         <button
           onClick={togglePin}
           title={pinned ? 'Unpin sidebar' : 'Pin sidebar open'}
+          aria-label={pinned ? 'Unpin sidebar' : 'Pin sidebar open — needed to use the sidebar on touch devices, which have no hover'}
           className={`w-7 h-7 rounded-md flex items-center justify-center transition-all duration-150 ${
             pinned
               ? 'text-cyan-400 bg-cyan-500/15 shadow-[0_0_10px_rgba(34,211,238,0.5)] rotate-45'

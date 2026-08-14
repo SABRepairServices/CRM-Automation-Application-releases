@@ -100,6 +100,7 @@ export default function InvoiceDocumentPage() {
             businessPhone={client?.phone}
             businessEmail={client?.email}
             onSend={() => sendInvoice(localStorage.getItem('selectedClientId') || '', invoice.id)}
+            onSent={() => getInvoice(localStorage.getItem('selectedClientId') || '', invoice.id).then((i) => i && setInvoice(i))}
           />
         </div>
 

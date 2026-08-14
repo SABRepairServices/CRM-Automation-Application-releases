@@ -5,13 +5,23 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { PinInput } from '@/components/ui/pin-input';
 import { OWNER_EMAIL } from '@/lib/authConstants';
+import { useClients } from '@/hooks/useClients';
 
 export default function LoginPage() {
   const { login, isAuthenticated, loading, pinConfigured } = useAuth();
+  const { getClient } = useClients();
   const router = useRouter();
   const [pin, setPin] = useState('');
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [companyName, setCompanyName] = useState('');
+
+  useEffect(() => {
+    const clientId = localStorage.getItem('selectedClientId');
+    if (!clientId) return;
+    getClient(clientId).then((c) => c?.name && setCompanyName(c.name));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     if (loading) return;
@@ -49,12 +59,12 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 px-4">
-      <div className="w-full max-w-md form-glass rounded-2xl p-8">
-        <h1 className="text-2xl font-bold text-white mb-1">Shams Al Barakat Repair Services</h1>
-        <p className="text-slate-400 mb-8">{submitting ? 'Signing in...' : 'Enter your PIN'}</p>
+    <div className="min-h-screen flex items-center justify-center bg-slate-950 px-4">
+      <div className="w-full max-w-md bg-slate-900 border border-slate-800 rounded-md p-8">
+        <h1 className="text-2xl font-semibold text-white mb-1">{companyName || 'CRM & Automation'}</h1>
+        <p className="text-sm text-slate-500 mb-8">{submitting ? 'Signing in...' : 'Enter your PIN'}</p>
 
-        {error && <div className="bg-red-500/10 border border-red-900 text-red-400 text-sm p-3 rounded-lg mb-4">{error}</div>}
+        {error && <div className="bg-red-500/10 border border-red-200 text-red-400 text-sm p-3 rounded-md mb-4">{error}</div>}
 
         <div className="space-y-5">
           <PinInput length={4} value={pin} onChange={setPin} onComplete={submitEnter} autoFocus />

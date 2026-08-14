@@ -99,6 +99,7 @@ export default function InspectionDocumentPage() {
             businessPhone={client?.phone}
             businessEmail={client?.email}
             onSend={() => sendReport(localStorage.getItem('selectedClientId') || '', report.id)}
+            onSent={() => getReport(localStorage.getItem('selectedClientId') || '', report.id).then((r) => r && setReport(r))}
           />
         </div>
 

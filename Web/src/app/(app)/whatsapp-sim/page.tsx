@@ -131,7 +131,7 @@ export default function WhatsappSimPage() {
   const activeThread = threads.find((t) => sameNumber(t.customer_whatsapp, custNumber));
 
   const sendTech = async (text: string) => {
-    if (!text.trim()) return;
+    if (!text.trim() || !techNumber) return;
     await sendInbound(techNumber, text, 'text', 'Technician');
     setTechDraft('');
   };
@@ -157,7 +157,7 @@ export default function WhatsappSimPage() {
             </p>
           </div>
           <button
-            onClick={() => clientId && reset(clientId)}
+            onClick={() => clientId && confirm('Reset the simulation? This clears the entire conversation history.') && reset(clientId)}
             disabled={sending || !clientId}
             className="shrink-0 flex items-center gap-1.5 px-3 py-2 text-xs font-medium bg-slate-800/60 border border-slate-700 text-slate-200 rounded-md hover:bg-slate-700/60 transition-colors disabled:opacity-40"
           >
@@ -266,19 +266,22 @@ export default function WhatsappSimPage() {
               </button>
               <button
                 onClick={() => sendTech('DONE')}
-                disabled={sending}
+                disabled={sending || !techNumber}
                 className="px-2.5 py-1 text-[11px] font-medium bg-slate-800 border border-slate-700 text-slate-300 rounded hover:bg-slate-700 disabled:opacity-40"
               >
                 Send DONE
               </button>
               <button
                 onClick={() => sendTech('hello can you help')}
-                disabled={sending}
+                disabled={sending || !techNumber}
                 className="px-2.5 py-1 text-[11px] font-medium bg-slate-800 border border-slate-700 text-slate-300 rounded hover:bg-slate-700 disabled:opacity-40"
               >
                 Send gibberish
               </button>
             </div>
+            {!techNumber && (
+              <p className="text-[11px] text-amber-400">Select a technician above before sending as one.</p>
+            )}
             <div className="flex gap-2">
               <textarea
                 value={techDraft}
@@ -289,7 +292,7 @@ export default function WhatsappSimPage() {
               />
               <button
                 onClick={() => sendTech(techDraft)}
-                disabled={sending || !techDraft.trim()}
+                disabled={sending || !techDraft.trim() || !techNumber}
                 className="px-3 self-stretch bg-emerald-600 hover:bg-emerald-500 disabled:opacity-40 text-white rounded-md transition-colors"
                 aria-label="Send as technician"
               >

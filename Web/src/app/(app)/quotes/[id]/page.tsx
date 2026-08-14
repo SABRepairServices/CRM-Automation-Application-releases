@@ -107,6 +107,7 @@ export default function QuotationDocumentPage() {
             businessPhone={client?.phone}
             businessEmail={client?.email}
             onSend={() => sendQuotation(localStorage.getItem('selectedClientId') || '', quotation.id)}
+            onSent={() => getQuotation(localStorage.getItem('selectedClientId') || '', quotation.id).then((q) => q && setQuotation(q))}
           />
         </div>
 

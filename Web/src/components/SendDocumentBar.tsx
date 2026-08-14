@@ -30,6 +30,7 @@ export function SendDocumentBar({
   businessPhone,
   businessEmail,
   onSend,
+  onSent,
 }: {
   documentLabel: string;
   customerName?: string;
@@ -42,6 +43,10 @@ export function SendDocumentBar({
   businessPhone?: string;
   businessEmail?: string;
   onSend: () => Promise<SendResult>;
+  /** Called after a successful send so the caller can refetch the document —
+   *  the backend marks it 'sent', but nothing here updates the page's own
+   *  status badge (or the list it came from) without this. */
+  onSent?: () => void;
 }) {
   const [status, setStatus] = useState<'idle' | 'sending' | 'done' | 'failed'>('idle');
   const [result, setResult] = useState<SendResult | null>(null);
@@ -67,6 +72,7 @@ export function SendDocumentBar({
       const r = await onSend();
       setResult(r);
       setStatus(r.whatsappSent || !r.hasWhatsapp ? 'done' : 'failed');
+      onSent?.();
     } catch (err) {
       setStatus('failed');
       setErrorMsg(err instanceof Error ? err.message : 'Send failed');
