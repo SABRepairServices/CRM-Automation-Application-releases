@@ -21,6 +21,7 @@ const EMPTY_FORM = {
   city: '',
   country: '',
   billing_email: '',
+  vat_number: '',
 };
 
 export default function SettingsPage() {
@@ -54,6 +55,7 @@ export default function SettingsPage() {
       city: c.city || '',
       country: c.country || '',
       billing_email: c.billing_email || '',
+      vat_number: c.vat_number || '',
     });
   };
 
@@ -355,6 +357,10 @@ export default function SettingsPage() {
               <div>
                 <label className="block text-xs font-medium text-slate-500 mb-1">Billing Email</label>
                 <input type="email" value={formData.billing_email} onChange={(e) => setFormData({ ...formData, billing_email: e.target.value })} className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-md text-sm text-white placeholder:text-slate-600" />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-slate-500 mb-1">Tax Registration Number (TRN)</label>
+                <input type="text" placeholder="e.g. 100123456700003" value={formData.vat_number} onChange={(e) => setFormData({ ...formData, vat_number: e.target.value })} className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-md text-sm text-white placeholder:text-slate-600" />
               </div>
               <div className="sm:col-span-2">
                 <label className="block text-xs font-medium text-slate-500 mb-1">Address</label>

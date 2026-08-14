@@ -15,6 +15,7 @@ export interface Client {
   logo_url?: string;
   brand_color?: string;
   billing_email?: string;
+  vat_number?: string;
   notes?: string;
   is_active: boolean;
   subscription: string;
