@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
 import axios from 'axios';
 import { useClients, Client } from '@/hooks/useClients';
 import { ActionButton } from '@/components/ui/action-button';
@@ -25,7 +24,6 @@ const EMPTY_FORM = {
 };
 
 export default function SettingsPage() {
-  const router = useRouter();
   const { clients, listClients, getClient, updateClient, loading, error } = useClients();
   const { pinConfigured, register, refreshPinStatus } = useAuth();
   const [clientId, setClientId] = useState('');
@@ -246,7 +244,7 @@ export default function SettingsPage() {
           <PinInput key={`confirm-${changeFailCount}`} length={4} value={confirmNewPin} onChange={setConfirmNewPin} onComplete={handleChangePin} />
         </div>
         <p className="text-xs text-slate-500">Forgot your current PIN? There&apos;s no self-service reset &mdash; contact your developer to reset it directly.</p>
-        <ActionButton type="button" onClick={handleChangePin} disabled={changingPin} text={changingPin ? 'Changing...' : 'Change PIN'} />
+        <ActionButton type="button" onClick={() => handleChangePin()} disabled={changingPin} text={changingPin ? 'Changing...' : 'Change PIN'} />
       </div>
     </div>
   );

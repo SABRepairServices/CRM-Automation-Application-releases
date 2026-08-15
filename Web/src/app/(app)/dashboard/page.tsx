@@ -11,7 +11,7 @@ import {
   LayoutDashboard, Users, Wrench, FileText, Receipt,
   TrendingUp, AlertTriangle, CheckCircle2, Clock,
   Search, Bell, ChevronRight, Zap, Target,
-  ArrowUpRight, ArrowDownRight, Activity,
+  ArrowUpRight, Activity,
 } from 'lucide-react';
 
 const ACTIVE_JOB_STATUSES = ['new', 'scheduled', 'inspected', 'quoted', 'approved', 'in_progress'];
@@ -104,11 +104,11 @@ export default function DashboardPage() {
   }, [jobs, search]);
 
   const cards = [
-    { label: 'Customers', value: customers.length, icon: Users, accent: 'cyan', delta: null, href: '/customers' },
-    { label: 'Active Jobs', value: activeJobs.length, icon: Wrench, accent: 'emerald', delta: null, href: '/jobs' },
-    { label: 'Pending Quotes', value: pendingQuotes.length, icon: FileText, accent: 'amber', delta: null, href: '/quotes' },
-    { label: 'Outstanding (AED)', value: `${outstandingAmount.toFixed(0)}`, icon: Receipt, accent: 'rose', sub: `${unpaidInvoices.length} invoices`, href: '/invoices' },
-  ] as const;
+    { label: 'Customers', value: customers.length, icon: Users, accent: 'cyan', delta: null, sub: null, href: '/customers' },
+    { label: 'Active Jobs', value: activeJobs.length, icon: Wrench, accent: 'emerald', delta: null, sub: null, href: '/jobs' },
+    { label: 'Pending Quotes', value: pendingQuotes.length, icon: FileText, accent: 'amber', delta: null, sub: null, href: '/quotes' },
+    { label: 'Outstanding (AED)', value: `${outstandingAmount.toFixed(0)}`, icon: Receipt, accent: 'rose', delta: null, sub: `${unpaidInvoices.length} invoices`, href: '/invoices' },
+  ];
 
   const accentMap: Record<string, { text: string; bg: string; glow: string }> = {
     cyan: { text: 'text-cyan-400', bg: 'bg-cyan-500/15', glow: 'shadow-[0_0_16px_rgba(34,211,238,0.25)]' },

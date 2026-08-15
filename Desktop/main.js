@@ -282,11 +282,22 @@ function setupAutoUpdates() {
   autoUpdater.autoDownload = true;
   autoUpdater.autoInstallOnAppQuit = true;
 
+  // A download is in flight the whole time from "update-available" until
+  // either "update-downloaded" or "error" fires. Without this guard, the
+  // 15s poll would fire a fresh checkForUpdates() on top of a still-running
+  // multi-minute download of the ~80MB installer, which electron-updater
+  // doesn't handle cleanly.
+  let updateInFlight = false;
+
   autoUpdater.on('checking-for-update', () => log('[Update] checking...'));
   autoUpdater.on('update-not-available', () => log('[Update] already on the latest version.'));
-  autoUpdater.on('update-available', (info) => log('[Update] new version found:', info.version, '— downloading in the background.'));
+  autoUpdater.on('update-available', (info) => {
+    updateInFlight = true;
+    log('[Update] new version found:', info.version, '— downloading in the background.');
+  });
   autoUpdater.on('download-progress', (p) => log(`[Update] downloading: ${Math.round(p.percent)}%`));
   autoUpdater.on('update-downloaded', (info) => {
+    updateInFlight = false;
     log('[Update] version', info.version, 'downloaded — notifying the UI.');
     if (mainWindow && !mainWindow.isDestroyed()) {
       mainWindow.webContents.send('update-downloaded', {
@@ -295,13 +306,22 @@ function setupAutoUpdates() {
       });
     }
   });
-  autoUpdater.on('error', (err) => log('[Update] check failed (not fatal, app keeps running):', err.message));
+  autoUpdater.on('error', (err) => {
+    updateInFlight = false;
+    log('[Update] check failed (not fatal, app keeps running):', err.message);
+  });
 
-  autoUpdater.checkForUpdates().catch((err) => log('[Update] initial check failed:', err.message));
-  // Re-check every 3 minutes so updates land quickly after a release.
-  setInterval(() => {
-    autoUpdater.checkForUpdates().catch((err) => log('[Update] periodic check failed:', err.message));
-  }, 3 * 60 * 1000);
+  const runCheck = (label) => {
+    if (updateInFlight) return;
+    autoUpdater.checkForUpdates().catch((err) => log(`[Update] ${label} check failed:`, err.message));
+  };
+
+  // Checked once immediately on every launch (covers "user restarted the
+  // app") and again every 15s while it stays open (covers "app left running
+  // through a release") — so a fresh build never sits undetected for long
+  // either way.
+  runCheck('initial');
+  setInterval(() => runCheck('periodic'), 15 * 1000);
 }
 
 async function boot() {

@@ -10,8 +10,8 @@ export function UpdateNotification() {
   const [installing, setInstalling] = useState(false);
 
   useEffect(() => {
-    const unsubscribe = onUpdateDownloaded((v) => {
-      setVersion(v);
+    const unsubscribe = onUpdateDownloaded((info) => {
+      setVersion(info.version);
       setDismissed(false);
     });
     return unsubscribe;
