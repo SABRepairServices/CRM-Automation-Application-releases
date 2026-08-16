@@ -486,6 +486,20 @@
     --doc-muted: #4b5563;
     background: #fff !important;
   }
+  /* The actual document VALUES (customer name, phone, dates, amounts,
+     notes) are written straight into the page markup with dark-theme
+     Tailwind classes — text-white, text-slate-300, text-slate-400,
+     text-slate-500 — since those pages compose DocSection/meta-row
+     directly rather than going through a component that reads the
+     --doc-text token. None of those classes have a print: variant, so on
+     the white print background they stayed white-on-white or
+     near-invisible. Low-specificity blanket fix: every specific override
+     below (amt-cell, grand totals, section headers, status pills) is a
+     more specific selector and still wins the cascade despite both using
+     !important. */
+  .doc-theme, .doc-theme * {
+    color: #0f172a !important;
+  }
   .doc-theme .doc-section {
     border: 1px solid #ccc !important;
     background: #fff !important;

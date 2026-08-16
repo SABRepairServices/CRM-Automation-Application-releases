@@ -65,7 +65,9 @@ tbody tr {
   margin-top: 0.5rem;
 }
 @media print {
-  nav, header, .print\:hidden {
+  /* Sidebar renders as <aside>, not <nav> — omitting it here left the
+     fixed, full-height sidebar visible and overlapping every printout. */
+  nav, header, aside, .print\:hidden {
     display: none !important;
   }
   /* Document previews (Quotation/Invoice/Inspection) are dark on screen
