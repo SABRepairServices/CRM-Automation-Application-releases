@@ -125,8 +125,40 @@ function createSplashWindow() {
     center: true,
     show: true,
     backgroundColor: '#0B1F3A',
+    webPreferences: {
+      preload: path.join(__dirname, 'splash-preload.js'),
+      contextIsolation: true,
+      nodeIntegration: false,
+    },
+  });
+  splashReady = false;
+  splashWindow.webContents.once('did-finish-load', () => {
+    splashReady = true;
+    pendingSplashText.forEach((text) => splashWindow.webContents.send('splash-status', text));
+    pendingSplashText = [];
   });
   splashWindow.loadFile(path.join(__dirname, 'splash.html'));
+}
+
+// Surfaces real boot progress on the splash screen (instead of a static
+// spinner that looks frozen for however long startup actually takes) and
+// timestamps each stage in the log, so a slow launch is diagnosable from
+// the log file instead of guesswork. The most common cause of a slow first
+// launch after an auto-update is Windows Defender scanning the freshly
+// written .exe and bundled files on first run — this doesn't fix that (only
+// code-signing does), but it makes it visible which stage is actually slow.
+const bootStart = Date.now();
+let splashReady = false;
+let pendingSplashText = [];
+function setSplashStatus(text) {
+  const elapsed = ((Date.now() - bootStart) / 1000).toFixed(1);
+  log(`[Boot +${elapsed}s]`, text);
+  if (!splashWindow || splashWindow.isDestroyed()) return;
+  if (splashReady) {
+    splashWindow.webContents.send('splash-status', text);
+  } else {
+    pendingSplashText.push(text);
+  }
 }
 
 function createMainWindow() {
@@ -326,6 +358,7 @@ function setupAutoUpdates() {
 
 async function boot() {
   createSplashWindow();
+  setSplashStatus('Starting local services…');
 
   try {
     if (!WEB_PORT) {
@@ -334,17 +367,21 @@ async function boot() {
     WEB_URL = `http://localhost:${WEB_PORT}`;
     log('Using UI server port', WEB_PORT);
 
+    setSplashStatus('Starting the app server…');
     startWebServer();
 
     log('Waiting for the UI server...');
+    setSplashStatus('Waiting for the app server…');
     await waitForServer(WEB_URL, 90000);
     log('UI server is up.');
+    setSplashStatus('Loading the app…');
 
     createMainWindow();
     registerIpcHandlers();
     setupAutoUpdates();
 
     mainWindow.once('ready-to-show', () => {
+      setSplashStatus('Ready.');
       // Runs after the window is visible so the folder-picker dialog has a
       // proper parent. Only prompts once — the choice is remembered from
       // here on (see backupConfig.js).
