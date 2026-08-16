@@ -13,6 +13,7 @@ import {
   ClipboardCheck,
   FileText,
   Receipt,
+  CalendarRange,
   Phone,
   UserCog,
   FlaskConical,
@@ -72,6 +73,7 @@ const links: { href: string; label: string; icon: typeof LayoutDashboard; accent
   { href: '/inspections', label: 'Inspections', icon: ClipboardCheck, accent: 'rose' },
   { href: '/quotes', label: 'Quotes', icon: FileText, accent: 'blue' },
   { href: '/invoices', label: 'Invoices', icon: Receipt, accent: 'violet' },
+  { href: '/monthly-invoices', label: 'Monthly Invoices', icon: CalendarRange, accent: 'amber' },
   { href: '/call-agent', label: 'Call Agent', icon: Phone, accent: 'cyan' },
   { href: '/whatsapp-sim', label: 'WhatsApp Sim', icon: FlaskConical, accent: 'rose' },
 ];

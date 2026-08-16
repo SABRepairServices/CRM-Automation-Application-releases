@@ -1,5 +1,6 @@
 import db from '../../config/database.js';
 import { generateQuotationForFinalizedInspection } from './quotationService.js';
+import { resolveCustomerAndJob } from './customerJobResolver.js';
 
 const listInspectionReports = async (clientId, filters = {}) => {
   let query = `
@@ -45,17 +46,19 @@ const getInspectionReport = async (clientId, reportId) => {
 };
 
 const createInspectionReport = async (clientId, data) => {
-  const { job_id, inspected_by, findings = [], taxable_amount = 0, tax_rate = 5.0, notes } = data;
+  const { inspected_by, findings = [], taxable_amount = 0, tax_rate = 5.0, notes, root_cause, technician_notes, diagnosis_result, signatures } = data;
   const inspected_at = data.inspected_at || new Date().toISOString().slice(0, 10);
+
+  const { jobId } = await resolveCustomerAndJob(clientId, data);
 
   const taxAmount = Number(taxable_amount) * (Number(tax_rate) / 100);
 
   const result = await db.query(
     `INSERT INTO inspection_reports
-       (client_id, job_id, inspected_by, inspected_at, taxable_amount, tax_rate, tax_amount, notes, status)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'draft')
+       (client_id, job_id, inspected_by, inspected_at, taxable_amount, tax_rate, tax_amount, notes, status, root_cause, technician_notes, diagnosis_result, signatures)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'draft', $9, $10, $11, $12)
      RETURNING *`,
-    [clientId, job_id, inspected_by || null, inspected_at || null, taxable_amount, tax_rate, taxAmount, notes || '']
+    [clientId, jobId, inspected_by || null, inspected_at || null, taxable_amount, tax_rate, taxAmount, notes || '', root_cause || null, technician_notes || null, diagnosis_result || null, JSON.stringify(signatures || {})]
   );
 
   const report = result.rows[0];
@@ -105,6 +108,22 @@ const updateInspectionReport = async (clientId, reportId, data) => {
     updates.push(`tax_rate = $${paramCount++}`);
     values.push(data.tax_rate);
   }
+  if (data.root_cause !== undefined) {
+    updates.push(`root_cause = $${paramCount++}`);
+    values.push(data.root_cause);
+  }
+  if (data.technician_notes !== undefined) {
+    updates.push(`technician_notes = $${paramCount++}`);
+    values.push(data.technician_notes);
+  }
+  if (data.diagnosis_result !== undefined) {
+    updates.push(`diagnosis_result = $${paramCount++}`);
+    values.push(data.diagnosis_result);
+  }
+  if (data.signatures !== undefined) {
+    updates.push(`signatures = $${paramCount++}`);
+    values.push(JSON.stringify(data.signatures));
+  }
 
   values.push(reportId, clientId);
 
@@ -117,9 +136,11 @@ const updateInspectionReport = async (clientId, reportId, data) => {
 
   const updated = result.rows[0];
 
-  // Automation: finalizing an inspection report auto-generates its quotation, once.
+  // Automation: marking an inspection completed auto-generates its
+  // quotation, once. 'cannot_repair' is also a terminal state but does
+  // NOT generate a quotation — there's nothing to quote.
   let generatedQuotation = null;
-  if (before.status !== 'final' && updated.status === 'final') {
+  if (before.status !== 'completed' && updated.status === 'completed') {
     generatedQuotation = await generateQuotationForFinalizedInspection(clientId, updated);
   }
 

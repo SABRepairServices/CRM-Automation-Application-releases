@@ -1,10 +1,17 @@
 import { useState, useCallback } from 'react';
 import axios from 'axios';
+import type { DocumentJobContext, DocumentSignatures } from './useQuotations';
 
 export interface InspectionFinding {
   id?: string;
   description: string;
 }
+
+/** Where the appliance can actually be repaired, per the technician's
+ *  on-site diagnosis. Drives the "Diagnosis Result" picker. */
+export type DiagnosisResult = 'onsite' | 'workshop' | 'cannot';
+
+export type InspectionStatus = 'draft' | 'in_progress' | 'completed' | 'cannot_repair';
 
 export interface InspectionReport {
   id: string;
@@ -24,7 +31,11 @@ export interface InspectionReport {
   tax_rate: number;
   tax_amount: number;
   notes?: string;
-  status: 'draft' | 'final' | 'sent';
+  root_cause?: string;
+  technician_notes?: string;
+  diagnosis_result?: DiagnosisResult;
+  signatures?: DocumentSignatures;
+  status: InspectionStatus;
   findings?: InspectionFinding[];
   generated_quotation?: { id: string; quotation_number: string } | null;
   created_at: string;
@@ -63,7 +74,18 @@ export const useInspections = () => {
   const createReport = useCallback(
     async (
       clientId: string,
-      data: { job_id?: string; customer_name?: string; inspected_by?: string; findings: InspectionFinding[]; taxable_amount?: number; tax_rate?: number; notes?: string }
+      data: DocumentJobContext & {
+        inspected_by?: string;
+        inspected_at?: string;
+        findings: InspectionFinding[];
+        taxable_amount?: number;
+        tax_rate?: number;
+        notes?: string;
+        root_cause?: string;
+        technician_notes?: string;
+        diagnosis_result?: DiagnosisResult;
+        signatures?: DocumentSignatures;
+      }
     ) => {
       setLoading(true);
       setError(null);

@@ -15,6 +15,7 @@ import customerRoutes from './app/routes/customerRoutes.js';
 import jobRoutes from './app/routes/jobRoutes.js';
 import quotationRoutes from './app/routes/quotationRoutes.js';
 import invoiceRoutes from './app/routes/invoiceRoutes.js';
+import monthlyInvoiceRoutes from './app/routes/monthlyInvoiceRoutes.js';
 import inspectionRoutes from './app/routes/inspectionRoutes.js';
 import technicianRoutes from './app/routes/technicianRoutes.js';
 import socialAccountRoutes from './app/routes/socialAccountRoutes.js';
@@ -115,6 +116,9 @@ app.use('/api/quotations', quotationRoutes);
 
 // Invoices/Billing
 app.use('/api/invoices', invoiceRoutes);
+
+// Monthly consolidated invoices (contractor statements)
+app.use('/api/monthly-invoices', monthlyInvoiceRoutes);
 
 // Inspection Reports
 app.use('/api/inspections', inspectionRoutes);

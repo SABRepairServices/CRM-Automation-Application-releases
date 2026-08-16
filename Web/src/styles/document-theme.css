@@ -1,0 +1,524 @@
+/*
+ * Navy/gold branded document theme for the Quotation / Inspection /
+ * Invoice / Monthly Invoice pages, translated from the office's
+ * Quotation_Entry_App.html template.
+ *
+ * EVERY selector here is scoped under .doc-theme on purpose. The source
+ * template used bare element and utility selectors (*, .field, .section,
+ * .btn) which would leak into the Sidebar, Dashboard and Settings and
+ * silently restyle the whole app. Wrapping a page in <div className="doc-theme">
+ * opts it in; nothing else is affected.
+ */
+
+.doc-theme {
+  --doc-bg: #0b0d11;
+  --doc-surface: #13161e;
+  --doc-surface2: #1a1e2a;
+  --doc-border: #1f2433;
+  --doc-border2: #2a3044;
+  --doc-text: #e2e8f0;
+  --doc-muted: #64748b;
+  --doc-faint: #344055;
+
+  --doc-navy: #0d2137;
+  --doc-gold: #c9933a;
+  --doc-gold-light: #e8b05a;
+  --doc-gold-dim: rgba(201, 147, 58, 0.13);
+  --doc-blue: #1a4a7a;
+  --doc-blue-light: #3a7bd5;
+  --doc-blue-dim: rgba(58, 123, 213, 0.13);
+  --doc-green: #1a5c38;
+  --doc-green-light: #2e9e6b;
+  --doc-green-dim: rgba(46, 158, 107, 0.13);
+  --doc-red: #8b1a1a;
+  --doc-red-light: #c94a3a;
+  --doc-red-dim: rgba(201, 74, 58, 0.13);
+
+  --doc-input-bg: #090c11;
+  --doc-input-border: #243044;
+  --doc-input-focus: #c9933a;
+
+  color: var(--doc-text);
+  font-size: 14px;
+}
+
+/* ── META CARDS (document number / date / prepared-by strip) ─────────── */
+.doc-theme .meta-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  margin-bottom: 18px;
+}
+.doc-theme .meta-card {
+  background: var(--doc-surface);
+  border: 1px solid var(--doc-border2);
+  border-radius: 10px;
+  padding: 12px 14px;
+}
+.doc-theme .meta-card.hi {
+  border-color: var(--doc-gold);
+  background: rgba(201, 147, 58, 0.04);
+}
+.doc-theme .meta-label {
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--doc-muted);
+  margin-bottom: 5px;
+  font-weight: 600;
+}
+.doc-theme .meta-card.hi .meta-label {
+  color: var(--doc-gold);
+}
+.doc-theme .meta-input {
+  width: 100%;
+  background: var(--doc-input-bg);
+  border: 1px solid var(--doc-input-border);
+  border-radius: 6px;
+  padding: 7px 10px;
+  color: var(--doc-text);
+  font-size: 13px;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.18s;
+}
+.doc-theme .meta-input:focus {
+  border-color: var(--doc-input-focus);
+}
+
+/* ── SECTIONS ───────────────────────────────────────────────────────── */
+.doc-theme .doc-section {
+  background: var(--doc-surface);
+  border: 1px solid var(--doc-border);
+  border-radius: 11px;
+  margin-bottom: 14px;
+  overflow: hidden;
+}
+.doc-theme .doc-section-hdr {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 10px 18px;
+  border-bottom: 1px solid var(--doc-border);
+}
+.doc-theme .doc-section-hdr.blue {
+  background: var(--doc-blue-dim);
+  border-bottom-color: rgba(58, 123, 213, 0.18);
+}
+.doc-theme .doc-section-hdr.green {
+  background: var(--doc-green-dim);
+  border-bottom-color: rgba(46, 158, 107, 0.18);
+}
+.doc-theme .doc-section-hdr.gold {
+  background: var(--doc-gold-dim);
+  border-bottom-color: rgba(201, 147, 58, 0.18);
+}
+.doc-theme .doc-section-hdr.red {
+  background: var(--doc-red-dim);
+  border-bottom-color: rgba(201, 74, 58, 0.18);
+}
+.doc-theme .doc-section-hdr.gray {
+  background: rgba(100, 116, 139, 0.08);
+  border-bottom-color: rgba(100, 116, 139, 0.18);
+}
+.doc-theme .doc-section-title {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+.doc-theme .doc-section-hdr.blue .doc-section-title { color: var(--doc-blue-light); }
+.doc-theme .doc-section-hdr.green .doc-section-title { color: var(--doc-green-light); }
+.doc-theme .doc-section-hdr.gold .doc-section-title { color: var(--doc-gold); }
+.doc-theme .doc-section-hdr.red .doc-section-title { color: var(--doc-red-light); }
+.doc-theme .doc-section-hdr.gray .doc-section-title { color: var(--doc-muted); }
+.doc-theme .doc-section-body {
+  padding: 18px;
+}
+
+/* ── FORM GRID ──────────────────────────────────────────────────────── */
+.doc-theme .fg { display: grid; gap: 13px; }
+.doc-theme .fg.c2 { grid-template-columns: 1fr 1fr; }
+.doc-theme .fg.c3 { grid-template-columns: 1fr 1fr 1fr; }
+.doc-theme .fg.c4 { grid-template-columns: 1fr 1fr 1fr 1fr; }
+.doc-theme .fg .full { grid-column: 1 / -1; }
+
+.doc-theme .field label {
+  display: block;
+  font-size: 10px;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--doc-muted);
+  margin-bottom: 5px;
+  font-weight: 600;
+}
+.doc-theme .field input,
+.doc-theme .field select,
+.doc-theme .field textarea {
+  width: 100%;
+  background: var(--doc-input-bg);
+  border: 1px solid var(--doc-input-border);
+  border-radius: 7px;
+  padding: 8px 11px;
+  color: var(--doc-text);
+  font-size: 13px;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.18s, box-shadow 0.18s;
+}
+.doc-theme .field input:focus,
+.doc-theme .field select:focus,
+.doc-theme .field textarea:focus {
+  border-color: var(--doc-input-focus);
+  box-shadow: 0 0 0 3px rgba(201, 147, 58, 0.1);
+}
+.doc-theme .field select {
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='11' viewBox='0 0 11 11'%3E%3Cpath fill='%2364748b' d='M5.5 7.5L1 3h9z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+}
+.doc-theme .field select option { background: #13161e; }
+.doc-theme .field textarea { resize: vertical; min-height: 64px; line-height: 1.5; }
+
+/* ── ITEMS TABLE ────────────────────────────────────────────────────── */
+.doc-theme .tbl-wrap { overflow-x: auto; }
+.doc-theme .items-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 620px;
+}
+.doc-theme .items-table th {
+  text-align: left;
+  padding: 9px 8px;
+  background: var(--doc-surface2);
+  color: var(--doc-muted);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  border-bottom: 1px solid var(--doc-border2);
+  font-weight: 700;
+}
+.doc-theme .items-table td {
+  padding: 4px;
+  border-bottom: 1px solid var(--doc-border);
+}
+.doc-theme .items-table tbody tr:last-child td { border-bottom: none; }
+.doc-theme .items-table input,
+.doc-theme .items-table select {
+  width: 100%;
+  background: var(--doc-input-bg);
+  border: 1px solid transparent;
+  border-radius: 5px;
+  padding: 7px;
+  color: var(--doc-text);
+  font-size: 12px;
+  outline: none;
+  transition: border-color 0.15s;
+  font-family: inherit;
+}
+.doc-theme .items-table input:focus,
+.doc-theme .items-table select:focus {
+  border-color: var(--doc-input-focus);
+  background: rgba(201, 147, 58, 0.04);
+}
+.doc-theme .amt-cell {
+  color: var(--doc-gold-light);
+  font-weight: 700;
+  font-size: 13px;
+  text-align: right;
+  padding-right: 8px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.doc-theme .row-num {
+  color: var(--doc-faint);
+  font-size: 11px;
+  text-align: center;
+  padding: 0 6px;
+  width: 28px;
+}
+.doc-theme .del-cell { width: 28px; text-align: center; }
+.doc-theme .del-btn {
+  background: none;
+  border: none;
+  color: var(--doc-faint);
+  cursor: pointer;
+  font-size: 15px;
+  padding: 4px;
+  border-radius: 4px;
+  transition: color 0.15s;
+}
+.doc-theme .del-btn:hover { color: var(--doc-red-light); }
+.doc-theme .add-row-bar { padding: 10px 16px; border-top: 1px solid var(--doc-border); }
+
+.doc-theme .labour-row td {
+  background: rgba(100, 116, 139, 0.06);
+  border-top: 1px solid var(--doc-border2);
+}
+.doc-theme .labour-label {
+  font-size: 11px;
+  color: var(--doc-muted);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 0 8px;
+}
+
+/* ── TOTALS ─────────────────────────────────────────────────────────── */
+.doc-theme .totals-wrap { display: flex; justify-content: flex-end; padding: 14px 18px 18px; }
+.doc-theme .totals-box { display: flex; flex-direction: column; gap: 5px; min-width: 300px; }
+.doc-theme .tot-row { display: flex; align-items: center; }
+.doc-theme .tot-lbl {
+  flex: 1;
+  font-size: 12px;
+  color: var(--doc-muted);
+  text-align: right;
+  padding-right: 14px;
+  letter-spacing: 0.03em;
+}
+.doc-theme .tot-val {
+  min-width: 110px;
+  text-align: right;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  color: var(--doc-text);
+}
+.doc-theme .tot-input {
+  width: 110px;
+  background: var(--doc-input-bg);
+  border: 1px solid var(--doc-input-border);
+  border-radius: 5px;
+  padding: 5px 8px;
+  color: var(--doc-text);
+  font-size: 12px;
+  outline: none;
+  text-align: right;
+  font-family: inherit;
+}
+.doc-theme .tot-input:focus { border-color: var(--doc-input-focus); }
+.doc-theme .tot-divider { height: 1px; background: var(--doc-border2); margin: 5px 0; }
+.doc-theme .tot-row.grand .tot-lbl { color: var(--doc-gold); font-weight: 700; font-size: 13px; }
+.doc-theme .tot-row.grand .tot-val { color: var(--doc-gold-light); font-weight: 800; font-size: 17px; }
+.doc-theme .tot-row.received .tot-lbl,
+.doc-theme .tot-row.received .tot-val { color: var(--doc-green-light); }
+.doc-theme .tot-row.received .tot-val { font-weight: 700; }
+.doc-theme .tot-row.pending .tot-lbl,
+.doc-theme .tot-row.pending .tot-val { color: var(--doc-red-light); }
+.doc-theme .tot-row.pending .tot-val { font-weight: 700; }
+
+/* ── STATUS BAR ─────────────────────────────────────────────────────── */
+.doc-theme .status-bar { display: flex; gap: 8px; flex-wrap: wrap; }
+.doc-theme .s-btn {
+  flex: 1;
+  min-width: 100px;
+  padding: 9px 12px;
+  border-radius: 7px;
+  border: 1px solid var(--doc-border2);
+  background: var(--doc-surface2);
+  color: var(--doc-muted);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.18s;
+  font-family: inherit;
+}
+.doc-theme .s-btn:hover { border-color: var(--doc-muted); color: var(--doc-text); }
+.doc-theme .s-btn.gold {
+  background: var(--doc-gold-dim);
+  border-color: var(--doc-gold);
+  color: var(--doc-gold);
+}
+.doc-theme .s-btn.green {
+  background: var(--doc-green-dim);
+  border-color: var(--doc-green-light);
+  color: var(--doc-green-light);
+}
+.doc-theme .s-btn.red {
+  background: var(--doc-red-dim);
+  border-color: var(--doc-red-light);
+  color: var(--doc-red-light);
+}
+.doc-theme .s-btn.blue {
+  background: var(--doc-blue-dim);
+  border-color: var(--doc-blue-light);
+  color: var(--doc-blue-light);
+}
+.doc-theme .s-btn.slate {
+  background: rgba(100, 116, 139, 0.15);
+  border-color: var(--doc-muted);
+  color: var(--doc-text);
+}
+
+/* ── DIAGNOSIS PICKER ───────────────────────────────────────────────── */
+.doc-theme .diag-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.doc-theme .diag-opt {
+  background: var(--doc-input-bg);
+  border: 1px solid var(--doc-input-border);
+  border-radius: 8px;
+  padding: 14px;
+  cursor: pointer;
+  transition: all 0.18s;
+  text-align: center;
+  font-family: inherit;
+}
+.doc-theme .diag-opt:hover { border-color: var(--doc-muted); }
+.doc-theme .diag-opt.sel-onsite { border-color: var(--doc-green-light); background: var(--doc-green-dim); }
+.doc-theme .diag-opt.sel-workshop { border-color: var(--doc-gold); background: var(--doc-gold-dim); }
+.doc-theme .diag-opt.sel-cannot { border-color: var(--doc-red-light); background: var(--doc-red-dim); }
+.doc-theme .diag-opt-icon { font-size: 22px; margin-bottom: 6px; }
+.doc-theme .diag-opt-label { font-size: 12px; font-weight: 700; color: var(--doc-muted); }
+.doc-theme .diag-opt.sel-onsite .diag-opt-label { color: var(--doc-green-light); }
+.doc-theme .diag-opt.sel-workshop .diag-opt-label { color: var(--doc-gold); }
+.doc-theme .diag-opt.sel-cannot .diag-opt-label { color: var(--doc-red-light); }
+
+/* ── SIGNATURES ─────────────────────────────────────────────────────── */
+.doc-theme .sig-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+.doc-theme .sig-box {
+  background: var(--doc-input-bg);
+  border: 1px solid var(--doc-input-border);
+  border-radius: 8px;
+  padding: 14px;
+}
+.doc-theme .sig-title {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--doc-muted);
+  font-weight: 700;
+  margin-bottom: 10px;
+}
+.doc-theme .sig-line { height: 38px; border-bottom: 1px dashed var(--doc-border2); margin-bottom: 8px; }
+.doc-theme .sig-box input {
+  width: 100%;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--doc-border2);
+  color: var(--doc-text);
+  font-size: 12px;
+  padding: 4px 0;
+  outline: none;
+  font-family: inherit;
+}
+.doc-theme .sig-box input:focus { border-bottom-color: var(--doc-input-focus); }
+.doc-theme .sig-box input[type='date'] { color: var(--doc-muted); font-size: 11px; margin-top: 6px; }
+
+/* ── TERMS ──────────────────────────────────────────────────────────── */
+.doc-theme .terms-box {
+  background: var(--doc-input-bg);
+  border: 1px solid var(--doc-border);
+  border-radius: 7px;
+  padding: 13px 15px;
+  font-size: 12px;
+  color: var(--doc-muted);
+  line-height: 1.8;
+}
+.doc-theme .terms-box li {
+  list-style: none;
+  padding-left: 14px;
+  position: relative;
+  margin-bottom: 2px;
+}
+.doc-theme .terms-box li::before { content: '•'; position: absolute; left: 0; color: var(--doc-gold); }
+
+/* ── SUMMARY CARDS (monthly invoice) ────────────────────────────────── */
+.doc-theme .summary-badge { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; }
+.doc-theme .sum-card {
+  background: var(--doc-surface);
+  border: 1px solid var(--doc-border2);
+  border-radius: 9px;
+  padding: 12px 18px;
+  flex: 1;
+  min-width: 140px;
+}
+.doc-theme .sum-card.gold-card { border-color: var(--doc-gold); background: rgba(201, 147, 58, 0.05); }
+.doc-theme .sum-card.green-card { border-color: var(--doc-green-light); background: var(--doc-green-dim); }
+.doc-theme .sum-card.red-card { border-color: var(--doc-red-light); background: var(--doc-red-dim); }
+.doc-theme .sum-lbl {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--doc-muted);
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+.doc-theme .sum-val { font-size: 18px; font-weight: 800; font-variant-numeric: tabular-nums; }
+.doc-theme .sum-card.gold-card .sum-val { color: var(--doc-gold-light); }
+.doc-theme .sum-card.green-card .sum-val { color: var(--doc-green-light); }
+.doc-theme .sum-card.red-card .sum-val { color: var(--doc-red-light); }
+
+/* ── SEND PANEL ─────────────────────────────────────────────────────── */
+.doc-theme .send-panel {
+  background: linear-gradient(135deg, rgba(26, 74, 122, 0.14), rgba(9, 12, 17, 0.5));
+  border: 1px solid rgba(58, 123, 213, 0.28);
+  border-radius: 11px;
+  padding: 18px;
+  margin-top: 14px;
+}
+.doc-theme .send-panel-title {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--doc-blue-light);
+  margin-bottom: 14px;
+}
+
+/* ── RESPONSIVE ─────────────────────────────────────────────────────── */
+@media (max-width: 900px) {
+  .doc-theme .meta-row { grid-template-columns: 1fr 1fr; }
+  .doc-theme .fg.c4 { grid-template-columns: 1fr 1fr; }
+  .doc-theme .fg.c2,
+  .doc-theme .fg.c3 { grid-template-columns: 1fr; }
+  .doc-theme .sig-grid { grid-template-columns: 1fr; }
+  .doc-theme .diag-grid { grid-template-columns: 1fr; }
+}
+@media (max-width: 520px) {
+  .doc-theme .meta-row { grid-template-columns: 1fr; }
+}
+
+/* ── PRINT ──────────────────────────────────────────────────────────── */
+@media print {
+  .doc-theme {
+    --doc-text: #000;
+    --doc-muted: #4b5563;
+    background: #fff !important;
+  }
+  .doc-theme .doc-section {
+    border: 1px solid #ccc !important;
+    background: #fff !important;
+    margin-bottom: 8px;
+    break-inside: avoid;
+  }
+  .doc-theme .doc-section-hdr { padding: 7px 12px !important; }
+  .doc-theme .doc-section-hdr.blue { background: #dbeafe !important; }
+  .doc-theme .doc-section-hdr.green { background: #dcfce7 !important; }
+  .doc-theme .doc-section-hdr.gold { background: #fef3c7 !important; }
+  .doc-theme .doc-section-hdr.red { background: #fee2e2 !important; }
+  .doc-theme .doc-section-hdr.gray { background: #f3f4f6 !important; }
+  .doc-theme .doc-section-title { color: #1e3a5f !important; }
+  .doc-theme .doc-section-body { padding: 10px 12px !important; }
+  .doc-theme .field input,
+  .doc-theme .field select,
+  .doc-theme .field textarea,
+  .doc-theme .meta-input,
+  .doc-theme .items-table input,
+  .doc-theme .items-table select,
+  .doc-theme .sig-box input {
+    background: #fff !important;
+    border: 1px solid #ddd !important;
+    color: #000 !important;
+  }
+  .doc-theme .meta-card { background: #f9fafb !important; border: 1px solid #e5e7eb !important; }
+  .doc-theme .items-table th { background: #f3f4f6 !important; color: #374151 !important; }
+  .doc-theme .items-table td { border-bottom: 1px solid #e5e7eb !important; }
+  .doc-theme .amt-cell { color: #92400e !important; }
+  .doc-theme .tot-row.grand .tot-lbl,
+  .doc-theme .tot-row.grand .tot-val { color: #92400e !important; }
+  .doc-theme .sig-box { background: #f9fafb !important; border: 1px solid #e5e7eb !important; }
+  .doc-theme .add-row-bar,
+  .doc-theme .del-btn,
+  .doc-theme .send-panel { display: none !important; }
+}

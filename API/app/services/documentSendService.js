@@ -3,11 +3,13 @@ import { getCustomer } from './customerService.js';
 import { getQuotation } from './quotationService.js';
 import { getInvoice } from './invoiceService.js';
 import { getInspectionReport } from './inspectionService.js';
+import { getMonthlyInvoice } from './monthlyInvoiceService.js';
 import {
   getClientById,
   sendQuotationToCustomer,
   sendInvoiceToCustomer,
   sendInspectionToCustomer,
+  sendMonthlyInvoiceToCustomer,
 } from './whatsappBotService.js';
 
 const getJobById = async (jobId) => {
@@ -65,4 +67,17 @@ const sendInspectionManually = async (clientId, reportId) => {
   return sendInspectionToCustomer(client, customer, job || {}, report, { clientId });
 };
 
-export { sendQuotationManually, sendInvoiceManually, sendInspectionManually };
+const sendMonthlyInvoiceManually = async (clientId, invoiceId) => {
+  const client = await getClientById(clientId);
+  const invoice = await getMonthlyInvoice(clientId, invoiceId);
+  if (!client || !invoice) return { error: 'Monthly invoice not found' };
+  if (!invoice.customer_id) return { error: 'This monthly invoice has no linked customer to send to' };
+
+  const customer = await getCustomer(invoice.customer_id, clientId);
+  if (!customer) return { error: 'Customer not found' };
+  if (!customer.whatsapp && !customer.email) return { error: 'Customer has no WhatsApp number or email on file' };
+
+  return sendMonthlyInvoiceToCustomer(client, customer, invoice, { clientId });
+};
+
+export { sendQuotationManually, sendInvoiceManually, sendInspectionManually, sendMonthlyInvoiceManually };

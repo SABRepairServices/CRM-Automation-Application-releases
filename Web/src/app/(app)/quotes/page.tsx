@@ -1,70 +1,168 @@
-﻿'use client';
+'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useQuotations } from '@/hooks/useQuotations';
-import { useClients, Client } from '@/hooks/useClients';
+import { useQuotations, QuotationItem, DocumentJobContext, DocumentSignatures, RepairType } from '@/hooks/useQuotations';
+import { useTechnicians } from '@/hooks/useTechnicians';
 import { useSelectedClientId } from '@/hooks/useSelectedClientId';
 import { ActionButton } from '@/components/ui/action-button';
-import { QuotationPreview } from '@/components/documents/QuotationPreview';
+import { DocSection } from '@/components/documents/DocSection';
+import { JobContextFields } from '@/components/documents/JobContextFields';
+import { LineItemsTable, LineColumn } from '@/components/documents/LineItemsTable';
+import { SignatureBlock } from '@/components/documents/SignatureBlock';
+
+const STANDARD_TERMS = [
+  'This quotation is valid for 7 days from the date of issue.',
+  'Work will commence only upon written or WhatsApp approval of this quotation.',
+  'Payment is due upon completion of work unless a contract arrangement is in place.',
+  'Any additional parts or work identified during repair will require a revised quotation.',
+  'A 30-day warranty applies to all completed repair work.',
+];
+
+const REPAIR_TYPES: { value: RepairType; label: string }[] = [
+  { value: 'on_site', label: 'On-Site Repair' },
+  { value: 'workshop', label: 'Workshop Repair' },
+  { value: 'inspection_only', label: 'Inspection Only' },
+  { value: 'part_replacement', label: 'Part Replacement' },
+  { value: 'service', label: 'Service / Maintenance' },
+];
+
+const SIGNATURE_ROLES = [
+  { key: 'prepared_by', label: 'Prepared By (Office)' },
+  { key: 'approved_by', label: 'Approved By (Customer)', placeholder: 'Customer full name' },
+  { key: 'technician', label: 'Technician', placeholder: 'Technician name' },
+];
+
+/** One editable row in the scope-of-work grid. Kept as strings because
+ *  they're bound straight to text inputs; parsed only when totalling. */
+interface WorkRow extends Record<string, unknown> {
+  description: string;
+  item_type: string;
+  quantity: string;
+  unit_price: string;
+  discount: string;
+  note: string;
+}
+
+const emptyRow = (): WorkRow => ({ description: '', item_type: 'Part', quantity: '1', unit_price: '', discount: '', note: '' });
+const num = (v: unknown) => Number(v) || 0;
+const money = (n: number) => `AED ${n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+const today = () => new Date().toISOString().slice(0, 10);
+const plusDays = (d: number) => new Date(Date.now() + d * 86400000).toISOString().slice(0, 10);
+
+const COLUMNS: LineColumn<WorkRow>[] = [
+  { key: 'description', label: 'Description of Work / Parts', width: '34%', placeholder: 'Description of work or part…' },
+  { key: 'item_type', label: 'Type', width: '11%', type: 'select', options: ['Part', 'Labour', 'Service'] },
+  { key: 'quantity', label: 'Qty', width: '8%', type: 'number', placeholder: '1' },
+  { key: 'unit_price', label: 'Unit Price', width: '13%', type: 'number', step: '0.01', placeholder: '0.00' },
+  { key: 'discount', label: 'Discount', width: '12%', type: 'number', step: '0.01', placeholder: '0.00' },
+  { key: 'note', label: 'Notes', width: '13%', placeholder: 'Note' },
+];
 
 export default function QuotesPage() {
   const router = useRouter();
   const { quotations, loading, error, listQuotations, createQuotation, updateQuotation, deleteQuotation } = useQuotations();
-  const { getClient } = useClients();
-  const [previewClient, setPreviewClient] = useState<Client | null>(null);
+  const { technicians, listTechnicians } = useTechnicians();
   const clientId = useSelectedClientId();
-  const [approveMessage, setApproveMessage] = useState('');
+
+  const [message, setMessage] = useState('');
   const [formError, setFormError] = useState('');
-  const [formData, setFormData] = useState({
-    customer_name: '',
-    items: [{ description: '', item_type: 'part' as const, quantity: 1, unit_price: 0 }],
-    discount_amount: 0,
-    vat_percent: 5,
-    notes: '',
-  });
+  const [jobContext, setJobContext] = useState<DocumentJobContext>({ urgency: 'normal' });
+  const [rows, setRows] = useState<WorkRow[]>([emptyRow(), emptyRow(), emptyRow()]);
+  const [labour, setLabour] = useState('');
+  const [discount, setDiscount] = useState('');
+  const [vatPercent, setVatPercent] = useState('5');
+  const [repairType, setRepairType] = useState<RepairType | ''>('');
+  const [validUntil, setValidUntil] = useState(plusDays(7));
+  const [quoteDate, setQuoteDate] = useState(today());
+  const [preparedBy, setPreparedBy] = useState('');
+  const [notes, setNotes] = useState('');
+  const [signatures, setSignatures] = useState<DocumentSignatures>({});
 
   useEffect(() => {
     if (!clientId) return;
     listQuotations(clientId);
-    getClient(clientId).then(setPreviewClient);
+    listTechnicians(clientId);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [clientId]);
+
+  const totals = useMemo(() => {
+    const itemsSubtotal = rows.reduce((sum, r) => sum + Math.max(0, num(r.quantity) * num(r.unit_price) - num(r.discount)), 0);
+    const subtotal = itemsSubtotal + num(labour);
+    const afterDiscount = Math.max(0, subtotal - num(discount));
+    const vat = afterDiscount * (num(vatPercent) / 100);
+    return { subtotal, vat, total: afterDiscount + vat };
+  }, [rows, labour, discount, vatPercent]);
+
+  const lineAmount = (r: WorkRow) => {
+    const amt = Math.max(0, num(r.quantity) * num(r.unit_price) - num(r.discount));
+    return r.quantity || r.unit_price ? money(amt) : '—';
+  };
+
+  const resetForm = () => {
+    setJobContext({ urgency: 'normal' });
+    setRows([emptyRow(), emptyRow(), emptyRow()]);
+    setLabour(''); setDiscount(''); setVatPercent('5'); setRepairType('');
+    setValidUntil(plusDays(7)); setQuoteDate(today()); setPreparedBy(''); setNotes('');
+    setSignatures({});
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!clientId) return;
     setFormError('');
-    const validItems = formData.items.filter((i) => i.description);
-    if (validItems.length === 0) {
-      setFormError('Add at least one line item before saving.');
+    setMessage('');
+
+    if (!jobContext.customer_name || !jobContext.customer_phone) {
+      setFormError('Customer name and phone are required — the phone number is how a repeat customer is matched.');
       return;
     }
+
+    const items: QuotationItem[] = rows
+      .filter((r) => r.description.trim())
+      .map((r) => ({
+        description: r.note ? `${r.description} (${r.note})` : r.description,
+        item_type: (r.item_type.toLowerCase() as QuotationItem['item_type']) || 'part',
+        quantity: num(r.quantity) || 1,
+        unit_price: Math.max(0, num(r.unit_price) - num(r.discount) / (num(r.quantity) || 1)),
+      }));
+
+    if (num(labour) > 0) {
+      items.push({ description: 'Labour / Call-Out Charge', item_type: 'labour', quantity: 1, unit_price: num(labour) });
+    }
+
+    if (items.length === 0) {
+      setFormError('Add at least one line item, or a labour charge, before saving.');
+      return;
+    }
+
     try {
-      await createQuotation(clientId, {
-        customer_name: formData.customer_name,
-        items: validItems,
-        discount_amount: formData.discount_amount,
-        vat_percent: formData.vat_percent,
-        notes: formData.notes,
+      const created = await createQuotation(clientId, {
+        ...jobContext,
+        items,
+        discount_amount: num(discount),
+        vat_percent: num(vatPercent),
+        notes,
+        valid_until: validUntil,
+        repair_type: repairType || undefined,
+        signatures: preparedBy ? { ...signatures, prepared_by: { name: preparedBy, date: quoteDate } } : signatures,
       });
-      setFormData({ customer_name: '', items: [{ description: '', item_type: 'part', quantity: 1, unit_price: 0 }], discount_amount: 0, vat_percent: 5, notes: '' });
-    } catch (err) {
-      console.error('Error creating quotation:', err);
+      setMessage(`Quotation ${created.quotation_number} created.`);
+      resetForm();
+    } catch {
+      // createQuotation already surfaced the message via `error`
     }
   };
 
   const handleApprove = async (quotationId: string) => {
     if (!clientId) return;
     if (!confirm('Approve this quotation? This automatically creates its invoice.')) return;
-    setApproveMessage('');
+    setMessage('');
     try {
       const updated = await updateQuotation(clientId, quotationId, { status: 'approved', approval_channel: 'app' });
-      if (updated.generated_invoice) {
-        setApproveMessage(`Approved — invoice ${updated.generated_invoice.invoice_number} was created automatically.`);
-      } else {
-        setApproveMessage('Approved — an invoice already existed for this job.');
-      }
+      setMessage(updated.generated_invoice
+        ? `Approved — invoice ${updated.generated_invoice.invoice_number} was created automatically.`
+        : 'Approved — an invoice already existed for this job.');
     } catch (err) {
       console.error('Error approving quotation:', err);
     }
@@ -90,169 +188,134 @@ export default function QuotesPage() {
     }
   };
 
-  const statusColor = (status: string) => {
-    const colors: Record<string, string> = {
-      draft: 'bg-slate-800 text-slate-400',
-      sent: 'bg-amber-500/10 text-amber-400',
-      approved: 'bg-emerald-500/10 text-emerald-400',
-      rejected: 'bg-red-500/10 text-red-400',
-      expired: 'bg-slate-800 text-slate-500',
-    };
-    return colors[status] || 'bg-slate-800 text-slate-400';
-  };
+  const statusColor = (status: string) => ({
+    draft: 'bg-slate-800 text-slate-400',
+    sent: 'bg-amber-500/10 text-amber-400',
+    approved: 'bg-emerald-500/10 text-emerald-400',
+    rejected: 'bg-red-500/10 text-red-400',
+    expired: 'bg-slate-800 text-slate-500',
+  }[status] || 'bg-slate-800 text-slate-400');
 
   return (
-    <div className="px-4 py-4 bg-slate-950 min-h-screen">
-      <div className="max-w-6xl mx-auto">
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h1 className="text-2xl font-semibold text-white">Quotations</h1>
-          </div>
-        </div>
+    <div className="doc-theme px-4 py-4 bg-slate-950 min-h-screen">
+      <div className="max-w-5xl mx-auto">
+        <h1 className="text-2xl font-semibold text-white mb-4">Quotations</h1>
 
-        {approveMessage && (
-          <div className="bg-emerald-500/10 border border-emerald-200 text-emerald-300 text-sm px-4 py-3 rounded-md mb-6">
-            {approveMessage}
-          </div>
+        {message && (
+          <div className="bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-sm px-4 py-3 rounded-md mb-4">{message}</div>
         )}
-
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6 items-stretch">
-        <div className="bg-slate-900 border border-slate-800 rounded-md">
-            <div className="px-5 py-3 border-b border-slate-800">
-              <h2 className="text-sm font-semibold text-slate-300">New Quotation</h2>
-            </div>
-            <form onSubmit={handleSubmit} className="p-5 space-y-5">
-              <div>
-                <label className="block text-xs font-medium text-slate-500 mb-1">Customer Name</label>
-                <input
-                  type="text"
-                  value={formData.customer_name}
-                  onChange={(e) => setFormData({ ...formData, customer_name: e.target.value })}
-                  placeholder="e.g. Ahmed Al Rashidi"
-                  className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-md text-sm text-white placeholder:text-slate-600 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-medium text-slate-500 mb-2">Line Items</label>
-                <div className="border border-slate-800 rounded-md overflow-hidden">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="bg-slate-950 border-b border-slate-800 text-left text-xs text-slate-500 uppercase tracking-wide">
-                        <th className="px-3 py-2 font-medium">Description</th>
-                        <th className="px-3 py-2 font-medium w-28">Type</th>
-                        <th className="px-3 py-2 font-medium w-20">Qty</th>
-                        <th className="px-3 py-2 font-medium w-28">Unit Price</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {formData.items.map((item, idx) => (
-                        <tr key={idx} className="border-b border-slate-800 last:border-0">
-                          <td className="px-3 py-2">
-                            <input
-                              type="text"
-                              value={item.description}
-                              onChange={(e) => { const next = [...formData.items]; next[idx] = { ...next[idx], description: e.target.value }; setFormData({ ...formData, items: next }); }}
-                              className="w-full px-2 py-1 bg-slate-950 border border-slate-800 rounded text-sm text-white placeholder:text-slate-600"
-                            />
-                          </td>
-                          <td className="px-3 py-2">
-                            <select
-                              value={item.item_type}
-                              onChange={(e) => { const next = [...formData.items]; next[idx] = { ...next[idx], item_type: e.target.value as any }; setFormData({ ...formData, items: next }); }}
-                              className="w-full px-2 py-1 bg-slate-950 border border-slate-800 rounded text-sm text-white placeholder:text-slate-600"
-                            >
-                              <option value="part">Part</option>
-                              <option value="labour">Labour</option>
-                              <option value="service">Service</option>
-                            </select>
-                          </td>
-                          <td className="px-3 py-2">
-                            <input
-                              type="number"
-                              min={1}
-                              value={item.quantity}
-                              onChange={(e) => { const next = [...formData.items]; next[idx] = { ...next[idx], quantity: Math.max(1, parseInt(e.target.value) || 1) }; setFormData({ ...formData, items: next }); }}
-                              className="w-full px-2 py-1 bg-slate-950 border border-slate-800 rounded text-sm text-white placeholder:text-slate-600"
-                            />
-                          </td>
-                          <td className="px-3 py-2">
-                            <input
-                              type="number"
-                              min={0}
-                              value={item.unit_price}
-                              onChange={(e) => { const next = [...formData.items]; next[idx] = { ...next[idx], unit_price: Math.max(0, parseFloat(e.target.value) || 0) }; setFormData({ ...formData, items: next }); }}
-                              className="w-full px-2 py-1 bg-slate-950 border border-slate-800 rounded text-sm text-white placeholder:text-slate-600"
-                            />
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setFormData({ ...formData, items: [...formData.items, { description: '', item_type: 'part', quantity: 1, unit_price: 0 }] })}
-                  className="text-xs text-blue-400 font-medium mt-2"
-                >
-                  + Add line item
-                </button>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-medium text-slate-500 mb-1">Discount (AED)</label>
-                  <input type="number" min={0} value={formData.discount_amount} onChange={(e) => setFormData({ ...formData, discount_amount: Math.max(0, parseFloat(e.target.value) || 0) })} className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-md text-sm text-white placeholder:text-slate-600" />
-                </div>
-                <div>
-                  <label className="block text-xs font-medium text-slate-500 mb-1">VAT %</label>
-                  <input type="number" min={0} max={100} value={formData.vat_percent} onChange={(e) => setFormData({ ...formData, vat_percent: Math.min(100, Math.max(0, parseFloat(e.target.value) || 0)) })} className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-md text-sm text-white placeholder:text-slate-600" />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-medium text-slate-500 mb-1">Notes</label>
-                <textarea value={formData.notes} onChange={(e) => setFormData({ ...formData, notes: e.target.value })} rows={2} className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-md text-sm text-white placeholder:text-slate-600" />
-              </div>
-
-              <p className="text-xs text-slate-600">Standard terms &amp; conditions are shown on the preview and applied automatically.</p>
-
-              {formError && <p className="text-xs text-red-400">{formError}</p>}
-              <ActionButton type="submit" disabled={loading} text={loading ? 'Creating...' : 'Create Quotation'} />
-            </form>
-          </div>
-
-          <div className="bg-slate-900 border border-slate-800 rounded-md">
-            <div className="px-5 py-3 border-b border-slate-800">
-              <h2 className="text-sm font-semibold text-slate-300">Live Preview</h2>
-            </div>
-            <div className="p-5 lg:sticky lg:top-6">
-              <QuotationPreview
-                client={previewClient}
-                customerName={formData.customer_name}
-                items={formData.items}
-                discountAmount={formData.discount_amount}
-                vatPercent={formData.vat_percent}
-                notes={formData.notes}
-              />
-            </div>
-          </div>
-        </div>
-
         {error && (
-          <div className="bg-red-500/10 border border-red-200 text-red-400 text-sm px-4 py-3 rounded-md mb-6">{error}</div>
+          <div className="bg-red-500/10 border border-red-500/30 text-red-400 text-sm px-4 py-3 rounded-md mb-4">{error}</div>
         )}
 
-        <div className="bg-slate-900 border border-slate-800 rounded-md overflow-hidden">
+        <form onSubmit={handleSubmit}>
+          <div className="meta-row">
+            <div className="meta-card hi">
+              <div className="meta-label">Quotation No.</div>
+              <input className="meta-input" value="Auto-generated on save" readOnly />
+            </div>
+            <div className="meta-card">
+              <div className="meta-label">Date</div>
+              <input className="meta-input" type="date" value={quoteDate} onChange={(e) => setQuoteDate(e.target.value)} />
+            </div>
+            <div className="meta-card">
+              <div className="meta-label">Valid Until</div>
+              <input className="meta-input" type="date" value={validUntil} onChange={(e) => setValidUntil(e.target.value)} />
+            </div>
+            <div className="meta-card">
+              <div className="meta-label">Prepared By</div>
+              <input className="meta-input" value={preparedBy} placeholder="Your name" onChange={(e) => setPreparedBy(e.target.value)} />
+            </div>
+          </div>
+
+          <JobContextFields value={jobContext} onChange={setJobContext} technicians={technicians} />
+
+          <DocSection title="Repair Type" icon="🛠️" accent="blue">
+            <div className="fg c2">
+              <div className="field">
+                <label htmlFor="q-repair-type">Repair Type</label>
+                <select id="q-repair-type" value={repairType} onChange={(e) => setRepairType(e.target.value as RepairType)}>
+                  <option value="">— Select —</option>
+                  {REPAIR_TYPES.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
+                </select>
+              </div>
+              <div className="field">
+                <label htmlFor="q-vat">VAT %</label>
+                <input id="q-vat" type="number" min={0} max={100} value={vatPercent} onChange={(e) => setVatPercent(e.target.value)} />
+              </div>
+            </div>
+          </DocSection>
+
+          <DocSection title="Scope of Work &amp; Cost Breakdown" icon="📋" accent="blue" flush>
+            <LineItemsTable
+              columns={COLUMNS}
+              rows={rows}
+              onChange={setRows}
+              onAdd={() => setRows([...rows, emptyRow()])}
+              computed={lineAmount}
+              footer={
+                <tfoot>
+                  {/* 9 columns total: #, description, type, qty, unit, discount, note, amount, delete */}
+                  <tr className="labour-row">
+                    <td className="row-num">★</td>
+                    <td colSpan={3}><span className="labour-label">Labour / Call-Out Charge</span></td>
+                    <td>
+                      <input type="number" min={0} step="0.01" placeholder="0.00" value={labour}
+                        onChange={(e) => setLabour(e.target.value)} aria-label="Labour charge" />
+                    </td>
+                    <td /><td />
+                    <td className="amt-cell">{num(labour) ? money(num(labour)) : '—'}</td>
+                    <td />
+                  </tr>
+                </tfoot>
+              }
+            />
+            <div className="totals-wrap">
+              <div className="totals-box">
+                <div className="tot-row"><span className="tot-lbl">Subtotal</span><span className="tot-val">{money(totals.subtotal)}</span></div>
+                <div className="tot-row">
+                  <span className="tot-lbl">Overall Discount</span>
+                  <span className="tot-val">
+                    <input className="tot-input" type="number" min={0} step="0.01" placeholder="0.00" value={discount}
+                      onChange={(e) => setDiscount(e.target.value)} aria-label="Overall discount" />
+                  </span>
+                </div>
+                <div className="tot-row"><span className="tot-lbl">VAT {num(vatPercent)}%</span><span className="tot-val">{money(totals.vat)}</span></div>
+                <div className="tot-divider" />
+                <div className="tot-row grand"><span className="tot-lbl">TOTAL DUE</span><span className="tot-val">{money(totals.total)}</span></div>
+              </div>
+            </div>
+          </DocSection>
+
+          <DocSection title="Notes" icon="📝" accent="gray">
+            <div className="field">
+              <label htmlFor="q-notes">Additional Notes</label>
+              <textarea id="q-notes" value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Anything the customer should know…" />
+            </div>
+          </DocSection>
+
+          <DocSection title="Payment Terms &amp; Conditions" icon="📃" accent="gray">
+            <div className="terms-box">
+              <ul>{STANDARD_TERMS.map((t, i) => <li key={i}>{t}</li>)}</ul>
+            </div>
+          </DocSection>
+
+          <DocSection title="Signatures &amp; Acknowledgement" icon="✍️" accent="gold">
+            <SignatureBlock roles={SIGNATURE_ROLES} value={signatures} onChange={setSignatures} />
+          </DocSection>
+
+          {formError && <p className="text-xs text-red-400 mb-3">{formError}</p>}
+          <ActionButton type="submit" disabled={loading} text={loading ? 'Creating…' : 'Create Quotation'} />
+        </form>
+
+        <div className="bg-slate-900 border border-slate-800 rounded-md overflow-hidden mt-8">
           <div className="px-5 py-3 border-b border-slate-800 flex items-center justify-between">
             <h2 className="text-sm font-semibold text-slate-300">All Quotations</h2>
             <span className="text-xs text-slate-400">{quotations.length} total</span>
           </div>
 
           {quotations.length === 0 ? (
-            <div className="px-5 py-12 text-center">
-              <p className="text-sm text-slate-500">No quotations yet.</p>
-            </div>
+            <div className="px-5 py-12 text-center"><p className="text-sm text-slate-500">No quotations yet.</p></div>
           ) : (
             <table className="w-full text-sm">
               <thead>
@@ -261,16 +324,13 @@ export default function QuotesPage() {
                   <th className="px-5 py-2 font-medium">Customer</th>
                   <th className="px-5 py-2 font-medium text-right">Total</th>
                   <th className="px-5 py-2 font-medium">Status</th>
-                  <th className="px-5 py-2 font-medium"></th>
+                  <th className="px-5 py-2 font-medium" />
                 </tr>
               </thead>
               <tbody>
                 {quotations.map((q) => (
-                  <tr
-                    key={q.id}
-                    onClick={() => router.push(`/quotes/${q.id}`)}
-                    className="border-b border-slate-800 last:border-0 cursor-pointer hover:bg-slate-950"
-                  >
+                  <tr key={q.id} onClick={() => router.push(`/quotes/${q.id}`)}
+                    className="border-b border-slate-800 last:border-0 cursor-pointer hover:bg-slate-950">
                     <td className="px-5 py-3 font-medium text-white">{q.quotation_number}</td>
                     <td className="px-5 py-3 text-slate-400">{q.customer_name || 'Unassigned'}</td>
                     <td className="px-5 py-3 text-right text-white font-medium">AED {Number(q.total_amount).toFixed(2)}</td>
@@ -281,17 +341,10 @@ export default function QuotesPage() {
                       <div className="flex gap-2 justify-end">
                         {(q.status === 'draft' || q.status === 'sent') && (
                           <>
-                            <ActionButton
-                              text="Approve"
-                              variant="success"
-                              showArrow={false}
-                              className="!px-3 !py-1 !text-xs"
-                              onClick={() => handleApprove(q.id)}
-                            />
-                            <button
-                              onClick={() => handleReject(q.id)}
-                              className="px-3 py-1 text-xs font-medium text-red-400 hover:text-red-300 border border-red-900/50 rounded-md"
-                            >
+                            <ActionButton text="Approve" variant="success" showArrow={false}
+                              className="!px-3 !py-1 !text-xs" onClick={() => handleApprove(q.id)} />
+                            <button onClick={() => handleReject(q.id)}
+                              className="px-3 py-1 text-xs font-medium text-red-400 hover:text-red-300 border border-red-900/50 rounded-md">
                               Reject
                             </button>
                           </>
@@ -313,4 +366,3 @@ export default function QuotesPage() {
     </div>
   );
 }
-

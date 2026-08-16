@@ -24,9 +24,9 @@ router.get('/', authenticate, verifyClientAccess, async (req, res) => {
 
 router.post('/', authenticate, verifyClientAccess, async (req, res) => {
   try {
-    const { client_id, job_id } = req.body;
-    if (!job_id) {
-      return res.status(400).json({ error: 'job_id is required' });
+    const { client_id, job_id, customer_name, customer_phone } = req.body;
+    if (!job_id && (!customer_name || !customer_phone)) {
+      return res.status(400).json({ error: 'job_id, or customer_name and customer_phone, are required' });
     }
 
     const report = await createInspectionReport(client_id, req.body);

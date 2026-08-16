@@ -1,5 +1,6 @@
 import db from '../../config/database.js';
 import { generateInvoiceForApprovedQuotation } from './invoiceService.js';
+import { resolveCustomerAndJob } from './customerJobResolver.js';
 
 const listQuotations = async (clientId, filters = {}) => {
   let query = `
@@ -64,16 +65,18 @@ const computeTotals = (items, discountAmount, vatPercent) => {
 };
 
 const createQuotation = async (clientId, data) => {
-  const { job_id, items = [], discount_amount = 0, vat_percent = 5.0, valid_until, notes } = data;
+  const { items = [], discount_amount = 0, vat_percent = 5.0, valid_until, notes, repair_type, signatures } = data;
+
+  const { jobId } = await resolveCustomerAndJob(clientId, data);
 
   const { labourAmount, partsAmount, totalAmount } = computeTotals(items, discount_amount, vat_percent);
 
   const result = await db.query(
     `INSERT INTO quotations
-       (client_id, job_id, labour_amount, parts_amount, discount_amount, vat_percent, total_amount, status, valid_until, notes)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, 'draft', $8, $9)
+       (client_id, job_id, labour_amount, parts_amount, discount_amount, vat_percent, total_amount, status, valid_until, notes, repair_type, signatures)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, 'draft', $8, $9, $10, $11)
      RETURNING *`,
-    [clientId, job_id, labourAmount, partsAmount, discount_amount, vat_percent, totalAmount, valid_until || null, notes || '']
+    [clientId, jobId, labourAmount, partsAmount, discount_amount, vat_percent, totalAmount, valid_until || null, notes || '', repair_type || null, JSON.stringify(signatures || {})]
   );
 
   const quotation = result.rows[0];
@@ -169,6 +172,14 @@ const updateQuotation = async (clientId, quotationId, data) => {
   if (data.valid_until !== undefined) {
     updates.push(`valid_until = $${paramCount++}`);
     values.push(data.valid_until);
+  }
+  if (data.repair_type !== undefined) {
+    updates.push(`repair_type = $${paramCount++}`);
+    values.push(data.repair_type);
+  }
+  if (data.signatures !== undefined) {
+    updates.push(`signatures = $${paramCount++}`);
+    values.push(JSON.stringify(data.signatures));
   }
 
   values.push(quotationId, clientId);

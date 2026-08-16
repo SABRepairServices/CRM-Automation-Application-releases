@@ -1,6 +1,10 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
+// Branded navy/gold document theme. Every rule inside is scoped under
+// .doc-theme, so loading it globally is safe — it only applies to pages
+// that opt in by wrapping themselves in that class.
+import "../styles/document-theme.css";
 import { AuthProvider } from "@/context/AuthContext";
 
 const inter = Inter({

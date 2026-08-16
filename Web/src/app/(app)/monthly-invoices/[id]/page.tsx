@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { useInvoices, Invoice } from '@/hooks/useInvoices';
+import { useMonthlyInvoices, MonthlyInvoice, MONTH_NAMES, PAYMENT_TERMS_LABELS } from '@/hooks/useMonthlyInvoices';
 import { useClients, Client } from '@/hooks/useClients';
 import type { DocumentSignatures } from '@/hooks/useQuotations';
 import { DocumentHeader } from '@/components/DocumentHeader';
@@ -14,19 +14,19 @@ import { isElectron, saveDocumentBackup } from '@/lib/electronBridge';
 
 const SIGNATURE_ROLES = [
   { key: 'issued_by', label: 'Issued By (Office)' },
-  { key: 'received_by', label: 'Received By (Customer)', placeholder: 'Customer name' },
-  { key: 'technician', label: 'Technician', placeholder: 'Technician name' },
+  { key: 'verified_by', label: 'Verified By (Manager)', placeholder: 'Manager name' },
+  { key: 'acknowledged_by', label: 'Acknowledged By (Client)', placeholder: 'Client representative' },
 ];
 
 const money = (n: number | string) => `AED ${Number(n || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 const fmtDate = (d?: string) => (d ? new Date(d).toLocaleDateString('en-GB') : '—');
 
-export default function InvoiceDocumentPage() {
+export default function MonthlyInvoiceDocumentPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
-  const { getInvoice, sendInvoice, updateInvoice } = useInvoices();
+  const { getMonthlyInvoice, sendMonthlyInvoice, updateMonthlyInvoice } = useMonthlyInvoices();
   const { getClient } = useClients();
-  const [invoice, setInvoice] = useState<Invoice | null>(null);
+  const [invoice, setInvoice] = useState<MonthlyInvoice | null>(null);
   const [client, setClient] = useState<Client | null>(null);
   const [loading, setLoading] = useState(true);
   const [backupStatus, setBackupStatus] = useState<'idle' | 'saving' | 'saved' | 'failed'>('idle');
@@ -36,9 +36,9 @@ export default function InvoiceDocumentPage() {
   useEffect(() => {
     const clientId = localStorage.getItem('selectedClientId');
     if (!clientId || !id) return;
-    Promise.all([getInvoice(clientId, id), getClient(clientId)]).then(([inv, c]) => {
-      setInvoice(inv);
-      setSignatures(inv?.signatures || {});
+    Promise.all([getMonthlyInvoice(clientId, id), getClient(clientId)]).then(([mi, c]) => {
+      setInvoice(mi);
+      setSignatures(mi?.signatures || {});
       setClient(c);
       setLoading(false);
     });
@@ -51,10 +51,10 @@ export default function InvoiceDocumentPage() {
     setTimeout(async () => {
       const result = await saveDocumentBackup({
         clientName: client.name,
-        customerName: invoice.customer_name || 'Unknown Customer',
-        jobNumber: invoice.jobs?.[0]?.job_number || invoice.invoice_number,
-        applianceType: invoice.jobs?.[0]?.appliance_type || 'appliance',
-        docType: 'Invoice',
+        customerName: invoice.customer_name || invoice.contract_name || 'Unknown Client',
+        jobNumber: invoice.invoice_number,
+        applianceType: 'monthly-statement',
+        docType: 'MonthlyInvoice',
         docNumber: invoice.invoice_number,
       });
       setBackupStatus(result?.success ? 'saved' : 'failed');
@@ -71,23 +71,23 @@ export default function InvoiceDocumentPage() {
     if (!clientId || !invoice) return;
     setSaving(true);
     try {
-      await updateInvoice(clientId, invoice.id, { signatures });
+      await updateMonthlyInvoice(clientId, invoice.id, { signatures });
     } finally {
       setSaving(false);
     }
   };
 
   if (loading) return <div className="p-8 text-sm text-slate-500">Loading…</div>;
-  if (!invoice) return <div className="p-8"><p className="text-sm text-slate-500">Invoice not found.</p></div>;
+  if (!invoice) return <div className="p-8"><p className="text-sm text-slate-500">Monthly invoice not found.</p></div>;
 
-  const balance = Math.max(0, Number(invoice.total_amount) - Number(invoice.paid_amount));
+  const period = `${MONTH_NAMES[invoice.month - 1] || ''} ${invoice.year}`;
 
   return (
     <div className="doc-theme px-4 py-4 bg-slate-950 min-h-screen print:bg-white print:p-0">
       <div className="max-w-4xl mx-auto">
         <div className="flex items-center justify-between mb-4 print:hidden flex-wrap gap-3">
-          <button onClick={() => router.push('/invoices')} className="text-sm text-slate-500 hover:text-slate-300">
-            ← Back to Invoices
+          <button onClick={() => router.push('/monthly-invoices')} className="text-sm text-slate-500 hover:text-slate-300">
+            ← Back to Monthly Invoices
           </button>
           <div className="flex items-center gap-3 flex-wrap">
             {isElectron() && (
@@ -104,31 +104,31 @@ export default function InvoiceDocumentPage() {
 
         <div className="mb-4 print:hidden">
           <SendDocumentBar
-            documentLabel={`Invoice ${invoice.invoice_number}`}
+            documentLabel={`Monthly Invoice ${invoice.invoice_number}`}
             customerName={invoice.customer_name}
             customerPhone={invoice.customer_phone}
-            customerEmail={invoice.customer_email}
+            customerEmail={invoice.to_email || invoice.customer_email}
             businessPhone={client?.phone}
             businessEmail={client?.email}
-            onSend={() => sendInvoice(localStorage.getItem('selectedClientId') || '', invoice.id)}
-            onSent={() => getInvoice(localStorage.getItem('selectedClientId') || '', invoice.id).then((i) => i && setInvoice(i))}
+            onSend={() => sendMonthlyInvoice(localStorage.getItem('selectedClientId') || '', invoice.id)}
+            onSent={() => getMonthlyInvoice(localStorage.getItem('selectedClientId') || '', invoice.id).then((mi) => mi && setInvoice(mi))}
           />
         </div>
 
-        <DocumentHeader client={client} title="Tax Invoice" />
+        <DocumentHeader client={client} title="Monthly Invoice" />
 
         <div className="meta-row">
           <div className="meta-card hi">
             <div className="meta-label">Invoice No.</div>
             <div className="text-sm text-white font-medium">{invoice.invoice_number}</div>
           </div>
-          <div className="meta-card">
-            <div className="meta-label">Invoice Date</div>
-            <div className="text-sm text-slate-300">{fmtDate(invoice.issue_date)}</div>
+          <div className="meta-card hi">
+            <div className="meta-label">Period</div>
+            <div className="text-sm text-white font-medium">{period}</div>
           </div>
           <div className="meta-card">
-            <div className="meta-label">Due Date</div>
-            <div className="text-sm text-slate-300">{fmtDate(invoice.due_date)}</div>
+            <div className="meta-label">Payment Terms</div>
+            <div className="text-sm text-slate-300">{PAYMENT_TERMS_LABELS[invoice.payment_terms] || invoice.payment_terms}</div>
           </div>
           <div className="meta-card">
             <div className="meta-label">Status</div>
@@ -136,11 +136,30 @@ export default function InvoiceDocumentPage() {
           </div>
         </div>
 
-        <DocSection title="Bill To — Customer Details" icon="🏢" accent="blue">
+        <div className="summary-badge">
+          <div className="sum-card gold-card">
+            <div className="sum-lbl">Total Amount</div>
+            <div className="sum-val">{money(invoice.subtotal)}</div>
+          </div>
+          <div className="sum-card green-card">
+            <div className="sum-lbl">Total Received</div>
+            <div className="sum-val">{money(invoice.total_received)}</div>
+          </div>
+          <div className="sum-card red-card">
+            <div className="sum-lbl">Total Pending</div>
+            <div className="sum-val">{money(invoice.total_pending)}</div>
+          </div>
+        </div>
+
+        <DocSection title="Client / Company Details" icon="🏢" accent="blue">
           <div className="fg c2">
             <div>
-              <div className="meta-label">Customer</div>
-              <div className="text-sm text-white">{invoice.customer_name || '—'}</div>
+              <div className="meta-label">Company</div>
+              <div className="text-sm text-white">{invoice.customer_name || invoice.contract_name || '—'}</div>
+            </div>
+            <div>
+              <div className="meta-label">Contact Person</div>
+              <div className="text-sm text-slate-300">{invoice.contact_person || '—'}</div>
             </div>
             <div>
               <div className="meta-label">Phone</div>
@@ -148,29 +167,47 @@ export default function InvoiceDocumentPage() {
             </div>
             <div>
               <div className="meta-label">Email</div>
-              <div className="text-sm text-slate-300">{invoice.customer_email || '—'}</div>
+              <div className="text-sm text-slate-300">{invoice.to_email || invoice.customer_email || '—'}</div>
+            </div>
+            <div>
+              <div className="meta-label">Account / Panel #</div>
+              <div className="text-sm text-slate-300">{invoice.panel_account_number || '—'}</div>
+            </div>
+            <div>
+              <div className="meta-label">Prepared By</div>
+              <div className="text-sm text-slate-300">{invoice.prepared_by || '—'}</div>
             </div>
           </div>
         </DocSection>
 
-        <DocSection title="Invoice Items" icon="💰" accent="green" flush>
+        <DocSection title="Monthly Job Log" icon="📊" accent="green" flush>
           <div className="tbl-wrap">
             <table className="items-table">
               <thead>
                 <tr>
                   <th style={{ width: '28px' }}>#</th>
-                  <th>Description</th>
-                  <th style={{ width: '22%', textAlign: 'right' }}>Amount</th>
+                  <th style={{ width: '12%' }}>Date</th>
+                  <th style={{ width: '14%' }}>Job No.</th>
+                  <th style={{ width: '15%' }}>Appliance</th>
+                  <th>Work Done</th>
+                  <th style={{ width: '13%', textAlign: 'right' }}>Amount</th>
+                  <th style={{ width: '13%', textAlign: 'right' }}>Received</th>
+                  <th style={{ width: '13%', textAlign: 'right' }}>Pending</th>
                 </tr>
               </thead>
               <tbody>
                 {(invoice.jobs || []).map((j, idx) => (
                   <tr key={j.job_id || idx}>
                     <td className="row-num">{idx + 1}</td>
-                    <td className="px-2 text-sm text-white">
-                      {j.appliance_type || 'Appliance'}{j.reported_fault ? ` — ${j.reported_fault}` : ''}
-                    </td>
+                    <td className="px-2 text-xs text-slate-400">{fmtDate(j.completed_at)}</td>
+                    <td className="px-2 text-xs text-slate-300">{j.job_number || '—'}</td>
+                    <td className="px-2 text-xs text-slate-300">{j.appliance_type || '—'}</td>
+                    <td className="px-2 text-xs text-slate-400">{j.reported_fault || '—'}</td>
                     <td className="amt-cell">{money(j.amount)}</td>
+                    <td className="amt-cell" style={{ color: 'var(--doc-green-light)' }}>{money(j.received_amount)}</td>
+                    <td className="amt-cell" style={{ color: 'var(--doc-red-light)' }}>
+                      {money(Math.max(0, Number(j.amount) - Number(j.received_amount)))}
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -178,13 +215,14 @@ export default function InvoiceDocumentPage() {
           </div>
           <div className="totals-wrap">
             <div className="totals-box">
-              <div className="tot-row"><span className="tot-lbl">Subtotal</span><span className="tot-val">{money(invoice.subtotal)}</span></div>
-              <div className="tot-row"><span className="tot-lbl">VAT</span><span className="tot-val">{money(invoice.vat_amount)}</span></div>
+              <div className="tot-row">
+                <span className="tot-lbl">Total Jobs</span>
+                <span className="tot-val">{(invoice.jobs || []).length}</span>
+              </div>
+              <div className="tot-row grand"><span className="tot-lbl">TOTAL AMOUNT</span><span className="tot-val">{money(invoice.subtotal)}</span></div>
               <div className="tot-divider" />
-              <div className="tot-row grand"><span className="tot-lbl">TOTAL DUE</span><span className="tot-val">{money(invoice.total_amount)}</span></div>
-              <div className="tot-divider" />
-              <div className="tot-row received"><span className="tot-lbl">Amount Received</span><span className="tot-val">{money(invoice.paid_amount)}</span></div>
-              <div className="tot-row pending"><span className="tot-lbl">Balance Due</span><span className="tot-val">{money(balance)}</span></div>
+              <div className="tot-row received"><span className="tot-lbl">Total Received</span><span className="tot-val">{money(invoice.total_received)}</span></div>
+              <div className="tot-row pending"><span className="tot-lbl">Total Pending</span><span className="tot-val">{money(invoice.total_pending)}</span></div>
             </div>
           </div>
         </DocSection>

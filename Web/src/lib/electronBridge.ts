@@ -8,7 +8,7 @@ export interface DocumentBackupMeta {
   customerName: string;
   jobNumber: string;
   applianceType: string;
-  docType: 'Inspection' | 'Quotation' | 'Invoice';
+  docType: 'Inspection' | 'Quotation' | 'Invoice' | 'MonthlyInvoice';
   docNumber: string;
 }
 

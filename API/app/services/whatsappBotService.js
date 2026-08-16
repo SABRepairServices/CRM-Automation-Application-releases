@@ -2,10 +2,11 @@ import db from '../../config/database.js';
 import { sendText, sendDocument, sendTemplateDocument, isWithin24HourWindow } from './whatsappService.js';
 import { parseTechnicianMessage } from './aiParserService.js';
 import { sendPdfEmail } from './emailService.js';
-import { generateInspectionPdf, generateQuotationPdf, generateInvoicePdf } from './pdfService.js';
+import { generateInspectionPdf, generateQuotationPdf, generateInvoicePdf, generateMonthlyInvoicePdf } from './pdfService.js';
 import { createInspectionReport, getInspectionReport, updateInspectionReport } from './inspectionService.js';
 import { getQuotation, updateQuotation } from './quotationService.js';
 import { getInvoice, createInvoice } from './invoiceService.js';
+import { getMonthlyInvoice } from './monthlyInvoiceService.js';
 import { createJob } from './jobService.js';
 import { createCustomer } from './customerService.js';
 
@@ -193,6 +194,23 @@ const sendInvoiceToCustomer = async (client, customer, invoice, threadCtx = {}) 
     emailText: 'Please find your invoice attached.',
     threadCtx,
     template: { name: 'invoice_ready', params: [customer.name, total] },
+  });
+};
+
+const sendMonthlyInvoiceToCustomer = async (client, customer, monthlyInvoice, threadCtx = {}) => {
+  const full = await getMonthlyInvoice(client.id, monthlyInvoice.id);
+  const pdf = await generateMonthlyInvoicePdf({ client, invoice: full, customerName: customer.name });
+  const total = Number(full.subtotal).toFixed(2);
+
+  return deliverDocument({
+    customer,
+    buffer: pdf,
+    filename: `Monthly_Invoice_${monthlyInvoice.invoice_number}.pdf`,
+    caption: `Monthly invoice ${monthlyInvoice.invoice_number} — total ${total} AED.`,
+    subject: `Monthly Invoice ${monthlyInvoice.invoice_number}`,
+    emailText: 'Please find your monthly invoice attached.',
+    threadCtx,
+    template: { name: 'monthly_invoice_ready', params: [customer.name, total] },
   });
 };
 
@@ -431,4 +449,5 @@ export {
   sendInspectionToCustomer,
   sendQuotationToCustomer,
   sendInvoiceToCustomer,
+  sendMonthlyInvoiceToCustomer,
 };

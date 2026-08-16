@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
 import axios from 'axios';
+import type { DocumentSignatures } from './useQuotations';
 
 export interface Invoice {
   id: string;
@@ -14,6 +15,7 @@ export interface Invoice {
   due_date: string;
   status: 'draft' | 'sent' | 'partial' | 'paid' | 'overdue' | 'cancelled';
   notes?: string;
+  signatures?: DocumentSignatures;
   jobs?: Array<{ job_id: string; amount: number; job_number?: string; appliance_type?: string; reported_fault?: string }>;
   subtotal: number;
   vat_amount: number;

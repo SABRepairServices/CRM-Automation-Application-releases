@@ -20,12 +20,18 @@ router.get('/', authenticate, verifyClientAccess, async (req, res) => {
 
 router.post('/', authenticate, verifyClientAccess, async (req, res) => {
   try {
-    const { client_id, job_id, items, discount_amount, vat_percent, valid_until, notes } = req.body;
-    if (!client_id || !job_id) {
-      return res.status(400).json({ error: 'client_id and job_id are required' });
+    const { client_id, ...data } = req.body;
+    if (!client_id) {
+      return res.status(400).json({ error: 'client_id is required' });
+    }
+    // Either an existing job_id, or enough customer/appliance detail to
+    // create one — resolveCustomerAndJob (called inside createQuotation)
+    // enforces which.
+    if (!data.job_id && (!data.customer_name || !data.customer_phone)) {
+      return res.status(400).json({ error: 'job_id, or customer_name and customer_phone, are required' });
     }
 
-    const quotation = await createQuotation(client_id, { job_id, items, discount_amount, vat_percent, valid_until, notes });
+    const quotation = await createQuotation(client_id, data);
     res.json({ data: quotation });
   } catch (err) {
     res.status(500).json({ error: err.message });
