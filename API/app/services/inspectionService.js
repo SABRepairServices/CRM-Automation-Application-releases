@@ -1,4 +1,4 @@
-import db from '../../config/database.js';
+import db, { withTransaction } from '../../config/database.js';
 import { generateQuotationForFinalizedInspection } from './quotationService.js';
 import { resolveCustomerAndJob } from './customerJobResolver.js';
 
@@ -48,32 +48,36 @@ const getInspectionReport = async (clientId, reportId) => {
 const createInspectionReport = async (clientId, data) => {
   const { inspected_by, findings = [], taxable_amount = 0, tax_rate = 5.0, notes, root_cause, technician_notes, diagnosis_result, signatures } = data;
   const inspected_at = data.inspected_at || new Date().toISOString().slice(0, 10);
-
-  const { jobId } = await resolveCustomerAndJob(clientId, data);
-
   const taxAmount = Number(taxable_amount) * (Number(tax_rate) / 100);
 
-  const result = await db.query(
-    `INSERT INTO inspection_reports
-       (client_id, job_id, inspected_by, inspected_at, taxable_amount, tax_rate, tax_amount, notes, status, root_cause, technician_notes, diagnosis_result, signatures)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'draft', $9, $10, $11, $12)
-     RETURNING *`,
-    [clientId, jobId, inspected_by || null, inspected_at || null, taxable_amount, tax_rate, taxAmount, notes || '', root_cause || null, technician_notes || null, diagnosis_result || null, JSON.stringify(signatures || {})]
-  );
+  // Transactional — same reasoning as quotationService.createQuotation:
+  // resolveCustomerAndJob's writes must roll back together with the
+  // report/findings if anything downstream fails.
+  return withTransaction(async (client) => {
+    const { jobId } = await resolveCustomerAndJob(clientId, data, client);
 
-  const report = result.rows[0];
-
-  let sortOrder = 0;
-  for (const finding of findings) {
-    if (!finding.description) continue;
-    await db.query(
-      `INSERT INTO inspection_findings (inspection_report_id, description, sort_order)
-       VALUES ($1, $2, $3)`,
-      [report.id, finding.description, sortOrder++]
+    const result = await client.query(
+      `INSERT INTO inspection_reports
+         (client_id, job_id, inspected_by, inspected_at, taxable_amount, tax_rate, tax_amount, notes, status, root_cause, technician_notes, diagnosis_result, signatures)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'draft', $9, $10, $11, $12)
+       RETURNING *`,
+      [clientId, jobId, inspected_by || null, inspected_at || null, taxable_amount, tax_rate, taxAmount, notes || '', root_cause || null, technician_notes || null, diagnosis_result || null, JSON.stringify(signatures || {})]
     );
-  }
 
-  return report;
+    const report = result.rows[0];
+
+    let sortOrder = 0;
+    for (const finding of findings) {
+      if (!finding.description) continue;
+      await client.query(
+        `INSERT INTO inspection_findings (inspection_report_id, description, sort_order)
+         VALUES ($1, $2, $3)`,
+        [report.id, finding.description, sortOrder++]
+      );
+    }
+
+    return report;
+  });
 };
 
 const updateInspectionReport = async (clientId, reportId, data) => {

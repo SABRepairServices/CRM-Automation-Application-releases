@@ -1,4 +1,4 @@
-import db from '../../config/database.js';
+import db, { withTransaction } from '../../config/database.js';
 
 const listInvoices = async (clientId, filters = {}) => {
   let query = `
@@ -59,24 +59,30 @@ const createInvoice = async (clientId, data) => {
   const vatAmount = subtotal * 0.05;
   const totalAmount = subtotal + vatAmount;
 
-  const result = await db.query(
-    `INSERT INTO invoices
-       (client_id, customer_id, contract_id, subtotal, vat_amount, total_amount, status, issue_date, due_date, notes)
-     VALUES ($1, $2, $3, $4, $5, $6, 'draft', $7, $8, $9)
-     RETURNING *`,
-    [clientId, customer_id || null, contract_id || null, subtotal, vatAmount, totalAmount, issue_date || null, due_date || null, notes || '']
-  );
-
-  const invoice = result.rows[0];
-
-  for (const { job_id, amount } of job_amounts) {
-    await db.query(
-      `INSERT INTO invoice_jobs (invoice_id, job_id, amount) VALUES ($1, $2, $3)`,
-      [invoice.id, job_id, amount]
+  // Transactional: a job_id already linked to another invoice trips
+  // invoice_jobs' UNIQUE(invoice_id, job_id) partway through the loop —
+  // without this the header row commits regardless, orphaning an empty
+  // invoice. Same bug class caught live in monthlyInvoiceService.
+  return withTransaction(async (client) => {
+    const result = await client.query(
+      `INSERT INTO invoices
+         (client_id, customer_id, contract_id, subtotal, vat_amount, total_amount, status, issue_date, due_date, notes)
+       VALUES ($1, $2, $3, $4, $5, $6, 'draft', $7, $8, $9)
+       RETURNING *`,
+      [clientId, customer_id || null, contract_id || null, subtotal, vatAmount, totalAmount, issue_date || null, due_date || null, notes || '']
     );
-  }
 
-  return invoice;
+    const invoice = result.rows[0];
+
+    for (const { job_id, amount } of job_amounts) {
+      await client.query(
+        `INSERT INTO invoice_jobs (invoice_id, job_id, amount) VALUES ($1, $2, $3)`,
+        [invoice.id, job_id, amount]
+      );
+    }
+
+    return invoice;
+  });
 };
 
 /**
@@ -103,22 +109,24 @@ const generateInvoiceForApprovedQuotation = async (clientId, quotation) => {
   const issueDate = new Date().toISOString().slice(0, 10);
   const dueDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
 
-  const result = await db.query(
-    `INSERT INTO invoices
-       (client_id, customer_id, subtotal, vat_amount, total_amount, status, issue_date, due_date, notes)
-     VALUES ($1, $2, $3, $4, $5, 'draft', $6, $7, $8)
-     RETURNING *`,
-    [clientId, customerId, subtotal, vatAmount, totalAmount, issueDate, dueDate, `Auto-generated from quotation ${quotation.quotation_number}`]
-  );
+  return withTransaction(async (client) => {
+    const result = await client.query(
+      `INSERT INTO invoices
+         (client_id, customer_id, subtotal, vat_amount, total_amount, status, issue_date, due_date, notes)
+       VALUES ($1, $2, $3, $4, $5, 'draft', $6, $7, $8)
+       RETURNING *`,
+      [clientId, customerId, subtotal, vatAmount, totalAmount, issueDate, dueDate, `Auto-generated from quotation ${quotation.quotation_number}`]
+    );
 
-  const invoice = result.rows[0];
+    const invoice = result.rows[0];
 
-  await db.query(
-    `INSERT INTO invoice_jobs (invoice_id, job_id, amount) VALUES ($1, $2, $3)`,
-    [invoice.id, quotation.job_id, subtotal]
-  );
+    await client.query(
+      `INSERT INTO invoice_jobs (invoice_id, job_id, amount) VALUES ($1, $2, $3)`,
+      [invoice.id, quotation.job_id, subtotal]
+    );
 
-  return invoice;
+    return invoice;
+  });
 };
 
 const updateInvoice = async (clientId, invoiceId, data) => {

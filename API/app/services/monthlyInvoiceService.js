@@ -1,4 +1,4 @@
-import db from '../../config/database.js';
+import db, { withTransaction } from '../../config/database.js';
 
 /**
  * Completed jobs for a contract/customer, in a given month, not already
@@ -96,24 +96,30 @@ const createMonthlyInvoice = async (clientId, data) => {
   const totalReceived = job_amounts.reduce((sum, j) => sum + Number(j.received_amount || 0), 0);
   const totalPending = Math.max(0, subtotal - totalReceived);
 
-  const result = await db.query(
-    `INSERT INTO monthly_invoices
-       (client_id, contract_id, customer_id, month, year, payment_terms, prepared_by, to_email, cc_email, subtotal, total_received, total_pending, status, notes)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, 'draft', $13)
-     RETURNING *`,
-    [clientId, contract_id || null, customer_id || null, month, year, payment_terms || 'due_on_receipt', prepared_by || null, to_email || null, cc_email || null, subtotal, totalReceived, totalPending, notes || '']
-  );
-
-  const invoice = result.rows[0];
-
-  for (const { job_id, amount, received_amount } of job_amounts) {
-    await db.query(
-      `INSERT INTO monthly_invoice_jobs (monthly_invoice_id, job_id, amount, received_amount) VALUES ($1, $2, $3, $4)`,
-      [invoice.id, job_id, amount || 0, received_amount || 0]
+  // Transactional: a job already billed on another statement trips the
+  // UNIQUE on monthly_invoice_jobs.job_id partway through the loop below.
+  // Without a transaction that left the header row committed with none of
+  // its job lines — an orphaned empty invoice — caught by live testing.
+  return withTransaction(async (client) => {
+    const result = await client.query(
+      `INSERT INTO monthly_invoices
+         (client_id, contract_id, customer_id, month, year, payment_terms, prepared_by, to_email, cc_email, subtotal, total_received, total_pending, status, notes)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, 'draft', $13)
+       RETURNING *`,
+      [clientId, contract_id || null, customer_id || null, month, year, payment_terms || 'due_on_receipt', prepared_by || null, to_email || null, cc_email || null, subtotal, totalReceived, totalPending, notes || '']
     );
-  }
 
-  return invoice;
+    const invoice = result.rows[0];
+
+    for (const { job_id, amount, received_amount } of job_amounts) {
+      await client.query(
+        `INSERT INTO monthly_invoice_jobs (monthly_invoice_id, job_id, amount, received_amount) VALUES ($1, $2, $3, $4)`,
+        [invoice.id, job_id, amount || 0, received_amount || 0]
+      );
+    }
+
+    return invoice;
+  });
 };
 
 const updateMonthlyInvoice = async (clientId, invoiceId, data) => {

@@ -1,4 +1,4 @@
-import db from '../../config/database.js';
+import pool from '../../config/database.js';
 
 /**
  * Quotations and inspection reports both require a real repair_jobs row
@@ -15,7 +15,7 @@ import db from '../../config/database.js';
  * (frequently undefined) job_id, which was violating repair_jobs'/
  * quotations'/inspection_reports' NOT NULL constraints in production.
  */
-const resolveCustomerAndJob = async (clientId, data) => {
+const resolveCustomerAndJob = async (clientId, data, db = pool) => {
   if (data.job_id) {
     const existing = await db.query(
       `SELECT id, customer_id FROM repair_jobs WHERE id = $1`,

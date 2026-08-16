@@ -1,4 +1,4 @@
-import db from '../../config/database.js';
+import db, { withTransaction } from '../../config/database.js';
 import { generateInvoiceForApprovedQuotation } from './invoiceService.js';
 import { resolveCustomerAndJob } from './customerJobResolver.js';
 
@@ -67,31 +67,40 @@ const computeTotals = (items, discountAmount, vatPercent) => {
 const createQuotation = async (clientId, data) => {
   const { items = [], discount_amount = 0, vat_percent = 5.0, valid_until, notes, repair_type, signatures } = data;
 
-  const { jobId } = await resolveCustomerAndJob(clientId, data);
-
   const { labourAmount, partsAmount, totalAmount } = computeTotals(items, discount_amount, vat_percent);
 
-  const result = await db.query(
-    `INSERT INTO quotations
-       (client_id, job_id, labour_amount, parts_amount, discount_amount, vat_percent, total_amount, status, valid_until, notes, repair_type, signatures)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, 'draft', $8, $9, $10, $11)
-     RETURNING *`,
-    [clientId, jobId, labourAmount, partsAmount, discount_amount, vat_percent, totalAmount, valid_until || null, notes || '', repair_type || null, JSON.stringify(signatures || {})]
-  );
+  // Transactional: resolveCustomerAndJob may insert a new customer AND a
+  // new repair_jobs row before the quotation itself is even attempted. If
+  // any later statement in this chain fails, all of it must roll back
+  // together — otherwise a rejected quotation can still leave behind a
+  // freshly-created customer/job with nothing pointing at it. See
+  // withTransaction's doc comment for the orphaned-row bug this pattern
+  // caught in monthlyInvoiceService.
+  return withTransaction(async (client) => {
+    const { jobId } = await resolveCustomerAndJob(clientId, data, client);
 
-  const quotation = result.rows[0];
-
-  let sortOrder = 0;
-  for (const item of items) {
-    const lineTotal = item.quantity * item.unit_price;
-    await db.query(
-      `INSERT INTO quotation_items (quotation_id, description, item_type, quantity, unit_price, line_total, sort_order)
-       VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-      [quotation.id, item.description, item.item_type || 'part', item.quantity, item.unit_price, lineTotal, sortOrder++]
+    const result = await client.query(
+      `INSERT INTO quotations
+         (client_id, job_id, labour_amount, parts_amount, discount_amount, vat_percent, total_amount, status, valid_until, notes, repair_type, signatures)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, 'draft', $8, $9, $10, $11)
+       RETURNING *`,
+      [clientId, jobId, labourAmount, partsAmount, discount_amount, vat_percent, totalAmount, valid_until || null, notes || '', repair_type || null, JSON.stringify(signatures || {})]
     );
-  }
 
-  return quotation;
+    const quotation = result.rows[0];
+
+    let sortOrder = 0;
+    for (const item of items) {
+      const lineTotal = item.quantity * item.unit_price;
+      await client.query(
+        `INSERT INTO quotation_items (quotation_id, description, item_type, quantity, unit_price, line_total, sort_order)
+         VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+        [quotation.id, item.description, item.item_type || 'part', item.quantity, item.unit_price, lineTotal, sortOrder++]
+      );
+    }
+
+    return quotation;
+  });
 };
 
 /**
