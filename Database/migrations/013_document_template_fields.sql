@@ -56,10 +56,17 @@ ALTER TABLE inspection_reports
 -- (finalize; auto-generates a quotation) or cannot_repair (finalize;
 -- terminal, no quotation). 'final' is remapped to 'completed' so any
 -- existing rows keep a valid status under the new constraint.
-UPDATE inspection_reports SET status = 'completed' WHERE status = 'final';
-
+--
+-- Order matters: the old constraint must be DROPPED before the UPDATE.
+-- Remapping first would set status='completed' while the old
+-- CHECK (status IN ('draft','final')) is still enforced, and Postgres
+-- rejects the row — which is exactly what happened on the first run
+-- against real data holding 3 'final' reports.
 ALTER TABLE inspection_reports
   DROP CONSTRAINT IF EXISTS inspection_reports_status_chk;
+
+UPDATE inspection_reports SET status = 'completed' WHERE status = 'final';
+
 ALTER TABLE inspection_reports
   ADD CONSTRAINT inspection_reports_status_chk
     CHECK (status IN ('draft','in_progress','completed','cannot_repair'));
