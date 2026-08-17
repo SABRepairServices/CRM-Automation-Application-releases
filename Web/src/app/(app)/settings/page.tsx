@@ -14,6 +14,7 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:5000/api';
 const EMPTY_FORM = {
   name: '',
   logo_url: '',
+  document_logo_url: '',
   email: '',
   phone: '',
   address: '',
@@ -31,6 +32,7 @@ export default function SettingsPage() {
   const [formData, setFormData] = useState(EMPTY_FORM);
   const [saved, setSaved] = useState(false);
   const [logoError, setLogoError] = useState('');
+  const [docLogoError, setDocLogoError] = useState('');
   const [backupFolder, setBackupFolder] = useState<string | null>(null);
   const [changingFolder, setChangingFolder] = useState(false);
   const [backupFolderSaved, setBackupFolderSaved] = useState(false);
@@ -57,6 +59,7 @@ export default function SettingsPage() {
     setFormData({
       name: c.name || '',
       logo_url: c.logo_url || '',
+      document_logo_url: c.document_logo_url || '',
       email: c.email || '',
       phone: c.phone || '',
       address: c.address || '',
@@ -379,7 +382,7 @@ export default function SettingsPage() {
               </div>
               <div className="flex-1 space-y-2">
                 <div>
-                  <label className="block text-xs font-medium text-slate-500 mb-1">Upload Logo</label>
+                  <label className="block text-xs font-medium text-slate-500 mb-1">App Logo <span className="font-normal text-slate-600">— sidebar &amp; header badge</span></label>
                   <input
                     type="file"
                     accept="image/*"
@@ -411,6 +414,60 @@ export default function SettingsPage() {
                     placeholder="https://..."
                     value={formData.logo_url.startsWith('data:') ? '' : formData.logo_url}
                     onChange={(e) => setFormData({ ...formData, logo_url: e.target.value })}
+                    className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-md text-sm text-white placeholder:text-slate-600"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Separate from the App Logo above — a business often wants a
+                compact square mark for the app UI but a wider letterhead
+                logo on the actual paperwork customers receive. Falls back
+                to the App Logo automatically (see DocumentHeader.tsx) if
+                this is left blank, so setting only one still works fine. */}
+            <div className="flex items-center gap-4 pt-1 border-t border-slate-800/60">
+              <div className="w-20 h-20 rounded-md border border-slate-800 flex items-center justify-center overflow-hidden bg-slate-950 shrink-0 mt-4">
+                {formData.document_logo_url ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={formData.document_logo_url} alt="Document logo preview" className="w-full h-full object-contain" />
+                ) : (
+                  <span className="text-xs text-slate-400 text-center px-1">Uses App Logo</span>
+                )}
+              </div>
+              <div className="flex-1 space-y-2 mt-4">
+                <div>
+                  <label className="block text-xs font-medium text-slate-500 mb-1">Document Logo <span className="font-normal text-slate-600">— Quotations, Invoices &amp; Inspection Reports</span></label>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (!file) return;
+                      setDocLogoError('');
+                      if (!file.type.startsWith('image/')) {
+                        setDocLogoError('Please choose an image file.');
+                        return;
+                      }
+                      if (file.size > 2 * 1024 * 1024) {
+                        setDocLogoError('Logo must be under 2MB &mdash; try a smaller image.');
+                        return;
+                      }
+                      const reader = new FileReader();
+                      reader.onload = () => setFormData((prev) => ({ ...prev, document_logo_url: String(reader.result) }));
+                      reader.onerror = () => setDocLogoError('Could not read that file &mdash; try again.');
+                      reader.readAsDataURL(file);
+                    }}
+                    className="w-full text-xs text-slate-400 file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-medium file:bg-blue-600 file:text-white hover:file:bg-blue-500 file:cursor-pointer cursor-pointer"
+                  />
+                  {docLogoError && <p className="text-xs text-red-400 mt-1">{docLogoError}</p>}
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-slate-500 mb-1">or paste a Logo URL</label>
+                  <input
+                    type="text"
+                    placeholder="https://..."
+                    value={formData.document_logo_url.startsWith('data:') ? '' : formData.document_logo_url}
+                    onChange={(e) => setFormData({ ...formData, document_logo_url: e.target.value })}
                     className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-md text-sm text-white placeholder:text-slate-600"
                   />
                 </div>

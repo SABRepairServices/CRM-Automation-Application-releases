@@ -57,7 +57,7 @@ export const updateClient = async (clientId, userId, data) => {
   const params = [];
   let paramNum = 1;
 
-  const fields = ['name', 'business_type', 'industry', 'website', 'email', 'phone', 'address', 'city', 'country', 'logo_url', 'brand_color', 'billing_email', 'notes', 'is_active', 'vat_number'];
+  const fields = ['name', 'business_type', 'industry', 'website', 'email', 'phone', 'address', 'city', 'country', 'logo_url', 'document_logo_url', 'brand_color', 'billing_email', 'notes', 'is_active', 'vat_number'];
   fields.forEach(field => {
     if (data[field] !== undefined) {
       updates.push(`${field} = $${paramNum++}`);

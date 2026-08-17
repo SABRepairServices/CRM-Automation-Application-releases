@@ -13,6 +13,31 @@ const TEXT = '#0f172a';
 const money = (n) => `AED ${Number(n || 0).toFixed(2)}`;
 const fmtDate = (d) => (d ? new Date(d).toLocaleDateString('en-GB') : '—');
 
+/**
+ * Fetches the logo image (a wider letterhead-style document_logo_url,
+ * falling back to the small app-badge logo_url — same fallback the
+ * on-screen DocumentHeader.tsx uses) as a Buffer for pdfkit to embed.
+ * Handles both http(s) URLs and data: URIs (a "Choose File" upload in
+ * Settings stores the logo as a base64 data URI, not a hosted file).
+ * Never throws — a missing/unreachable/corrupt logo degrades to the
+ * text-only header rather than failing the whole document.
+ */
+const fetchLogoBuffer = async (url) => {
+  if (!url) return null;
+  try {
+    if (url.startsWith('data:')) {
+      const base64 = url.split(',')[1];
+      return base64 ? Buffer.from(base64, 'base64') : null;
+    }
+    const response = await fetch(url, { signal: AbortSignal.timeout(5000) });
+    if (!response.ok) return null;
+    return Buffer.from(await response.arrayBuffer());
+  } catch (err) {
+    console.error('[pdfService] could not fetch document logo:', err.message);
+    return null;
+  }
+};
+
 const buildPdf = (drawFn) =>
   new Promise((resolve, reject) => {
     const doc = new PDFDocument({ margin: 42, size: 'A4' });
@@ -24,25 +49,51 @@ const buildPdf = (drawFn) =>
     doc.end();
   });
 
-/** Navy banner with the client name, a gold divider, and the document
- * title/number on the right — the PDF equivalent of DocumentHeader.tsx. */
-const brandedHeader = (doc, client, title, docNumber) => {
+/** Navy banner with the client's logo (if set), name, a gold divider, and
+ * the document title/number on the right — the PDF equivalent of
+ * DocumentHeader.tsx, so what the customer receives by email/WhatsApp
+ * matches what the office sees on screen. */
+const brandedHeader = (doc, client, title, docNumber, logoBuffer) => {
   const top = doc.y;
-  doc.rect(doc.page.margins.left, top, doc.page.width - doc.page.margins.left - doc.page.margins.right, 64).fill(NAVY);
+  const bannerHeight = 64;
+  doc.rect(doc.page.margins.left, top, doc.page.width - doc.page.margins.left - doc.page.margins.right, bannerHeight).fill(NAVY);
+
+  let textX = doc.page.margins.left + 16;
+  let textWidth = 300;
+  if (logoBuffer) {
+    try {
+      const logoSize = 40;
+      const logoX = doc.page.margins.left + 12;
+      const logoY = top + (bannerHeight - logoSize) / 2;
+      // White backing plate — logos are often transparent-background PNGs
+      // and would otherwise vanish into the navy banner around any dark
+      // pixels in the mark itself.
+      doc.rect(logoX, logoY, logoSize, logoSize).fill('#fff');
+      doc.image(logoBuffer, logoX, logoY, { fit: [logoSize, logoSize], align: 'center', valign: 'center' });
+      textX = logoX + logoSize + 12;
+      textWidth = 300 - logoSize - 12;
+    } catch (err) {
+      // pdfkit only decodes JPEG/PNG — a corrupt file or an unsupported
+      // format (SVG, WebP) throws here. Degrade to the text-only header
+      // rather than failing the whole document over a bad logo.
+      console.error('[pdfService] logo image could not be embedded:', err.message);
+    }
+  }
+
   doc.fillColor('#fff').fontSize(15).font('Helvetica-Bold')
-    .text(client?.name || 'Your Company', doc.page.margins.left + 16, top + 12, { width: 300 });
+    .text(client?.name || 'Your Company', textX, top + 12, { width: textWidth });
   doc.fillColor(GOLD).fontSize(8).font('Helvetica')
-    .text([client?.address, client?.phone, client?.email].filter(Boolean).join('  •  '), doc.page.margins.left + 16, top + 32, { width: 320 });
+    .text([client?.address, client?.phone, client?.email].filter(Boolean).join('  •  '), textX, top + 32, { width: textWidth + 20 });
   if (client?.vat_number) {
-    doc.fillColor('#c7d2e0').fontSize(7.5).text(`TRN: ${client.vat_number}`, doc.page.margins.left + 16, top + 46);
+    doc.fillColor('#c7d2e0').fontSize(7.5).text(`TRN: ${client.vat_number}`, textX, top + 46);
   }
   doc.fillColor(GOLD).fontSize(14).font('Helvetica-Bold')
     .text(title.toUpperCase(), doc.page.width - doc.page.margins.right - 220, top + 14, { width: 220, align: 'right' });
   doc.fillColor('#fff').fontSize(9).font('Helvetica')
     .text(docNumber, doc.page.width - doc.page.margins.right - 220, top + 34, { width: 220, align: 'right' });
-  doc.rect(doc.page.margins.left, top + 64, doc.page.width - doc.page.margins.left - doc.page.margins.right, 3).fill(GOLD);
+  doc.rect(doc.page.margins.left, top + bannerHeight, doc.page.width - doc.page.margins.left - doc.page.margins.right, 3).fill(GOLD);
   doc.fillColor(TEXT).moveDown(3);
-  doc.y = top + 82;
+  doc.y = top + bannerHeight + 18;
 };
 
 const sectionLabel = (doc, text) => {
@@ -136,9 +187,10 @@ const footer = (doc, client) => {
     });
 };
 
-const generateInspectionPdf = ({ client, report, customerName, customerPhone }) =>
-  buildPdf((doc) => {
-    brandedHeader(doc, client, 'Inspection Report', `Ref: ${report.report_number}  •  ${fmtDate(report.inspected_at)}`);
+const generateInspectionPdf = async ({ client, report, customerName, customerPhone }) => {
+  const logoBuffer = await fetchLogoBuffer(client?.document_logo_url || client?.logo_url);
+  return buildPdf((doc) => {
+    brandedHeader(doc, client, 'Inspection Report', `Ref: ${report.report_number}  •  ${fmtDate(report.inspected_at)}`, logoBuffer);
     customerBlock(doc, customerName, customerPhone, [report.appliance_type]);
 
     sectionLabel(doc, 'Findings');
@@ -168,10 +220,12 @@ const generateInspectionPdf = ({ client, report, customerName, customerPhone }) 
 
     footer(doc, client);
   });
+};
 
-const generateQuotationPdf = ({ client, quotation, customerName, customerPhone }) =>
-  buildPdf((doc) => {
-    brandedHeader(doc, client, 'Quotation', `Ref: ${quotation.quotation_number}  •  Valid until ${fmtDate(quotation.valid_until)}`);
+const generateQuotationPdf = async ({ client, quotation, customerName, customerPhone }) => {
+  const logoBuffer = await fetchLogoBuffer(client?.document_logo_url || client?.logo_url);
+  return buildPdf((doc) => {
+    brandedHeader(doc, client, 'Quotation', `Ref: ${quotation.quotation_number}  •  Valid until ${fmtDate(quotation.valid_until)}`, logoBuffer);
     customerBlock(doc, customerName, customerPhone, [quotation.appliance_type]);
 
     sectionLabel(doc, 'Scope of Work & Cost Breakdown');
@@ -219,10 +273,12 @@ const generateQuotationPdf = ({ client, quotation, customerName, customerPhone }
 
     footer(doc, client);
   });
+};
 
-const generateInvoicePdf = ({ client, invoice, customerName, customerPhone }) =>
-  buildPdf((doc) => {
-    brandedHeader(doc, client, 'Tax Invoice', `Invoice: ${invoice.invoice_number}  •  Due ${fmtDate(invoice.due_date)}`);
+const generateInvoicePdf = async ({ client, invoice, customerName, customerPhone }) => {
+  const logoBuffer = await fetchLogoBuffer(client?.document_logo_url || client?.logo_url);
+  return buildPdf((doc) => {
+    brandedHeader(doc, client, 'Tax Invoice', `Invoice: ${invoice.invoice_number}  •  Due ${fmtDate(invoice.due_date)}`, logoBuffer);
     customerBlock(doc, customerName, customerPhone);
 
     sectionLabel(doc, 'Invoice Items');
@@ -256,13 +312,15 @@ const generateInvoicePdf = ({ client, invoice, customerName, customerPhone }) =>
 
     footer(doc, client);
   });
+};
 
 const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
-const generateMonthlyInvoicePdf = ({ client, invoice, customerName }) =>
-  buildPdf((doc) => {
+const generateMonthlyInvoicePdf = async ({ client, invoice, customerName }) => {
+  const logoBuffer = await fetchLogoBuffer(client?.document_logo_url || client?.logo_url);
+  return buildPdf((doc) => {
     const period = `${MONTH_NAMES[invoice.month - 1] || ''} ${invoice.year}`;
-    brandedHeader(doc, client, 'Monthly Invoice', `${period}  •  ${invoice.invoice_number}`);
+    brandedHeader(doc, client, 'Monthly Invoice', `${period}  •  ${invoice.invoice_number}`, logoBuffer);
     customerBlock(doc, customerName || invoice.contract_name);
 
     sectionLabel(doc, 'Monthly Job Log');
@@ -301,5 +359,6 @@ const generateMonthlyInvoicePdf = ({ client, invoice, customerName }) =>
 
     footer(doc, client);
   });
+};
 
 export { generateInspectionPdf, generateQuotationPdf, generateInvoicePdf, generateMonthlyInvoicePdf };

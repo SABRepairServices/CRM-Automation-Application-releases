@@ -5,7 +5,13 @@ import { Client } from '@/hooks/useClients';
 
 export function DocumentHeader({ client, title }: { client: Client | null; title: string }) {
   const [logoFailed, setLogoFailed] = useState(false);
-  const showLogo = client?.logo_url && !logoFailed;
+  // The document logo is a separate field from the small app-badge logo
+  // (Header.tsx sidebar/header avatar) — businesses often want a compact
+  // square mark for the app UI but a wider letterhead-style logo on
+  // printed documents. Falls back to the app logo for anyone who set that
+  // before this field existed, rather than showing a blank box.
+  const documentLogoUrl = client?.document_logo_url || client?.logo_url;
+  const showLogo = documentLogoUrl && !logoFailed;
   const contactLine = [client?.address, [client?.city, client?.country].filter(Boolean).join(', '), client?.phone, client?.email]
     .filter(Boolean)
     .join('  •  ');
@@ -25,8 +31,8 @@ export function DocumentHeader({ client, title }: { client: Client | null; title
         {showLogo ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
-            src={client.logo_url}
-            alt={client.name}
+            src={documentLogoUrl}
+            alt={client?.name}
             className="max-h-[4.5rem] max-w-[240px] object-contain"
             onError={() => setLogoFailed(true)}
           />

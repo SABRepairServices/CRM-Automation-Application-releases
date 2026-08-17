@@ -13,6 +13,7 @@ export interface Client {
   city?: string;
   country?: string;
   logo_url?: string;
+  document_logo_url?: string;
   brand_color?: string;
   billing_email?: string;
   vat_number?: string;
