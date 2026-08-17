@@ -230,6 +230,21 @@ export function Sidebar() {
         </div>
       )}
 
+      {/* Collapsed rail has no room for the full card above, but an update
+          being ready — and about to auto-install on its own 30s timer — is
+          exactly the kind of thing that shouldn't be invisible just because
+          nobody happens to be hovering the sidebar at that moment. A small
+          pulsing dot on the pin/toggle button is visible in both states and
+          hovering it (or the sidebar itself) reveals the full card. */}
+      {updateReady && !wide && (
+        <div className="pb-2.5 flex justify-center" title={`Update ready — v${updateReady.version} — hover the sidebar for details`}>
+          <span className="relative flex h-2.5 w-2.5">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75" />
+            <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-blue-500" />
+          </span>
+        </div>
+      )}
+
       {wide && (
         <div className="px-3 py-3 border-t border-white/5">
           <div className="text-[10.5px] text-slate-600 text-center leading-relaxed">
