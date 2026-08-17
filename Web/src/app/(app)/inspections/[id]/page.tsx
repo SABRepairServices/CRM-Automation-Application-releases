@@ -98,7 +98,7 @@ export default function InspectionDocumentPage() {
 
   return (
     <div className="doc-theme px-4 py-4 bg-slate-950 min-h-screen print:bg-white print:p-0">
-      <div className="max-w-4xl mx-auto">
+      <div className="doc-sheet max-w-4xl mx-auto">
         <div className="flex items-center justify-between mb-4 print:hidden flex-wrap gap-3">
           <button onClick={() => router.push('/inspections')} className="text-sm text-slate-500 hover:text-slate-300">
             ← Back to Inspection Reports

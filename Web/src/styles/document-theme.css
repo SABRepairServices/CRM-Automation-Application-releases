@@ -500,11 +500,43 @@
   .doc-theme, .doc-theme * {
     color: #0f172a !important;
   }
-  .doc-theme .doc-section {
-    border: 1px solid #ccc !important;
+
+  /* ── ONE SHEET, NOT A STACK OF CARDS ──────────────────────────────────
+     On screen every block (header, meta strip, each section) is its own
+     rounded, separately-bordered, gapped card — reads fine on a dark
+     dashboard but prints as a scattered pile of boxes instead of one
+     document. On paper this becomes a single continuous frame: one
+     outer border around the whole sheet, and every block inside loses
+     its own border/radius/margin in favor of a plain top rule line —
+     the classic single-ledger-sheet look. The items table's own full
+     cell-grid borders are untouched; they already read as ruled lines
+     within this frame. */
+  .doc-theme .doc-sheet {
+    border: 1.5px solid #1e293b !important;
     background: #fff !important;
-    margin-bottom: 8px;
+  }
+  .doc-theme .doc-header,
+  .doc-theme .meta-row,
+  .doc-theme .doc-section {
+    border: none !important;
+    border-top: 1px solid #94a3b8 !important;
+    border-radius: 0 !important;
+    margin: 0 !important;
+    background: #fff !important;
     break-inside: avoid;
+  }
+  .doc-theme .doc-header {
+    border-top: none !important;
+    padding-bottom: 14px !important;
+  }
+  /* The dark navy "QUOTATION"/"INVOICE"/etc title strip inside the header
+     keeps its own solid background on purpose (it's a real banner, not a
+     plain text row) — without this override the blanket
+     .doc-theme * { color: #0f172a } above turns its own white text
+     invisible: dark text on its own still-dark background. */
+  .doc-theme .doc-header .bg-slate-900 {
+    background: #0f172a !important;
+    color: #fff !important;
   }
   .doc-theme .doc-section-hdr { padding: 7px 12px !important; }
   .doc-theme .doc-section-hdr.blue { background: #dbeafe !important; }
@@ -513,7 +545,7 @@
   .doc-theme .doc-section-hdr.red { background: #fee2e2 !important; }
   .doc-theme .doc-section-hdr.gray { background: #f3f4f6 !important; }
   .doc-theme .doc-section-title { color: #1e3a5f !important; }
-  .doc-theme .doc-section-body { padding: 10px 12px !important; }
+  .doc-theme .doc-section-body { padding: 10px 14px !important; }
   .doc-theme .field input,
   .doc-theme .field select,
   .doc-theme .field textarea,
@@ -525,13 +557,25 @@
     border: 1px solid #ddd !important;
     color: #000 !important;
   }
-  .doc-theme .meta-card { background: #f9fafb !important; border: 1px solid #e5e7eb !important; }
+  /* Meta strip (Quotation No. / Date / Valid Until / Status) — one
+     bordered row with thin vertical dividers between cells instead of
+     four separate boxes. */
+  .doc-theme .meta-row { gap: 0 !important; }
+  .doc-theme .meta-card {
+    background: #fff !important;
+    border: none !important;
+    border-right: 1px solid #cbd5e1 !important;
+    border-radius: 0 !important;
+    padding: 10px 14px !important;
+  }
+  .doc-theme .meta-card:last-child { border-right: none !important; }
   .doc-theme .items-table th { background: #f3f4f6 !important; color: #374151 !important; }
   .doc-theme .items-table td { border-bottom: 1px solid #e5e7eb !important; }
   .doc-theme .amt-cell { color: #92400e !important; }
   .doc-theme .tot-row.grand .tot-lbl,
   .doc-theme .tot-row.grand .tot-val { color: #92400e !important; }
   .doc-theme .sig-box { background: #f9fafb !important; border: 1px solid #e5e7eb !important; }
+  .doc-theme .terms-box { background: #f9fafb !important; border: 1px solid #e5e7eb !important; }
   .doc-theme .add-row-bar,
   .doc-theme .del-btn,
   .doc-theme .send-panel { display: none !important; }

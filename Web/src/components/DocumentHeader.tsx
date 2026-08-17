@@ -18,7 +18,7 @@ export function DocumentHeader({ client, title }: { client: Client | null; title
   const trnLine = client?.vat_number ? `TRN: ${client.vat_number}` : null;
 
   return (
-    <div className="mb-6 border border-slate-800 rounded-md px-6 pt-5 pb-0 text-center">
+    <div className="doc-header mb-6 border border-slate-800 rounded-md px-6 pt-5 pb-0 text-center">
       <div className="text-lg font-bold text-white tracking-tight">{client?.name || 'Your Company'}</div>
       {contactLine && <div className="text-[11px] text-slate-400 mt-1">{contactLine}</div>}
       {trnLine && <div className="text-[11px] text-slate-500 mt-0.5">{trnLine}</div>}
