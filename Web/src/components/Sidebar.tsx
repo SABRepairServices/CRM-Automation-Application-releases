@@ -94,6 +94,26 @@ export function Sidebar() {
   const suppressHoverRef = useRef(false);
   const wide = pinned || hovering;
 
+  // A 4th state below "collapsed icon rail": after a few seconds with the
+  // mouse away entirely, the sidebar recedes to a thin curved edge tab —
+  // just enough to show something's there — and any hover on that sliver
+  // brings the normal icon rail straight back. Never fires while pinned
+  // or already hovering, and resets the instant either one starts.
+  const [idle, setIdle] = useState(false);
+  const idleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    if (pinned || hovering) {
+      setIdle(false);
+      if (idleTimerRef.current) clearTimeout(idleTimerRef.current);
+      return;
+    }
+    idleTimerRef.current = setTimeout(() => setIdle(true), 3000);
+    return () => {
+      if (idleTimerRef.current) clearTimeout(idleTimerRef.current);
+    };
+  }, [pinned, hovering]);
+  const ultraMinimal = idle && !wide;
+
   // The main content area lives outside this component (in the shared app
   // shell layout) and only needs to shift over for a PINNED sidebar — a
   // persistent layout change the user asked for. A hover preview is
@@ -161,10 +181,22 @@ export function Sidebar() {
     <aside
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
-      className={`fixed left-0 top-16 h-[calc(100vh-4rem)] bg-slate-900 border-r border-slate-800 z-30 flex flex-col transition-[width] duration-500 ease-in-out ${
-        wide ? 'w-56 shadow-[8px_0_24px_-8px_rgba(0,0,0,0.5)]' : 'w-16'
+      className={`fixed left-0 top-16 h-[calc(100vh-4rem)] z-30 flex flex-col transition-all duration-500 ease-in-out ${
+        wide
+          ? 'w-56 bg-slate-900 border-r border-slate-800 shadow-[8px_0_24px_-8px_rgba(0,0,0,0.5)]'
+          : ultraMinimal
+          ? 'w-3 bg-transparent'
+          : 'w-16 bg-slate-900 border-r border-slate-800'
       }`}
     >
+      {ultraMinimal ? (
+        // The idle state: everything else in this file fades out, leaving
+        // only a thin curved tab as a quiet reminder the sidebar exists.
+        // Hovering this sliver re-triggers handleMouseEnter above like any
+        // other part of the sidebar, bringing the icon rail straight back.
+        <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1.5 h-16 rounded-r-full bg-gradient-to-b from-blue-400 to-violet-500 opacity-50 transition-opacity duration-500 hover:opacity-90" />
+      ) : (
+      <>
       <div className={`flex items-center h-9 shrink-0 ${wide ? 'justify-end px-2 pt-2' : 'justify-center pt-2'}`}>
         <button
           onClick={togglePin}
@@ -259,6 +291,8 @@ export function Sidebar() {
             <p>© 2026 Shams Al Barakat Repair Services</p>
           </div>
         </div>
+      )}
+      </>
       )}
     </aside>
   );
