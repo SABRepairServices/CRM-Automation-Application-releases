@@ -207,6 +207,7 @@ export default function MonthlyInvoicesPage() {
 
           <DocSection title="Monthly Job Log" icon="📊" accent="green" flush>
             <div className="tbl-wrap">
+              <div className="overflow-x-auto">
               <table className="items-table">
                 <thead>
                   <tr>
@@ -262,6 +263,7 @@ export default function MonthlyInvoicesPage() {
                   )}
                 </tbody>
               </table>
+              </div>
             </div>
             <div className="totals-wrap">
               <div className="totals-box">
@@ -315,6 +317,7 @@ export default function MonthlyInvoicesPage() {
           {invoices.length === 0 ? (
             <div className="px-5 py-12 text-center"><p className="text-sm text-slate-500">No monthly invoices yet.</p></div>
           ) : (
+            <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-slate-800 text-left text-xs text-slate-500 uppercase tracking-wide">
@@ -352,6 +355,7 @@ export default function MonthlyInvoicesPage() {
                 ))}
               </tbody>
             </table>
+            </div>
           )}
         </div>
       </div>

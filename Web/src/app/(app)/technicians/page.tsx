@@ -175,6 +175,7 @@ export default function TechniciansPage() {
               <p className="text-sm text-slate-500">No technicians yet. Add one to start assigning jobs.</p>
             </div>
           ) : (
+            <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-slate-800 text-left text-xs text-slate-500 uppercase tracking-wide">
@@ -246,6 +247,7 @@ export default function TechniciansPage() {
                 })}
               </tbody>
             </table>
+            </div>
           )}
         </div>
       </div>

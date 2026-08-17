@@ -224,6 +224,7 @@ export default function JobsPage() {
                   <p className="text-sm text-slate-500">No jobs yet. Create one to get started.</p>
                 </div>
               ) : (
+                <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b border-slate-800 text-left text-xs text-slate-500 uppercase tracking-wide">
@@ -283,6 +284,7 @@ export default function JobsPage() {
                     ))}
                   </tbody>
                 </table>
+                </div>
               )}
             </div>
           </>

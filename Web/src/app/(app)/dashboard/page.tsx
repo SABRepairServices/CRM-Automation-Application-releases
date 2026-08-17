@@ -308,6 +308,7 @@ export default function DashboardPage() {
               <p className="text-xs text-slate-600">{search ? 'No jobs match your search.' : 'No jobs yet.'}</p>
             </div>
           ) : (
+            <div className="overflow-x-auto">
             <table className="w-full text-xs">
               <thead>
                 <tr className="border-b border-slate-800 text-left text-[10px] text-slate-600 uppercase tracking-wide">
@@ -337,6 +338,7 @@ export default function DashboardPage() {
                 ))}
               </tbody>
             </table>
+            </div>
           )}
         </div>
 

@@ -193,6 +193,7 @@ export default function CustomersPage() {
               <p className="text-sm text-slate-500">No customers yet. Add one to get started.</p>
             </div>
           ) : (
+            <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-slate-800 text-left text-xs text-slate-500 uppercase tracking-wide">
@@ -254,6 +255,7 @@ export default function CustomersPage() {
                 ))}
               </tbody>
             </table>
+            </div>
           )}
         </div>
       </div>

@@ -237,6 +237,7 @@ export default function InvoicesPage() {
           {invoices.length === 0 ? (
             <div className="px-5 py-12 text-center"><p className="text-sm text-slate-500">No invoices yet.</p></div>
           ) : (
+            <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-slate-800 text-left text-xs text-slate-500 uppercase tracking-wide">
@@ -300,6 +301,7 @@ export default function InvoicesPage() {
                 })}
               </tbody>
             </table>
+            </div>
           )}
         </div>
       </div>
