@@ -51,7 +51,22 @@ app.set('trust proxy', 1);
 // Security
 app.use(helmet());
 app.use(cors({
-  origin: process.env.CORS_ORIGIN || 'http://localhost:3000',
+  // The packaged desktop app serves its own UI from a local port (see
+  // Desktop/main.js's fixed WEB_PORT) and calls this API from there — that
+  // origin is always this same app talking to itself, so any
+  // http://localhost:<port> is allowed regardless of the exact port.
+  // A single hardcoded 'http://localhost:3000' here previously meant the
+  // desktop app's own requests were silently rejected by CORS on every
+  // single launch, no matter what else was fixed — the browser blocks the
+  // request before it ever reaches a route handler, so this looked
+  // exactly like "nothing loads" with no error surfaced anywhere useful.
+  origin: (origin, callback) => {
+    if (!origin) return callback(null, true); // curl, server-to-server, etc.
+    if (/^http:\/\/localhost:\d+$/.test(origin)) return callback(null, true);
+    const allowed = (process.env.CORS_ORIGIN || 'http://localhost:3000').split(',').map((s) => s.trim());
+    if (allowed.includes(origin)) return callback(null, true);
+    return callback(new Error('Not allowed by CORS'));
+  },
   credentials: true,
 }));
 
