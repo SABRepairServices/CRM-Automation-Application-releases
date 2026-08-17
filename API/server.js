@@ -1,3 +1,4 @@
+import './loadEnv.js';
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
@@ -26,10 +27,10 @@ import whatsappSimRoutes from './app/routes/whatsappSimRoutes.js';
 import cron from 'node-cron';
 import { runMonthEndContractorBatch } from './app/services/invoiceBatchService.js';
 
-// Load environment variables from Configs/.env (repo root), falling back to API/.env
+// Env vars are loaded by the ./loadEnv.js side-effect import at the top of
+// this file — must happen before any route import runs its module-level
+// code (see that file's comment for why).
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-dotenv.config({ path: path.resolve(__dirname, '../Configs/.env') });
-dotenv.config();
 
 const app = express();
 // Render (and most PaaS hosts) assign the port via PORT and require the app
