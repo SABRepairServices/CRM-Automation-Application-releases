@@ -1,4 +1,5 @@
 import { query } from './database.js';
+import { encrypt } from './cryptoService.js';
 
 /**
  * List all clients for a user
@@ -114,4 +115,57 @@ export const getClientStats = async (clientId, userId) => {
   );
 
   return result.rows[0] || { id: clientId, name: '', customer_count: 0, job_count: 0, social_accounts_count: 0 };
+};
+
+/**
+ * Save or clear a client's WhatsApp Business credentials.
+ * Pass token='' and phoneNumberId='' to disconnect (nulls out all 4 columns).
+ * Token is stored AES-256-GCM encrypted — never in plaintext.
+ */
+export const updateWhatsappCredentials = async (clientId, userId, { token, phoneNumberId, displayNumber }) => {
+  await getClient(clientId, userId); // ownership check — throws if not found
+
+  if (!token && !phoneNumberId) {
+    await query(
+      `UPDATE clients
+         SET whatsapp_token_encrypted = NULL,
+             whatsapp_phone_number_id  = NULL,
+             whatsapp_display_number   = NULL,
+             whatsapp_connected_at     = NULL
+       WHERE id = $1`,
+      [clientId]
+    );
+    return { connected: false };
+  }
+
+  const encryptedToken = encrypt(token);
+  await query(
+    `UPDATE clients
+       SET whatsapp_token_encrypted = $1,
+           whatsapp_phone_number_id  = $2,
+           whatsapp_display_number   = $3,
+           whatsapp_connected_at     = NOW()
+     WHERE id = $4`,
+    [encryptedToken, phoneNumberId, displayNumber || null, clientId]
+  );
+  return { connected: true, phoneNumberId, displayNumber };
+};
+
+/**
+ * Returns the WhatsApp connection status for a client (no token in plaintext).
+ */
+export const getWhatsappStatus = async (clientId, userId) => {
+  await getClient(clientId, userId); // ownership check
+  const result = await query(
+    `SELECT whatsapp_phone_number_id, whatsapp_display_number, whatsapp_connected_at
+       FROM clients WHERE id = $1`,
+    [clientId]
+  );
+  const row = result.rows[0];
+  return {
+    connected: Boolean(row?.whatsapp_phone_number_id),
+    phoneNumberId: row?.whatsapp_phone_number_id || null,
+    displayNumber: row?.whatsapp_display_number || null,
+    connectedAt: row?.whatsapp_connected_at || null,
+  };
 };

@@ -2,8 +2,61 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import db from '../../config/database.js';
+import { decrypt } from './cryptoService.js';
 
 const GRAPH_API_VERSION = 'v21.0';
+
+/**
+ * Per-client WhatsApp Business credentials, connected from Settings
+ * (Web/src/app/(app)/settings/page.tsx), take priority over the single
+ * shared number set via WHATSAPP_TOKEN/WHATSAPP_PHONE_NUMBER_ID env vars —
+ * that global pair is now only a fallback for clients who haven't
+ * connected their own.
+ *
+ * This only affects OUTBOUND sends (document delivery on Quotation/
+ * Invoice/Inspection "Send Now"). The inbound webhook still resolves to
+ * one number app-wide — Meta's webhook is registered against a single
+ * phone_number_id, and the current handler doesn't read
+ * `entry[].changes[].value.metadata.phone_number_id` from the payload to
+ * route an inbound message to a specific client's credentials. Routing
+ * inbound messages (technician job-logging, customer approval replies)
+ * per connected number is a separate, larger change to the webhook
+ * handler — not attempted here.
+ */
+const credentialsCache = new Map();
+
+const resolveCredentials = async (clientId) => {
+  if (!clientId) {
+    return { token: process.env.WHATSAPP_TOKEN, phoneNumberId: process.env.WHATSAPP_PHONE_NUMBER_ID };
+  }
+  if (credentialsCache.has(clientId)) {
+    return credentialsCache.get(clientId);
+  }
+
+  const result = await db.query(
+    `SELECT whatsapp_token_encrypted, whatsapp_phone_number_id FROM clients WHERE id = $1`,
+    [clientId]
+  );
+  const row = result.rows[0];
+
+  let resolved;
+  if (row?.whatsapp_token_encrypted && row?.whatsapp_phone_number_id) {
+    try {
+      resolved = { token: decrypt(row.whatsapp_token_encrypted), phoneNumberId: row.whatsapp_phone_number_id };
+    } catch (err) {
+      console.error(`[WhatsApp] failed to decrypt stored token for client ${clientId}:`, err.message);
+      resolved = { token: process.env.WHATSAPP_TOKEN, phoneNumberId: process.env.WHATSAPP_PHONE_NUMBER_ID };
+    }
+  } else {
+    resolved = { token: process.env.WHATSAPP_TOKEN, phoneNumberId: process.env.WHATSAPP_PHONE_NUMBER_ID };
+  }
+
+  credentialsCache.set(clientId, resolved);
+  // Short-lived cache — a client reconnecting a new number in Settings
+  // should take effect on their very next send, not after a restart.
+  setTimeout(() => credentialsCache.delete(clientId), 60_000);
+  return resolved;
+};
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const DRY_RUN_DOCS = path.resolve(__dirname, '../../dry-run-documents');
@@ -27,10 +80,13 @@ const persistDryRunDocument = (filename, buffer) => {
   }
 };
 
-const graphUrl = () =>
-  `https://graph.facebook.com/${GRAPH_API_VERSION}/${process.env.WHATSAPP_PHONE_NUMBER_ID}/messages`;
+const graphUrl = (phoneNumberId) =>
+  `https://graph.facebook.com/${GRAPH_API_VERSION}/${phoneNumberId}/messages`;
 
-const isConfigured = () => Boolean(process.env.WHATSAPP_TOKEN && process.env.WHATSAPP_PHONE_NUMBER_ID);
+const isConfigured = (creds) => {
+  if (creds) return Boolean(creds.token && creds.phoneNumberId);
+  return Boolean(process.env.WHATSAPP_TOKEN && process.env.WHATSAPP_PHONE_NUMBER_ID);
+};
 
 /**
  * Sends a plain text WhatsApp message via the Meta Cloud API and logs it.
@@ -39,16 +95,17 @@ const isConfigured = () => Boolean(process.env.WHATSAPP_TOKEN && process.env.WHA
  * business number is verified.
  */
 const sendText = async (to, body, { clientId = null, threadId = null } = {}) => {
-  if (!isConfigured()) {
+  const creds = await resolveCredentials(clientId);
+  if (!isConfigured(creds)) {
     console.log(`[WhatsApp:DRY-RUN] -> ${to}: ${body}`);
-    await logMessage({ clientId, threadId, direction: 'outbound', from: process.env.WHATSAPP_PHONE_NUMBER_ID || 'unset', to, body, raw: null });
+    await logMessage({ clientId, threadId, direction: 'outbound', from: creds.phoneNumberId || 'unset', to, body, raw: null });
     return { dryRun: true };
   }
 
-  const response = await fetch(graphUrl(), {
+  const response = await fetch(graphUrl(creds.phoneNumberId), {
     method: 'POST',
     headers: {
-      Authorization: `Bearer ${process.env.WHATSAPP_TOKEN}`,
+      Authorization: `Bearer ${creds.token}`,
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
@@ -64,7 +121,7 @@ const sendText = async (to, body, { clientId = null, threadId = null } = {}) => 
     console.error('[WhatsApp] send failed:', result);
   }
 
-  await logMessage({ clientId, threadId, direction: 'outbound', from: process.env.WHATSAPP_PHONE_NUMBER_ID, to, body, raw: result });
+  await logMessage({ clientId, threadId, direction: 'outbound', from: creds.phoneNumberId, to, body, raw: result });
   // Meta signals refusal (expired 24h window, unregistered recipient, rate
   // limit) with a 4xx body, not a thrown error. Callers must be able to tell
   // "delivered" from "refused", or they will report success for a message
@@ -77,14 +134,14 @@ const sendText = async (to, body, { clientId = null, threadId = null } = {}) => 
  * a free-form document message and a template's document header. Shared so
  * the two send paths below don't duplicate this.
  */
-const uploadMedia = async (buffer, filename) => {
+const uploadMedia = async (buffer, filename, creds) => {
   const mediaForm = new FormData();
   mediaForm.append('messaging_product', 'whatsapp');
   mediaForm.append('file', new Blob([buffer], { type: 'application/pdf' }), filename);
 
   const response = await fetch(
-    `https://graph.facebook.com/${GRAPH_API_VERSION}/${process.env.WHATSAPP_PHONE_NUMBER_ID}/media`,
-    { method: 'POST', headers: { Authorization: `Bearer ${process.env.WHATSAPP_TOKEN}` }, body: mediaForm }
+    `https://graph.facebook.com/${GRAPH_API_VERSION}/${creds.phoneNumberId}/media`,
+    { method: 'POST', headers: { Authorization: `Bearer ${creds.token}` }, body: mediaForm }
   );
   const result = await response.json();
   if (!response.ok) {
@@ -124,14 +181,15 @@ const isWithin24HourWindow = async (customerNumber) => {
  * this app expects and how to submit them.
  */
 const sendTemplateDocument = async (to, { templateName, languageCode = 'en_US', buffer, filename, bodyParams = [] }, { clientId = null, threadId = null } = {}) => {
-  if (!isConfigured()) {
+  const creds = await resolveCredentials(clientId);
+  if (!isConfigured(creds)) {
     const saved = persistDryRunDocument(filename, buffer);
     console.log(`[WhatsApp:DRY-RUN] -> ${to}: [TEMPLATE ${templateName}] [document: ${filename}] params=${JSON.stringify(bodyParams)}`);
     await logMessage({
       clientId,
       threadId,
       direction: 'outbound',
-      from: process.env.WHATSAPP_PHONE_NUMBER_ID || 'unset',
+      from: creds.phoneNumberId || 'unset',
       to,
       body: `[template:${templateName}] [document: ${filename}]`,
       raw: saved ? { dryRunDocument: saved, bytes: buffer?.length ?? 0, template: templateName, bodyParams } : null,
@@ -139,13 +197,13 @@ const sendTemplateDocument = async (to, { templateName, languageCode = 'en_US', 
     return { ok: true, dryRun: true, document: saved };
   }
 
-  const mediaResult = await uploadMedia(buffer, filename);
+  const mediaResult = await uploadMedia(buffer, filename, creds);
   if (!mediaResult.ok) {
     await logMessage({
       clientId,
       threadId,
       direction: 'outbound',
-      from: process.env.WHATSAPP_PHONE_NUMBER_ID,
+      from: creds.phoneNumberId,
       to,
       body: `[FAILED to upload document for template ${templateName}: ${filename}]`,
       raw: mediaResult.error,
@@ -153,10 +211,10 @@ const sendTemplateDocument = async (to, { templateName, languageCode = 'en_US', 
     return { ok: false, error: mediaResult.error, stage: 'media_upload' };
   }
 
-  const response = await fetch(graphUrl(), {
+  const response = await fetch(graphUrl(creds.phoneNumberId), {
     method: 'POST',
     headers: {
-      Authorization: `Bearer ${process.env.WHATSAPP_TOKEN}`,
+      Authorization: `Bearer ${creds.token}`,
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
@@ -184,7 +242,7 @@ const sendTemplateDocument = async (to, { templateName, languageCode = 'en_US', 
     console.error(`[WhatsApp] template "${templateName}" send failed:`, result);
   }
 
-  await logMessage({ clientId, threadId, direction: 'outbound', from: process.env.WHATSAPP_PHONE_NUMBER_ID, to, body: `[template:${templateName}] [document: ${filename}]`, raw: result });
+  await logMessage({ clientId, threadId, direction: 'outbound', from: creds.phoneNumberId, to, body: `[template:${templateName}] [document: ${filename}]`, raw: result });
   return { ok: response.ok, error: response.ok ? null : result?.error || result, stage: 'template_send', raw: result };
 };
 
@@ -195,14 +253,15 @@ const sendTemplateDocument = async (to, { templateName, languageCode = 'en_US', 
  * Dry-run mode (no token configured) just logs it.
  */
 const sendDocument = async (to, { buffer, filename, caption }, { clientId = null, threadId = null } = {}) => {
-  if (!isConfigured()) {
+  const creds = await resolveCredentials(clientId);
+  if (!isConfigured(creds)) {
     const saved = persistDryRunDocument(filename, buffer);
     console.log(`[WhatsApp:DRY-RUN] -> ${to}: [document: ${filename}] ${caption || ''}`);
     await logMessage({
       clientId,
       threadId,
       direction: 'outbound',
-      from: process.env.WHATSAPP_PHONE_NUMBER_ID || 'unset',
+      from: creds.phoneNumberId || 'unset',
       to,
       body: `[document: ${filename}] ${caption || ''}`,
       raw: saved ? { dryRunDocument: saved, bytes: buffer?.length ?? 0 } : null,
@@ -210,7 +269,7 @@ const sendDocument = async (to, { buffer, filename, caption }, { clientId = null
     return { ok: true, dryRun: true, document: saved };
   }
 
-  const mediaResult = await uploadMedia(buffer, filename);
+  const mediaResult = await uploadMedia(buffer, filename, creds);
   if (!mediaResult.ok) {
     // Log the failure too — otherwise a rejected upload leaves no trace at
     // all beyond one console line, and the job silently waits forever.
@@ -218,7 +277,7 @@ const sendDocument = async (to, { buffer, filename, caption }, { clientId = null
       clientId,
       threadId,
       direction: 'outbound',
-      from: process.env.WHATSAPP_PHONE_NUMBER_ID,
+      from: creds.phoneNumberId,
       to,
       body: `[FAILED to upload document: ${filename}]`,
       raw: mediaResult.error,
@@ -226,10 +285,10 @@ const sendDocument = async (to, { buffer, filename, caption }, { clientId = null
     return { ok: false, error: mediaResult.error, stage: 'media_upload' };
   }
 
-  const response = await fetch(graphUrl(), {
+  const response = await fetch(graphUrl(creds.phoneNumberId), {
     method: 'POST',
     headers: {
-      Authorization: `Bearer ${process.env.WHATSAPP_TOKEN}`,
+      Authorization: `Bearer ${creds.token}`,
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
@@ -245,7 +304,7 @@ const sendDocument = async (to, { buffer, filename, caption }, { clientId = null
     console.error('[WhatsApp] document send failed:', result);
   }
 
-  await logMessage({ clientId, threadId, direction: 'outbound', from: process.env.WHATSAPP_PHONE_NUMBER_ID, to, body: `[document: ${filename}] ${caption || ''}`, raw: result });
+  await logMessage({ clientId, threadId, direction: 'outbound', from: creds.phoneNumberId, to, body: `[document: ${filename}] ${caption || ''}`, raw: result });
   return { ok: response.ok, error: response.ok ? null : result?.error || result, stage: 'message_send', raw: result };
 };
 

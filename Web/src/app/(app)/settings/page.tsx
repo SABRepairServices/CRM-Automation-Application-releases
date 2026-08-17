@@ -46,6 +46,12 @@ export default function SettingsPage() {
   const [setupError, setSetupError] = useState('');
   const [setupFailCount, setSetupFailCount] = useState(0);
   const [settingUpPin, setSettingUpPin] = useState(false);
+  const [waToken, setWaToken] = useState('');
+  const [waPhoneId, setWaPhoneId] = useState('');
+  const [waDisplay, setWaDisplay] = useState('');
+  const [waStatus, setWaStatus] = useState<{ connected: boolean; phoneNumberId?: string | null; displayNumber?: string | null; connectedAt?: string | null } | null>(null);
+  const [waSaving, setWaSaving] = useState(false);
+  const [waMsg, setWaMsg] = useState('');
 
   const applyClient = (c: Client) => {
     setFormData({
@@ -61,11 +67,21 @@ export default function SettingsPage() {
     });
   };
 
+  const authHeaders = () => ({ headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } });
+
+  const loadWaStatus = async (id: string) => {
+    try {
+      const { data } = await axios.get(`${API_URL}/clients/${id}/whatsapp`, authHeaders());
+      setWaStatus(data.data);
+    } catch { /* non-fatal */ }
+  };
+
   const handleSelectClient = (id: string) => {
     if (!id) return;
     localStorage.setItem('selectedClientId', id);
     setClientId(id);
     getClient(id).then((c: Client | null) => c && applyClient(c));
+    loadWaStatus(id);
   };
 
   useEffect(() => {
@@ -73,6 +89,7 @@ export default function SettingsPage() {
     if (stored) {
       setClientId(stored);
       getClient(stored).then((c: Client | null) => c && applyClient(c));
+      loadWaStatus(stored);
     }
     listClients().then(() => setClientsChecked(true));
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -117,6 +134,41 @@ export default function SettingsPage() {
     } catch (err) {
       console.error('Error saving company profile:', err);
     }
+  };
+
+  const handleSaveWhatsapp = async () => {
+    if (!clientId) return;
+    setWaSaving(true);
+    setWaMsg('');
+    try {
+      await axios.put(`${API_URL}/clients/${clientId}/whatsapp`, {
+        token: waToken,
+        phoneNumberId: waPhoneId,
+        displayNumber: waDisplay,
+      }, authHeaders());
+      await loadWaStatus(clientId);
+      setWaToken('');
+      setWaPhoneId('');
+      setWaMsg(waToken ? 'WhatsApp number connected.' : 'WhatsApp disconnected.');
+      setTimeout(() => setWaMsg(''), 4000);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Failed to save';
+      setWaMsg(`Error: ${msg}`);
+    } finally {
+      setWaSaving(false);
+    }
+  };
+
+  const handleDisconnectWhatsapp = async () => {
+    if (!clientId) return;
+    setWaSaving(true);
+    setWaMsg('');
+    try {
+      await axios.put(`${API_URL}/clients/${clientId}/whatsapp`, { token: '', phoneNumberId: '', displayNumber: '' }, authHeaders());
+      setWaStatus({ connected: false });
+      setWaMsg('WhatsApp disconnected.');
+      setTimeout(() => setWaMsg(''), 4000);
+    } catch { setWaMsg('Failed to disconnect.'); } finally { setWaSaving(false); }
   };
 
   const handleChangePin = async (freshConfirm?: string) => {
@@ -433,6 +485,79 @@ export default function SettingsPage() {
             </div>
           </div>
         )}
+
+        {/* WhatsApp Business connection */}
+        <div className="bg-slate-900 border border-slate-800 rounded-md">
+          <div className="px-5 py-3 border-b border-slate-800 flex items-center gap-2">
+            <svg viewBox="0 0 24 24" className="w-4 h-4 text-emerald-400" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378L.057 23.25l1.926-4.836a9.928 9.928 0 0 1-1.412-5.143C.572 7.352 5.924 2 12.427 2c3.153 0 6.11 1.229 8.333 3.458A11.684 11.684 0 0 1 24 13.835c-.003 6.497-5.354 11.851-11.949 11.951"/></svg>
+            <h2 className="text-sm font-semibold text-slate-300">WhatsApp Business</h2>
+            {waStatus?.connected && (
+              <span className="ml-auto flex items-center gap-1 text-xs text-emerald-400">
+                <span className="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                Connected{waStatus.displayNumber ? ` · ${waStatus.displayNumber}` : ''}
+              </span>
+            )}
+          </div>
+          <div className="p-5 space-y-4">
+            {waStatus?.connected ? (
+              <div className="space-y-3">
+                <p className="text-xs text-slate-400">
+                  Number <span className="font-mono text-white">{waStatus.displayNumber || waStatus.phoneNumberId}</span> is connected. Document send buttons on Quotes, Invoices and Inspections will use this number.
+                </p>
+                <div className="flex gap-2">
+                  <ActionButton text={waSaving ? 'Disconnecting…' : 'Disconnect'} variant="danger" showArrow={false} disabled={waSaving} onClick={handleDisconnectWhatsapp} />
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <p className="text-xs text-slate-400">Connect your own WhatsApp Business number. Get the Token and Phone Number ID from the <strong className="text-slate-300">Meta Business Manager → WhatsApp → API Setup</strong> panel.</p>
+                <div className="grid grid-cols-1 gap-3">
+                  <div>
+                    <label className="block text-xs text-slate-400 mb-1">Permanent Access Token</label>
+                    <input
+                      type="password"
+                      placeholder="EAAxxxxxxxxxxxxxxx..."
+                      value={waToken}
+                      onChange={(e) => setWaToken(e.target.value)}
+                      className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-md text-sm text-white font-mono"
+                      autoComplete="off"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-slate-400 mb-1">Phone Number ID</label>
+                    <input
+                      type="text"
+                      placeholder="1234567890123456"
+                      value={waPhoneId}
+                      onChange={(e) => setWaPhoneId(e.target.value)}
+                      className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-md text-sm text-white font-mono"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-slate-400 mb-1">Display Number (optional, e.g. +971 50 123 4567)</label>
+                    <input
+                      type="text"
+                      placeholder="+971 50 123 4567"
+                      value={waDisplay}
+                      onChange={(e) => setWaDisplay(e.target.value)}
+                      className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-md text-sm text-white"
+                    />
+                  </div>
+                </div>
+                <ActionButton
+                  text={waSaving ? 'Saving…' : 'Connect Number'}
+                  variant="primary"
+                  showArrow={false}
+                  disabled={waSaving || !waToken || !waPhoneId}
+                  onClick={handleSaveWhatsapp}
+                />
+              </div>
+            )}
+            {waMsg && (
+              <p className={`text-xs mt-1 ${waMsg.startsWith('Error') ? 'text-red-400' : 'text-emerald-400'}`}>{waMsg}</p>
+            )}
+          </div>
+        </div>
 
         <div className="bg-slate-900 border border-slate-800 rounded-md">
           <div className="px-5 py-3 border-b border-slate-800">

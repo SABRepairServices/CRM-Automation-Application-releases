@@ -87,4 +87,32 @@ router.get('/:id/stats', authenticate, async (req, res) => {
   }
 });
 
+/**
+ * GET /api/clients/:id/whatsapp - WhatsApp connection status (no token returned)
+ */
+router.get('/:id/whatsapp', authenticate, async (req, res) => {
+  try {
+    const status = await clientService.getWhatsappStatus(req.params.id, req.user.userId);
+    res.json({ success: true, data: status });
+  } catch (error) {
+    console.error('Error getting WhatsApp status:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * PUT /api/clients/:id/whatsapp - Save or clear WhatsApp Business credentials
+ * Body: { token, phoneNumberId, displayNumber } — send empty strings to disconnect
+ */
+router.put('/:id/whatsapp', authenticate, async (req, res) => {
+  try {
+    const { token, phoneNumberId, displayNumber } = req.body;
+    const result = await clientService.updateWhatsappCredentials(req.params.id, req.user.userId, { token, phoneNumberId, displayNumber });
+    res.json({ success: true, data: result });
+  } catch (error) {
+    console.error('Error updating WhatsApp credentials:', error);
+    res.status(400).json({ error: error.message });
+  }
+});
+
 export default router;
