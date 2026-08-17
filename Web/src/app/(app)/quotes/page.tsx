@@ -147,8 +147,11 @@ export default function QuotesPage() {
         repair_type: repairType || undefined,
         signatures: preparedBy ? { ...signatures, prepared_by: { name: preparedBy, date: quoteDate } } : signatures,
       });
-      setMessage(`Quotation ${created.quotation_number} created.`);
       resetForm();
+      // Straight to the printable/sendable document instead of leaving the
+      // office on this list — this IS the "one page" the create flow was
+      // missing: fill in details, land immediately on the finished document.
+      router.push(`/quotes/${created.id}`);
     } catch {
       // createQuotation already surfaced the message via `error`
     }

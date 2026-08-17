@@ -131,8 +131,11 @@ export default function InspectionsPage() {
         diagnosis_result: diagnosis,
         signatures,
       });
-      setMessage(`Inspection report ${created.report_number} created.`);
       resetForm();
+      // Straight to the printable/sendable document instead of leaving the
+      // office on this list — fill in details, land immediately on the
+      // finished document.
+      router.push(`/inspections/${created.id}`);
     } catch {
       // createReport already surfaced the message via `error`
     }

@@ -83,7 +83,7 @@ export default function InvoicesPage() {
     }
 
     try {
-      await createInvoice(clientId, {
+      const created = await createInvoice(clientId, {
         customer_name: customerName,
         issue_date: issueDate,
         due_date: dueDate,
@@ -93,6 +93,10 @@ export default function InvoicesPage() {
       setCustomerName(''); setRows([emptyRow(), emptyRow(), emptyRow()]);
       setLabour(''); setNotes(''); setPreparedBy('');
       setIssueDate(today()); setDueDate(plusDays(30));
+      // Straight to the printable/sendable document instead of leaving the
+      // office on this list — fill in details, land immediately on the
+      // finished document.
+      router.push(`/invoices/${created.id}`);
     } catch (err) {
       console.error('Error creating invoice:', err);
     }
