@@ -12,36 +12,51 @@ export function DocumentHeader({ client, title }: { client: Client | null; title
   // before this field existed, rather than showing a blank box.
   const documentLogoUrl = client?.document_logo_url || client?.logo_url;
   const showLogo = documentLogoUrl && !logoFailed;
-  const contactLine = [client?.address, [client?.city, client?.country].filter(Boolean).join(', '), client?.phone, client?.email]
-    .filter(Boolean)
-    .join('  •  ');
+  const contactLines = [
+    client?.address,
+    [client?.city, client?.country].filter(Boolean).join(', '),
+    client?.phone,
+    client?.email,
+  ].filter(Boolean);
   const trnLine = client?.vat_number ? `TRN: ${client.vat_number}` : null;
 
   return (
-    <div className="doc-header mb-6 border border-slate-800 rounded-md px-6 pt-5 pb-0 text-center">
-      <div className="text-lg font-bold text-white tracking-tight">{client?.name || 'Your Company'}</div>
-      {contactLine && <div className="text-[11px] text-slate-400 mt-1">{contactLine}</div>}
-      {trnLine && <div className="text-[11px] text-slate-500 mt-0.5">{trnLine}</div>}
+    <div className="doc-header mb-6 border border-slate-800 rounded-md overflow-hidden">
+      <div className="grid grid-cols-[1fr_2fr_1fr] items-start gap-3 px-5 py-4 bg-slate-900">
+        <div className="flex justify-start">
+          {showLogo ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={documentLogoUrl}
+              alt={client?.name}
+              className="max-h-9 max-w-[100px] object-contain"
+              onError={() => setLogoFailed(true)}
+            />
+          ) : (
+            // A thin outline, not a heavy filled box — this is an empty-state
+            // hint for the office, not a real logo placeholder, so it should
+            // read as a quiet line, not a competing shape on the page.
+            <div className="h-7 w-[88px] border border-slate-700 flex items-center justify-center text-[8px] font-medium text-slate-600 uppercase tracking-widest">
+              Logo
+            </div>
+          )}
+        </div>
 
-      <div className="bg-slate-900 text-white text-center py-2.5 rounded-md text-sm font-semibold tracking-[0.15em] uppercase border-b-2 border-amber-400 mt-4">
-        {title}
+        <div className="text-center">
+          <div className="text-base font-bold text-white tracking-tight">{client?.name || 'Your Company'}</div>
+          <div className="text-[10px] font-semibold tracking-[0.16em] uppercase text-amber-400 mt-1.5">{title}</div>
+        </div>
+
+        <div className="text-right text-[10px] text-amber-400 leading-relaxed">
+          {contactLines.map((line, i) => <div key={i}>{line}</div>)}
+        </div>
       </div>
 
-      <div className="flex items-center justify-center py-4">
-        {showLogo ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={documentLogoUrl}
-            alt={client?.name}
-            className="max-h-[4.5rem] max-w-[240px] object-contain"
-            onError={() => setLogoFailed(true)}
-          />
-        ) : (
-          <div className="h-16 w-16 rounded-md border border-dashed border-slate-700 bg-slate-950 flex items-center justify-center text-[10px] font-medium text-slate-500 uppercase tracking-wide">
-            Logo
-          </div>
-        )}
-      </div>
+      {trnLine && (
+        <div className="px-5 py-1.5 text-[10px] text-slate-500 text-right border-t border-slate-800 bg-slate-950/40">
+          {trnLine}
+        </div>
+      )}
     </div>
   );
 }

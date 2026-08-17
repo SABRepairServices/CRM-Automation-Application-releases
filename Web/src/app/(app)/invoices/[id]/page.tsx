@@ -118,21 +118,25 @@ export default function InvoiceDocumentPage() {
         <DocumentHeader client={client} title="Tax Invoice" />
 
         <div className="meta-row">
-          <div className="meta-card hi">
-            <div className="meta-label">Invoice No.</div>
-            <div className="text-sm text-white font-medium">{invoice.invoice_number}</div>
+          <div className="meta-col">
+            <div className="meta-card hi">
+              <div className="meta-label">Invoice No.</div>
+              <div className="text-sm text-white font-medium">{invoice.invoice_number}</div>
+            </div>
+            <div className="meta-card">
+              <div className="meta-label">Invoice Date</div>
+              <div className="text-sm text-slate-300">{fmtDate(invoice.issue_date)}</div>
+            </div>
           </div>
-          <div className="meta-card">
-            <div className="meta-label">Invoice Date</div>
-            <div className="text-sm text-slate-300">{fmtDate(invoice.issue_date)}</div>
-          </div>
-          <div className="meta-card">
-            <div className="meta-label">Due Date</div>
-            <div className="text-sm text-slate-300">{fmtDate(invoice.due_date)}</div>
-          </div>
-          <div className="meta-card">
-            <div className="meta-label">Status</div>
-            <div className="text-sm text-slate-300 capitalize">{invoice.status}</div>
+          <div className="meta-col">
+            <div className="meta-card">
+              <div className="meta-label">Due Date</div>
+              <div className="text-sm text-slate-300">{fmtDate(invoice.due_date)}</div>
+            </div>
+            <div className="meta-card">
+              <div className="meta-label">Status</div>
+              <div className="text-sm text-slate-300 capitalize">{invoice.status}</div>
+            </div>
           </div>
         </div>
 

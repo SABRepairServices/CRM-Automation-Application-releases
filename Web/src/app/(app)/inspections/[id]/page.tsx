@@ -136,21 +136,25 @@ export default function InspectionDocumentPage() {
         <DocumentHeader client={client} title="Inspection Report" />
 
         <div className="meta-row">
-          <div className="meta-card hi">
-            <div className="meta-label">Inspection No.</div>
-            <div className="text-sm text-white font-medium">{report.report_number}</div>
+          <div className="meta-col">
+            <div className="meta-card hi">
+              <div className="meta-label">Inspection No.</div>
+              <div className="text-sm text-white font-medium">{report.report_number}</div>
+            </div>
+            <div className="meta-card">
+              <div className="meta-label">Date</div>
+              <div className="text-sm text-slate-300">{fmtDate(report.inspected_at)}</div>
+            </div>
           </div>
-          <div className="meta-card">
-            <div className="meta-label">Date</div>
-            <div className="text-sm text-slate-300">{fmtDate(report.inspected_at)}</div>
-          </div>
-          <div className="meta-card">
-            <div className="meta-label">Inspected By</div>
-            <div className="text-sm text-slate-300">{report.inspected_by || '—'}</div>
-          </div>
-          <div className="meta-card">
-            <div className="meta-label">Appliance</div>
-            <div className="text-sm text-slate-300">{report.appliance_type || '—'}</div>
+          <div className="meta-col">
+            <div className="meta-card">
+              <div className="meta-label">Inspected By</div>
+              <div className="text-sm text-slate-300">{report.inspected_by || '—'}</div>
+            </div>
+            <div className="meta-card">
+              <div className="meta-label">Appliance</div>
+              <div className="text-sm text-slate-300">{report.appliance_type || '—'}</div>
+            </div>
           </div>
         </div>
 

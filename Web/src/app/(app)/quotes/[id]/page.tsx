@@ -128,21 +128,25 @@ export default function QuotationDocumentPage() {
         <DocumentHeader client={client} title="Quotation" />
 
         <div className="meta-row">
-          <div className="meta-card hi">
-            <div className="meta-label">Quotation No.</div>
-            <div className="text-sm text-white font-medium">{quotation.quotation_number}</div>
+          <div className="meta-col">
+            <div className="meta-card hi">
+              <div className="meta-label">Quotation No.</div>
+              <div className="text-sm text-white font-medium">{quotation.quotation_number}</div>
+            </div>
+            <div className="meta-card">
+              <div className="meta-label">Date</div>
+              <div className="text-sm text-slate-300">{fmtDate(quotation.created_at)}</div>
+            </div>
           </div>
-          <div className="meta-card">
-            <div className="meta-label">Date</div>
-            <div className="text-sm text-slate-300">{fmtDate(quotation.created_at)}</div>
-          </div>
-          <div className="meta-card">
-            <div className="meta-label">Valid Until</div>
-            <div className="text-sm text-slate-300">{fmtDate(quotation.valid_until)}</div>
-          </div>
-          <div className="meta-card">
-            <div className="meta-label">Status</div>
-            <div className="text-sm text-slate-300 capitalize">{quotation.status}</div>
+          <div className="meta-col">
+            <div className="meta-card">
+              <div className="meta-label">Valid Until</div>
+              <div className="text-sm text-slate-300">{fmtDate(quotation.valid_until)}</div>
+            </div>
+            <div className="meta-card">
+              <div className="meta-label">Status</div>
+              <div className="text-sm text-slate-300 capitalize">{quotation.status}</div>
+            </div>
           </div>
         </div>
 

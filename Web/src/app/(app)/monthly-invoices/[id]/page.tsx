@@ -118,21 +118,25 @@ export default function MonthlyInvoiceDocumentPage() {
         <DocumentHeader client={client} title="Monthly Invoice" />
 
         <div className="meta-row">
-          <div className="meta-card hi">
-            <div className="meta-label">Invoice No.</div>
-            <div className="text-sm text-white font-medium">{invoice.invoice_number}</div>
+          <div className="meta-col">
+            <div className="meta-card hi">
+              <div className="meta-label">Invoice No.</div>
+              <div className="text-sm text-white font-medium">{invoice.invoice_number}</div>
+            </div>
+            <div className="meta-card hi">
+              <div className="meta-label">Period</div>
+              <div className="text-sm text-white font-medium">{period}</div>
+            </div>
           </div>
-          <div className="meta-card hi">
-            <div className="meta-label">Period</div>
-            <div className="text-sm text-white font-medium">{period}</div>
-          </div>
-          <div className="meta-card">
-            <div className="meta-label">Payment Terms</div>
-            <div className="text-sm text-slate-300">{PAYMENT_TERMS_LABELS[invoice.payment_terms] || invoice.payment_terms}</div>
-          </div>
-          <div className="meta-card">
-            <div className="meta-label">Status</div>
-            <div className="text-sm text-slate-300 capitalize">{invoice.status}</div>
+          <div className="meta-col">
+            <div className="meta-card">
+              <div className="meta-label">Payment Terms</div>
+              <div className="text-sm text-slate-300">{PAYMENT_TERMS_LABELS[invoice.payment_terms] || invoice.payment_terms}</div>
+            </div>
+            <div className="meta-card">
+              <div className="meta-label">Status</div>
+              <div className="text-sm text-slate-300 capitalize">{invoice.status}</div>
+            </div>
           </div>
         </div>
 
