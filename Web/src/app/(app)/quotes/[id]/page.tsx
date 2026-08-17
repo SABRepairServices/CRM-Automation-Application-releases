@@ -11,14 +11,6 @@ import { DocSection } from '@/components/documents/DocSection';
 import { SignatureBlock } from '@/components/documents/SignatureBlock';
 import { isElectron, saveDocumentBackup } from '@/lib/electronBridge';
 
-const STANDARD_TERMS = [
-  'This quotation is valid for 7 days from the date of issue.',
-  'Work will commence only upon written or WhatsApp approval of this quotation.',
-  'Payment is due upon completion of work unless a contract arrangement is in place.',
-  'Any additional parts or work identified during repair will require a revised quotation.',
-  'A 30-day warranty applies to all completed repair work.',
-];
-
 const SIGNATURE_ROLES = [
   { key: 'prepared_by', label: 'Prepared By (Office)' },
   { key: 'approved_by', label: 'Approved By (Customer)', placeholder: 'Customer full name' },
@@ -221,12 +213,6 @@ export default function QuotationDocumentPage() {
             <p className="text-sm text-slate-400">{quotation.notes}</p>
           </DocSection>
         )}
-
-        <DocSection title="Payment Terms &amp; Conditions" icon="📃" accent="gray">
-          <div className="terms-box">
-            <ul>{STANDARD_TERMS.map((t, i) => <li key={i}>{t}</li>)}</ul>
-          </div>
-        </DocSection>
 
         <DocSection title="Signatures &amp; Acknowledgement" icon="✍️" accent="gold">
           <SignatureBlock roles={SIGNATURE_ROLES} value={signatures} onChange={setSignatures} />

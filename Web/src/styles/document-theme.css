@@ -576,6 +576,15 @@
   .doc-theme .tot-row.grand .tot-val { color: #92400e !important; }
   .doc-theme .sig-box { background: #f9fafb !important; border: 1px solid #e5e7eb !important; }
   .doc-theme .terms-box { background: #f9fafb !important; border: 1px solid #e5e7eb !important; }
+  /* Diagnosis Result picker (Inspection only) — same dark-background bug
+     as the terms/title boxes above: the two UNSELECTED options kept
+     their own solid dark background, so their labels went dark-on-dark.
+     The selected option happened to read fine already (a translucent
+     tint over the button's own background, not the page). */
+  .doc-theme .diag-opt { background: #f9fafb !important; border: 1px solid #e2e8f0 !important; }
+  .doc-theme .diag-opt.sel-onsite { background: #dcfce7 !important; border-color: #16a34a !important; }
+  .doc-theme .diag-opt.sel-workshop { background: #fef3c7 !important; border-color: #c9933a !important; }
+  .doc-theme .diag-opt.sel-cannot { background: #fee2e2 !important; border-color: #dc2626 !important; }
   .doc-theme .add-row-bar,
   .doc-theme .del-btn,
   .doc-theme .send-panel { display: none !important; }
