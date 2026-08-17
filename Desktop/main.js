@@ -292,8 +292,13 @@ function registerIpcHandlers() {
   // installer runs with no UI of its own and overwrites the existing
   // install path in place, and the app is guaranteed to relaunch
   // afterward even though the install itself was silent.
-  ipcMain.handle('install-update', () => {
+  //
+  // shutdownChildProcesses() is awaited FIRST — see its own comment for
+  // why: skipping this let the installer start overwriting files the old
+  // web server process still had open.
+  ipcMain.handle('install-update', async () => {
     clearPendingAutoInstall();
+    await shutdownChildProcesses();
     autoUpdater.quitAndInstall(true, true);
   });
 
@@ -378,9 +383,10 @@ function setupAutoUpdates() {
     // because it was left running unattended, which is exactly what let
     // installs pile up 10+ releases behind before.
     clearPendingAutoInstall();
-    pendingAutoInstallTimer = setTimeout(() => {
+    pendingAutoInstallTimer = setTimeout(async () => {
       pendingAutoInstallTimer = null;
       log('[Update] no interaction within 30s — installing automatically.');
+      await shutdownChildProcesses();
       autoUpdater.quitAndInstall(true, true);
     }, 30 * 1000);
   });
@@ -454,11 +460,30 @@ app.on('before-quit', () => {
   shutdownChildProcesses();
 });
 
+/**
+ * Kills the spawned local Next.js server and waits for the OS to actually
+ * confirm it's gone before resolving. This MUST be awaited before
+ * quitAndInstall() — treeKill is asynchronous (shells out to taskkill on
+ * Windows), and calling it fire-and-forget let quitAndInstall's NSIS
+ * installer start overwriting web-standalone/ while the old server
+ * process still had those files open. Windows can't overwrite a locked
+ * file; NSIS in silent mode swallows that failure with no visible error,
+ * leaving a corrupted half-old/half-new build — which is exactly what a
+ * blank, broken Dashboard after an auto-update looks like.
+ */
 function shutdownChildProcesses() {
-  if (webProcess && webProcess.pid) {
-    treeKill(webProcess.pid);
-    webProcess = null;
-  }
+  return new Promise((resolve) => {
+    if (webProcess && webProcess.pid) {
+      const pid = webProcess.pid;
+      webProcess = null;
+      treeKill(pid, (err) => {
+        if (err) log('[Update] tree-kill of web server reported an error (continuing anyway):', err.message);
+        resolve();
+      });
+    } else {
+      resolve();
+    }
+  });
 }
 
 app.on('activate', () => {
