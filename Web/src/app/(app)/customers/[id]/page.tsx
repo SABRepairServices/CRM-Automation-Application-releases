@@ -145,7 +145,7 @@ export default function CustomerDetailPage() {
           <div className="flex items-center gap-3">
             <h1 className="text-xl font-semibold text-white">{customer.name}</h1>
             <span
-              className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+              className={`status-pill px-2 py-0.5 rounded-full text-xs font-medium ${
                 customer.billing_type === 'contractor' ? 'bg-violet-500/10 text-violet-400' : 'bg-slate-800 text-slate-400'
               }`}
             >
@@ -189,7 +189,7 @@ export default function CustomerDetailPage() {
                     </div>
                     <div className="text-xs text-slate-500 mt-0.5">{job.reported_fault || 'No fault description'}</div>
                   </div>
-                  <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${JOB_STATUS_COLOR[job.status] || 'bg-slate-800 text-slate-400'}`}>
+                  <span className={`status-pill px-2 py-0.5 rounded-full text-xs font-medium ${JOB_STATUS_COLOR[job.status] || 'bg-slate-800 text-slate-400'}`}>
                     {job.status.replace('_', ' ')}
                   </span>
                 </div>

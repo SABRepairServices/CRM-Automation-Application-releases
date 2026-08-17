@@ -6,7 +6,6 @@ import { useInvoices, Invoice } from '@/hooks/useInvoices';
 import { useClients, Client } from '@/hooks/useClients';
 import type { DocumentSignatures } from '@/hooks/useQuotations';
 import { DocumentHeader } from '@/components/DocumentHeader';
-import { MetaBox } from '@/components/documents/MetaBox';
 import { ActionButton } from '@/components/ui/action-button';
 import { SendDocumentBar } from '@/components/SendDocumentBar';
 import { DocSection } from '@/components/documents/DocSection';
@@ -115,20 +114,19 @@ export default function InvoiceDocumentPage() {
           />
         </div>
 
-        <div className="doc-header-row flex gap-4 items-stretch mb-6">
-          <DocumentHeader client={client} title="Tax Invoice" />
-          <MetaBox
-            fields={[
-              { label: 'Invoice No.', value: invoice.invoice_number, highlight: true },
-              { label: 'Invoice Date', value: fmtDate(invoice.issue_date) },
-              { label: 'Due Date', value: fmtDate(invoice.due_date) },
-              { label: 'Status', value: <span className="capitalize">{invoice.status}</span> },
-            ]}
-          />
-        </div>
+        <DocumentHeader
+          client={client}
+          title="Tax Invoice"
+          metaFields={[
+            { label: 'Invoice No.', value: invoice.invoice_number, highlight: true },
+            { label: 'Invoice Date', value: fmtDate(invoice.issue_date) },
+            { label: 'Due Date', value: fmtDate(invoice.due_date) },
+            { label: 'Status', value: <span className="capitalize">{invoice.status}</span> },
+          ]}
+        />
 
         <DocSection title="Bill To — Customer Details" icon="🏢" accent="blue">
-          <div className="fg c2">
+          <div className="fg c2 fg-lines">
             <div>
               <div className="meta-label">Customer</div>
               <div className="text-sm text-white">{invoice.customer_name || '—'}</div>

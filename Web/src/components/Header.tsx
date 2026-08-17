@@ -7,6 +7,7 @@ import { useAuth } from '@/context/AuthContext';
 import { ClientSelector } from '@/components/ClientSelector';
 import { useClients, Client } from '@/hooks/useClients';
 import { getAppVersion, isElectron } from '@/lib/electronBridge';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export function Header() {
   const pathname = usePathname();
@@ -20,6 +21,11 @@ export function Header() {
   const [version, setVersion] = useState<string | null>(null);
   const [client, setClient] = useState<Client | null>(null);
   const [badgeLogoFailed, setBadgeLogoFailed] = useState(false);
+  // Tracks only whether the stored client id has resolved yet — starts
+  // true so a fresh profile with no selectedClientId (nothing to fetch)
+  // doesn't hang on a skeleton forever waiting for an effect that will
+  // never run.
+  const [clientLoading, setClientLoading] = useState(true);
 
   useEffect(() => {
     if (isElectron()) {
@@ -32,8 +38,14 @@ export function Header() {
 
   useEffect(() => {
     const clientId = localStorage.getItem('selectedClientId');
-    if (!clientId) return;
-    getClient(clientId).then(setClient);
+    if (!clientId) {
+      setClientLoading(false);
+      return;
+    }
+    setClientLoading(true);
+    getClient(clientId)
+      .then(setClient)
+      .finally(() => setClientLoading(false));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pathname]);
 
@@ -62,31 +74,43 @@ export function Header() {
   return (
     <header className="fixed top-0 left-0 right-0 h-16 bg-slate-900 border-b border-slate-800 z-40 flex items-center justify-between px-5">
       <div className="flex items-center gap-2.5 w-56 shrink-0">
-        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-violet-600 flex items-center justify-center text-sm font-bold text-white shadow-lg shadow-blue-900/40 overflow-hidden shrink-0">
-          {client?.logo_url && !badgeLogoFailed ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={client.logo_url}
-              alt={brandName}
-              className="w-full h-full object-contain bg-white"
-              onError={() => setBadgeLogoFailed(true)}
-            />
-          ) : (
-            brandInitials || 'SB'
-          )}
-        </div>
-        <div>
-          <h1 className="text-sm font-semibold text-white leading-tight truncate max-w-[150px]">{brandName}</h1>
-          <div className="flex items-center gap-1.5 leading-tight">
-            <p className="text-[10px] text-slate-500">Repair Services CRM</p>
-            {version && (
-              <span className="inline-flex items-center gap-1 text-[9px] font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/30 rounded-full px-1.5 py-px">
-                <span className="w-1 h-1 rounded-full bg-emerald-400 shadow-[0_0_5px_rgba(52,211,153,0.9)]" />
-                v{version}
-              </span>
-            )}
-          </div>
-        </div>
+        {clientLoading ? (
+          <>
+            <Skeleton className="w-8 h-8 rounded-lg shrink-0" />
+            <div className="space-y-1.5">
+              <Skeleton className="h-3.5 w-28" />
+              <Skeleton className="h-2.5 w-20" />
+            </div>
+          </>
+        ) : (
+          <>
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-violet-600 flex items-center justify-center text-sm font-bold text-white shadow-lg shadow-blue-900/40 overflow-hidden shrink-0">
+              {client?.logo_url && !badgeLogoFailed ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={client.logo_url}
+                  alt={brandName}
+                  className="w-full h-full object-contain bg-white"
+                  onError={() => setBadgeLogoFailed(true)}
+                />
+              ) : (
+                brandInitials || 'SB'
+              )}
+            </div>
+            <div>
+              <h1 className="text-sm font-semibold text-white leading-tight truncate max-w-[150px]">{brandName}</h1>
+              <div className="flex items-center gap-1.5 leading-tight">
+                <p className="text-[10px] text-slate-500">Repair Services CRM</p>
+                {version && (
+                  <span className="inline-flex items-center gap-1 text-[9px] font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/30 rounded-full px-1.5 py-px">
+                    <span className="w-1 h-1 rounded-full bg-emerald-400 shadow-[0_0_5px_rgba(52,211,153,0.9)]" />
+                    v{version}
+                  </span>
+                )}
+              </div>
+            </div>
+          </>
+        )}
       </div>
 
       <div className="flex items-center gap-3">
@@ -95,13 +119,20 @@ export function Header() {
           href="/settings"
           aria-label="Settings"
           title="Settings"
-          className={`w-10 h-10 flex items-center justify-center rounded-full transition-all duration-200 ${
+          className={`group w-10 h-10 flex items-center justify-center rounded-full transition-all duration-200 ${
             pathname === '/settings'
               ? 'bg-blue-500/10 text-blue-400 shadow-[0_0_12px_rgba(96,165,250,0.5)]'
               : 'text-slate-500 hover:bg-slate-800 hover:text-slate-300 hover:shadow-[0_0_12px_rgba(148,163,184,0.35)]'
           }`}
         >
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <svg
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+            className="transition-transform duration-500 ease-out group-hover:rotate-90"
+          >
             <path
               d="M12 15.5A3.5 3.5 0 1 0 12 8.5a3.5 3.5 0 0 0 0 7Z"
               stroke="currentColor"

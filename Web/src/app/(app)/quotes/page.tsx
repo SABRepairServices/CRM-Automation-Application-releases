@@ -333,12 +333,12 @@ export default function QuotesPage() {
               <tbody>
                 {quotations.map((q) => (
                   <tr key={q.id} onClick={() => router.push(`/quotes/${q.id}`)}
-                    className="border-b border-slate-800 last:border-0 cursor-pointer hover:bg-slate-950">
+                    className="border-b border-slate-800 last:border-0 cursor-pointer hover:bg-slate-950 transition-colors">
                     <td className="px-5 py-3 font-medium text-white">{q.quotation_number}</td>
                     <td className="px-5 py-3 text-slate-400">{q.customer_name || 'Unassigned'}</td>
                     <td className="px-5 py-3 text-right text-white font-medium">AED {Number(q.total_amount).toFixed(2)}</td>
                     <td className="px-5 py-3">
-                      <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${statusColor(q.status)}`}>{q.status}</span>
+                      <span className={`status-pill px-2 py-0.5 rounded-full text-xs font-medium ${statusColor(q.status)}`}>{q.status}</span>
                     </td>
                     <td className="px-5 py-3 text-right" onClick={(e) => e.stopPropagation()}>
                       <div className="flex gap-2 justify-end">

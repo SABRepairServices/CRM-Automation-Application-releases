@@ -299,7 +299,7 @@ export default function InspectionsPage() {
               <tbody>
                 {reports.map((r) => (
                   <tr key={r.id} onClick={() => router.push(`/inspections/${r.id}`)}
-                    className="border-b border-slate-800 last:border-0 cursor-pointer hover:bg-slate-950">
+                    className="border-b border-slate-800 last:border-0 cursor-pointer hover:bg-slate-950 transition-colors">
                     <td className="px-5 py-3 font-medium text-white">{r.report_number}</td>
                     <td className="px-5 py-3 text-slate-400">{r.customer_name || 'Unassigned'}</td>
                     <td className="px-5 py-3 text-slate-400">{r.appliance_type || '—'}</td>
@@ -307,7 +307,7 @@ export default function InspectionsPage() {
                       AED {(Number(r.taxable_amount) + Number(r.tax_amount)).toFixed(2)}
                     </td>
                     <td className="px-5 py-3">
-                      <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${statusColor(r.status)}`}>
+                      <span className={`status-pill px-2 py-0.5 rounded-full text-xs font-medium ${statusColor(r.status)}`}>
                         {STATUS_LABELS[r.status] || r.status}
                       </span>
                     </td>

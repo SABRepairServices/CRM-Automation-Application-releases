@@ -395,8 +395,8 @@ export default function SettingsPage() {
             <h2 className="text-sm font-semibold text-slate-300">Logos</h2>
           </div>
           <div className="p-5 space-y-5">
-            <div className="flex items-center gap-4">
-              <div className="w-20 h-20 rounded-md border border-slate-800 flex items-center justify-center overflow-hidden bg-slate-950 shrink-0">
+            <div className="group flex items-center gap-4">
+              <div className="spring-hover w-20 h-20 rounded-md border border-slate-800 flex items-center justify-center overflow-hidden bg-slate-950 shrink-0 group-hover:border-blue-500/50 group-hover:shadow-[0_0_16px_-2px_rgba(96,165,250,0.4)]">
                 {formData.logo_url ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={formData.logo_url} alt="Logo preview" className="w-full h-full object-contain" />
@@ -449,8 +449,8 @@ export default function SettingsPage() {
                 logo on the actual paperwork customers receive. Falls back
                 to the App Logo automatically (see DocumentHeader.tsx) if
                 this is left blank, so setting only one still works fine. */}
-            <div className="flex items-center gap-4 pt-1 border-t border-slate-800/60">
-              <div className="w-20 h-20 rounded-md border border-slate-800 flex items-center justify-center overflow-hidden bg-slate-950 shrink-0 mt-4">
+            <div className="group flex items-center gap-4 pt-1 border-t border-slate-800/60">
+              <div className="spring-hover w-20 h-20 rounded-md border border-slate-800 flex items-center justify-center overflow-hidden bg-slate-950 shrink-0 mt-4 group-hover:border-blue-500/50 group-hover:shadow-[0_0_16px_-2px_rgba(96,165,250,0.4)]">
                 {formData.document_logo_url ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={formData.document_logo_url} alt="Document logo preview" className="w-full h-full object-contain" />
@@ -583,8 +583,10 @@ export default function SettingsPage() {
 
         {/* WhatsApp Business connection */}
         <div className="bg-slate-900 border border-slate-800 rounded-md">
-          <div className="px-5 py-3 border-b border-slate-800 flex items-center gap-2">
-            <svg viewBox="0 0 24 24" className="w-4 h-4 text-emerald-400" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378L.057 23.25l1.926-4.836a9.928 9.928 0 0 1-1.412-5.143C.572 7.352 5.924 2 12.427 2c3.153 0 6.11 1.229 8.333 3.458A11.684 11.684 0 0 1 24 13.835c-.003 6.497-5.354 11.851-11.949 11.951"/></svg>
+          <div className="group px-5 py-3 border-b border-slate-800 flex items-center gap-2">
+            <span className="spring-hover flex items-center justify-center w-6 h-6 rounded-full bg-emerald-500/10 group-hover:scale-110 group-hover:-rotate-6">
+              <svg viewBox="0 0 24 24" className="w-3.5 h-3.5 text-emerald-400" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378L.057 23.25l1.926-4.836a9.928 9.928 0 0 1-1.412-5.143C.572 7.352 5.924 2 12.427 2c3.153 0 6.11 1.229 8.333 3.458A11.684 11.684 0 0 1 24 13.835c-.003 6.497-5.354 11.851-11.949 11.951"/></svg>
+            </span>
             <h2 className="text-sm font-semibold text-slate-300">WhatsApp Business</h2>
             {waStatus?.connected && (
               <span className="ml-auto flex items-center gap-1 text-xs text-emerald-400">

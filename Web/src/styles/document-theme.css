@@ -147,6 +147,10 @@
 .doc-theme .fg.c3 { grid-template-columns: 1fr 1fr 1fr; }
 .doc-theme .fg.c4 { grid-template-columns: 1fr 1fr 1fr 1fr; }
 .doc-theme .fg .full { grid-column: 1 / -1; }
+.doc-theme .fg-lines > div {
+  border-bottom: 1px solid rgba(148, 163, 184, 0.15);
+  padding-bottom: 10px;
+}
 
 .doc-theme .field label {
   display: block;
@@ -529,36 +533,50 @@
     background: #fff !important;
     break-inside: avoid;
   }
-  /* The header row — logo/name box + document-meta box — keeps its own
-     navy/gold branding and rounded corners on print, same letterhead
-     look as the emailed PDF (pdfService.js), deliberately different from
-     the flat ruled-line sections below: this is the one part of the
-     sheet meant to look like a decorated letterhead, not a plain form. */
+  /* The header — logo/name identity zone + document-meta zone — is ONE
+     continuous frame on print (no gap, one shared border), same
+     letterhead look as the emailed PDF (pdfService.js), deliberately
+     different from the flat ruled-line sections below: this is the one
+     part of the sheet meant to look like a decorated letterhead, not a
+     plain form. The identity zone keeps navy branding, the meta zone
+     stays white/gold, split by a single vertical rule instead of a
+     second border. */
   .doc-theme .doc-header-row {
-    padding: 14px 14px 0 !important;
-    gap: 14px !important;
-    break-inside: avoid;
-  }
-  .doc-theme .doc-header {
-    background: #0D2137 !important;
+    margin: 14px 14px 0 !important;
     border: 1.5px solid #0D2137 !important;
     border-radius: 10px !important;
-    margin: 0 !important;
+    overflow: hidden;
+    break-inside: avoid;
   }
-  .doc-theme .doc-header * {
+  .doc-theme .doc-header-identity {
+    background: #0D2137 !important;
+  }
+  .doc-theme .doc-header-identity * {
     color: #fff !important;
   }
-  .doc-theme .doc-header .text-amber-400 {
+  .doc-theme .doc-header-identity .text-amber-400 {
     color: #C9933A !important;
+  }
+  .doc-theme .doc-header-divider {
+    background: #C9933A !important;
+    width: 1.5px !important;
   }
   .doc-theme .meta-box {
     background: #fff !important;
-    border: 1.5px solid #C9933A !important;
-    border-radius: 10px !important;
-    margin: 0 !important;
   }
   .doc-theme .meta-box .meta-label {
     color: #92400e !important;
+  }
+  .doc-theme .meta-row-divider {
+    border-bottom: 1px solid #e6c78a !important;
+  }
+  .doc-theme .fg-lines > div {
+    border-bottom: 1px solid #cbd5e1 !important;
+    padding-bottom: 8px !important;
+  }
+  .doc-theme .fg-lines > div.full,
+  .doc-theme .fg-lines-full {
+    grid-column: 1 / -1;
   }
   .doc-theme .doc-section-hdr { padding: 7px 12px !important; }
   .doc-theme .doc-section-hdr.blue { background: #dbeafe !important; }

@@ -110,11 +110,16 @@ export default function DashboardPage() {
     { label: 'Outstanding (AED)', value: `${outstandingAmount.toFixed(0)}`, icon: Receipt, accent: 'rose', delta: null, sub: `${unpaidInvoices.length} invoices`, href: '/invoices' },
   ];
 
-  const accentMap: Record<string, { text: string; bg: string; glow: string }> = {
-    cyan: { text: 'text-cyan-400', bg: 'bg-cyan-500/15', glow: 'shadow-[0_0_16px_rgba(34,211,238,0.25)]' },
-    emerald: { text: 'text-emerald-400', bg: 'bg-emerald-500/15', glow: 'shadow-[0_0_16px_rgba(52,211,153,0.25)]' },
-    amber: { text: 'text-amber-400', bg: 'bg-amber-500/15', glow: 'shadow-[0_0_16px_rgba(251,191,36,0.25)]' },
-    rose: { text: 'text-rose-400', bg: 'bg-rose-500/15', glow: 'shadow-[0_0_16px_rgba(251,113,133,0.25)]' },
+  // Tailwind's JIT scanner only picks up classes that appear as literal,
+  // unbroken tokens in the source — a template like `hover:${a.glow}` never
+  // matches anything at build time since the joined string doesn't exist
+  // literally anywhere in this file, so the previous version of this glow
+  // silently never rendered. Each variant below is written out in full.
+  const accentMap: Record<string, { text: string; bg: string; hoverGlow: string }> = {
+    cyan: { text: 'text-cyan-400', bg: 'bg-cyan-500/15', hoverGlow: 'hover:shadow-[0_0_20px_-4px_rgba(34,211,238,0.45)]' },
+    emerald: { text: 'text-emerald-400', bg: 'bg-emerald-500/15', hoverGlow: 'hover:shadow-[0_0_20px_-4px_rgba(52,211,153,0.45)]' },
+    amber: { text: 'text-amber-400', bg: 'bg-amber-500/15', hoverGlow: 'hover:shadow-[0_0_20px_-4px_rgba(251,191,36,0.45)]' },
+    rose: { text: 'text-rose-400', bg: 'bg-rose-500/15', hoverGlow: 'hover:shadow-[0_0_20px_-4px_rgba(251,113,133,0.45)]' },
   };
 
   if (!clientId) {
@@ -155,9 +160,9 @@ export default function DashboardPage() {
           <div className="relative ml-auto">
             <button
               onClick={() => setNotifOpen((v) => !v)}
-              className="relative w-8 h-8 flex items-center justify-center rounded-full bg-slate-900 border border-slate-800 text-slate-400 hover:text-white hover:border-slate-700 transition-all"
+              className="group relative w-8 h-8 flex items-center justify-center rounded-full bg-slate-900 border border-slate-800 text-slate-400 hover:text-white hover:border-slate-700 transition-all"
             >
-              <Bell className="w-4 h-4" />
+              <Bell className="w-4 h-4 group-hover:animate-[iconWiggle_0.4s_ease-in-out]" />
               {notifications.length > 0 && (
                 <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-rose-500 animate-pulse" />
               )}
@@ -197,10 +202,10 @@ export default function DashboardPage() {
               <button
                 key={card.label}
                 onClick={() => router.push(card.href)}
-                className={`text-left bg-slate-900 border border-slate-800 rounded-lg p-4 hover:border-slate-700 hover:${a.glow} transition-all duration-200 group`}
+                className={`text-left bg-slate-900 border border-slate-800 rounded-lg p-4 hover:border-slate-700 hover:-translate-y-0.5 ${a.hoverGlow} transition-all duration-200 group`}
               >
                 <div className="flex items-center justify-between mb-3">
-                  <div className={`w-8 h-8 rounded-md ${a.bg} flex items-center justify-center`}>
+                  <div className={`w-8 h-8 rounded-full ${a.bg} flex items-center justify-center`}>
                     <Icon className={`w-4 h-4 ${a.text}`} />
                   </div>
                   <ArrowUpRight className="w-3.5 h-3.5 text-slate-600 group-hover:text-slate-400 transition-colors" />
@@ -237,7 +242,7 @@ export default function DashboardPage() {
                   return (
                     <div key={status}>
                       <div className="flex items-center justify-between mb-1">
-                        <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full border ${STATUS_COLORS[status] || 'bg-slate-800 text-slate-400 border-slate-700'}`}>
+                        <span className={`status-pill text-[10px] font-medium px-2 py-0.5 rounded-full border ${STATUS_COLORS[status] || 'bg-slate-800 text-slate-400 border-slate-700'}`}>
                           {STATUS_LABELS[status] || status}
                         </span>
                         <span className="text-xs text-slate-400 font-medium">{count}</span>
@@ -330,7 +335,7 @@ export default function DashboardPage() {
                     <td className="px-4 py-2.5 text-slate-400">{job.customer_name || '—'}</td>
                     <td className="px-4 py-2.5 text-slate-500 hidden sm:table-cell">{new Date(job.created_at).toLocaleDateString()}</td>
                     <td className="px-4 py-2.5">
-                      <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full border ${STATUS_COLORS[job.status] || 'bg-slate-800 text-slate-400 border-slate-700'}`}>
+                      <span className={`status-pill text-[10px] font-medium px-2 py-0.5 rounded-full border ${STATUS_COLORS[job.status] || 'bg-slate-800 text-slate-400 border-slate-700'}`}>
                         {STATUS_LABELS[job.status] || job.status}
                       </span>
                     </td>

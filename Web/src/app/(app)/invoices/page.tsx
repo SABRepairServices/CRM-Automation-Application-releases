@@ -255,7 +255,7 @@ export default function InvoicesPage() {
                   const remaining = Number(inv.total_amount) - Number(inv.paid_amount);
                   return (
                     <tr key={inv.id} onClick={() => router.push(`/invoices/${inv.id}`)}
-                      className="border-b border-slate-800 last:border-0 cursor-pointer hover:bg-slate-950">
+                      className="border-b border-slate-800 last:border-0 cursor-pointer hover:bg-slate-950 transition-colors">
                       <td className="px-5 py-3 font-medium text-white">{inv.invoice_number}</td>
                       <td className="px-5 py-3 text-slate-400">{inv.customer_name || 'Unassigned'}</td>
                       <td className="px-5 py-3 text-slate-400">
@@ -266,7 +266,7 @@ export default function InvoicesPage() {
                         AED {remaining.toFixed(2)}
                       </td>
                       <td className="px-5 py-3">
-                        <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${statusColor(inv.status)}`}>{inv.status}</span>
+                        <span className={`status-pill px-2 py-0.5 rounded-full text-xs font-medium ${statusColor(inv.status)}`}>{inv.status}</span>
                       </td>
                       <td className="px-5 py-3 text-right" onClick={(e) => e.stopPropagation()}>
                         {payingId === inv.id ? (

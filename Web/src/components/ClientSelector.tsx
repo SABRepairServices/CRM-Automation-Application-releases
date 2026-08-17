@@ -3,9 +3,10 @@
 import { useEffect, useState } from 'react';
 import { useClients } from '@/hooks/useClients';
 import { CLIENT_CHANGED_EVENT } from '@/hooks/useSelectedClientId';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export function ClientSelector() {
-  const { clients, listClients } = useClients();
+  const { clients, loading, listClients } = useClients();
   const [selectedId, setSelectedId] = useState('');
 
   useEffect(() => {
@@ -40,6 +41,13 @@ export function ClientSelector() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [clients, selectedId]);
 
+  // Distinguish "haven't heard back yet" from "no clients on this account" —
+  // the former is a brief gap worth covering with a placeholder so the
+  // header doesn't visibly pop the dropdown in after the fact; the latter
+  // has nothing to show, same as before.
+  if (loading && clients.length === 0) {
+    return <Skeleton className="h-9 w-[180px]" />;
+  }
   if (clients.length === 0) return null;
 
   return (

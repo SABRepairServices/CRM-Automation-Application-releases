@@ -5,7 +5,6 @@ import { useParams, useRouter } from 'next/navigation';
 import { useQuotations, Quotation, DocumentSignatures } from '@/hooks/useQuotations';
 import { useClients, Client } from '@/hooks/useClients';
 import { DocumentHeader } from '@/components/DocumentHeader';
-import { MetaBox } from '@/components/documents/MetaBox';
 import { ActionButton } from '@/components/ui/action-button';
 import { SendDocumentBar } from '@/components/SendDocumentBar';
 import { DocSection } from '@/components/documents/DocSection';
@@ -125,20 +124,19 @@ export default function QuotationDocumentPage() {
           />
         </div>
 
-        <div className="doc-header-row flex gap-4 items-stretch mb-6">
-          <DocumentHeader client={client} title="Quotation" />
-          <MetaBox
-            fields={[
-              { label: 'Quotation No.', value: quotation.quotation_number, highlight: true },
-              { label: 'Date', value: fmtDate(quotation.created_at) },
-              { label: 'Valid Until', value: fmtDate(quotation.valid_until) },
-              { label: 'Status', value: <span className="capitalize">{quotation.status}</span> },
-            ]}
-          />
-        </div>
+        <DocumentHeader
+          client={client}
+          title="Quotation"
+          metaFields={[
+            { label: 'Quotation No.', value: quotation.quotation_number, highlight: true },
+            { label: 'Date', value: fmtDate(quotation.created_at) },
+            { label: 'Valid Until', value: fmtDate(quotation.valid_until) },
+            { label: 'Status', value: <span className="capitalize">{quotation.status}</span> },
+          ]}
+        />
 
         <DocSection title="Bill To — Customer Details" icon="🏢" accent="blue">
-          <div className="fg c2">
+          <div className="fg c2 fg-lines">
             <div>
               <div className="meta-label">Customer</div>
               <div className="text-sm text-white">{quotation.customer_name || '—'}</div>

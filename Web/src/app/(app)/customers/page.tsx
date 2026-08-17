@@ -211,7 +211,7 @@ export default function CustomersPage() {
                   <tr
                     key={customer.id}
                     onClick={() => router.push(`/customers/${customer.id}`)}
-                    className="border-b border-slate-800 last:border-0 cursor-pointer hover:bg-slate-950"
+                    className="border-b border-slate-800 last:border-0 cursor-pointer hover:bg-slate-950 transition-colors"
                   >
                     <td className="px-5 py-3 font-medium text-white">{customer.name}</td>
                     <td className="px-5 py-3 text-slate-400">{customer.phone}</td>
@@ -219,7 +219,7 @@ export default function CustomersPage() {
                     <td className="px-5 py-3 text-slate-400 capitalize">{customer.source}</td>
                     <td className="px-5 py-3">
                       <span
-                        className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+                        className={`status-pill px-2 py-0.5 rounded-full text-xs font-medium ${
                           customer.billing_type === 'contractor'
                             ? 'bg-violet-500/10 text-violet-400'
                             : 'bg-slate-800 text-slate-400'
@@ -230,7 +230,7 @@ export default function CustomersPage() {
                     </td>
                     <td className="px-5 py-3">
                       <span
-                        className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+                        className={`status-pill px-2 py-0.5 rounded-full text-xs font-medium ${
                           customer.status === 'done'
                             ? 'bg-emerald-500/10 text-emerald-400'
                             : customer.status === 'booked'

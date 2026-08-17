@@ -333,7 +333,7 @@ export default function MonthlyInvoicesPage() {
               <tbody>
                 {invoices.map((mi) => (
                   <tr key={mi.id} onClick={() => router.push(`/monthly-invoices/${mi.id}`)}
-                    className="border-b border-slate-800 last:border-0 cursor-pointer hover:bg-slate-950">
+                    className="border-b border-slate-800 last:border-0 cursor-pointer hover:bg-slate-950 transition-colors">
                     <td className="px-5 py-3 font-medium text-white">{mi.invoice_number}</td>
                     <td className="px-5 py-3 text-slate-400">{MONTH_NAMES[mi.month - 1]} {mi.year}</td>
                     <td className="px-5 py-3 text-slate-400">{mi.customer_name || mi.contract_name || '—'}</td>
@@ -342,7 +342,7 @@ export default function MonthlyInvoicesPage() {
                       AED {Number(mi.total_pending).toFixed(2)}
                     </td>
                     <td className="px-5 py-3">
-                      <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${statusColor(mi.status)}`}>{mi.status}</span>
+                      <span className={`status-pill px-2 py-0.5 rounded-full text-xs font-medium ${statusColor(mi.status)}`}>{mi.status}</span>
                     </td>
                     <td className="px-5 py-3 text-right" onClick={(e) => e.stopPropagation()}>
                       {mi.status === 'draft' && (

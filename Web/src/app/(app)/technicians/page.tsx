@@ -192,7 +192,7 @@ export default function TechniciansPage() {
                   const active = activeJobCount(tech.id);
                   const isEditing = editingId === tech.id;
                   return (
-                    <tr key={tech.id} className="border-b border-slate-800 last:border-0">
+                    <tr key={tech.id} className="border-b border-slate-800 last:border-0 hover:bg-slate-800/30 transition-colors">
                       {isEditing ? (
                         <>
                           <td className="px-5 py-2">
@@ -226,11 +226,11 @@ export default function TechniciansPage() {
                           <td className="px-5 py-3 text-slate-400">{tech.speciality || '—'}</td>
                           <td className="px-5 py-3">
                             {!tech.is_active ? (
-                              <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-slate-800 text-slate-500">Inactive</span>
+                              <span className="status-pill px-2 py-0.5 rounded-full text-xs font-medium bg-slate-800 text-slate-500">Inactive</span>
                             ) : active > 0 ? (
-                              <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-amber-500/10 text-amber-400">{active} active</span>
+                              <span className="status-pill px-2 py-0.5 rounded-full text-xs font-medium bg-amber-500/10 text-amber-400">{active} active</span>
                             ) : (
-                              <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-slate-800 text-slate-500">Free</span>
+                              <span className="status-pill px-2 py-0.5 rounded-full text-xs font-medium bg-slate-800 text-slate-500">Free</span>
                             )}
                           </td>
                           <td className="px-5 py-3 text-right space-x-3 whitespace-nowrap">

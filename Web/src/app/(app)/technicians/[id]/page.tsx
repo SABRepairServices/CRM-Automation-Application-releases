@@ -59,7 +59,7 @@ export default function TechnicianDetailPage() {
                 {technician.speciality && <span>Speciality: {technician.speciality}</span>}
               </div>
               <div className="mt-3 flex gap-2">
-                <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${activeJobs.length > 0 ? 'bg-amber-500/10 text-amber-400' : 'bg-slate-800 text-slate-500'}`}>
+                <span className={`status-pill px-2 py-0.5 rounded-full text-xs font-medium ${activeJobs.length > 0 ? 'bg-amber-500/10 text-amber-400' : 'bg-slate-800 text-slate-500'}`}>
                   {activeJobs.length > 0 ? `${activeJobs.length} active job${activeJobs.length === 1 ? '' : 's'}` : 'No active jobs'}
                 </span>
               </div>
@@ -85,12 +85,12 @@ export default function TechnicianDetailPage() {
                   </thead>
                   <tbody>
                     {activeJobs.map((job) => (
-                      <tr key={job.id} className="border-b border-slate-800 last:border-0">
+                      <tr key={job.id} className="border-b border-slate-800 last:border-0 hover:bg-slate-800/30 transition-colors">
                         <td className="px-5 py-3 font-medium text-white">{job.appliance_type}</td>
                         <td className="px-5 py-3 text-slate-400">{job.customer_name || '—'}</td>
                         <td className="px-5 py-3 text-slate-400 max-w-xs truncate">{job.reported_fault || '—'}</td>
                         <td className="px-5 py-3">
-                          <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${statusColor(job.status)}`}>{job.status.replace('_', ' ')}</span>
+                          <span className={`status-pill px-2 py-0.5 rounded-full text-xs font-medium ${statusColor(job.status)}`}>{job.status.replace('_', ' ')}</span>
                         </td>
                       </tr>
                     ))}
@@ -120,12 +120,12 @@ export default function TechnicianDetailPage() {
                   </thead>
                   <tbody>
                     {pastJobs.map((job) => (
-                      <tr key={job.id} className="border-b border-slate-800 last:border-0">
+                      <tr key={job.id} className="border-b border-slate-800 last:border-0 hover:bg-slate-800/30 transition-colors">
                         <td className="px-5 py-3 font-medium text-white">{job.appliance_type}</td>
                         <td className="px-5 py-3 text-slate-400">{job.customer_name || '—'}</td>
                         <td className="px-5 py-3 text-slate-400">{new Date(job.created_at).toLocaleDateString()}</td>
                         <td className="px-5 py-3">
-                          <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${statusColor(job.status)}`}>{job.status.replace('_', ' ')}</span>
+                          <span className={`status-pill px-2 py-0.5 rounded-full text-xs font-medium ${statusColor(job.status)}`}>{job.status.replace('_', ' ')}</span>
                         </td>
                       </tr>
                     ))}

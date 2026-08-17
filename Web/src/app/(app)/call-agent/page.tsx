@@ -245,13 +245,13 @@ export default function CallAgentPage() {
               </thead>
               <tbody>
                 {calls.map((call) => (
-                  <tr key={call.id} className="border-b border-slate-800 last:border-0 hover:bg-slate-950/50">
+                  <tr key={call.id} className="border-b border-slate-800 last:border-0 hover:bg-slate-950/50 transition-colors">
                     <td className="px-5 py-3">
                       <div className="font-medium text-white">{call.customer_name || 'Unknown'}</div>
                       <div className="text-xs text-slate-500">{call.customer_phone}</div>
                     </td>
                     <td className="px-5 py-3">
-                      <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${call.direction === 'inbound' ? 'bg-blue-500/10 text-blue-400' : 'bg-violet-500/10 text-violet-400'}`}>
+                      <span className={`status-pill px-2 py-0.5 rounded-full text-xs font-medium ${call.direction === 'inbound' ? 'bg-blue-500/10 text-blue-400' : 'bg-violet-500/10 text-violet-400'}`}>
                         {call.direction}
                       </span>
                     </td>

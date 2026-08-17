@@ -108,7 +108,7 @@ export default function ClientsPage() {
               </thead>
               <tbody>
                 {clients.map((client) => (
-                  <tr key={client.id} className="border-b border-slate-800 last:border-0">
+                  <tr key={client.id} className="border-b border-slate-800 last:border-0 hover:bg-slate-800/30 transition-colors">
                     <td className="px-5 py-3 font-medium text-white">{client.name}</td>
                     <td className="px-5 py-3 text-slate-400">{client.email || '—'}</td>
                     <td className="px-5 py-3 text-slate-400">{client.phone || '—'}</td>

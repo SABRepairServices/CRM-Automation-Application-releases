@@ -239,7 +239,7 @@ export default function JobsPage() {
                   </thead>
                   <tbody>
                     {jobs.map((job) => (
-                      <tr key={job.id} className="border-b border-slate-800 last:border-0">
+                      <tr key={job.id} className="border-b border-slate-800 last:border-0 hover:bg-slate-800/30 transition-colors">
                         <td className="px-5 py-3 font-medium text-white">
                           {job.appliance_type}
                           {(job.brand || job.model) && (

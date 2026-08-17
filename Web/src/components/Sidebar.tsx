@@ -29,38 +29,38 @@ const ACCENTS = {
   blue: {
     text: 'text-blue-400',
     bg: 'bg-blue-500/15',
-    iconIdle: 'bg-blue-500/15 group-hover:shadow-[0_0_12px_rgba(96,165,250,0.55)]',
-    iconActive: 'bg-blue-500/15 shadow-[0_0_12px_rgba(96,165,250,0.55)]',
+    iconIdle: 'bg-blue-500/15 border-2 border-blue-500/60 group-hover:shadow-[0_0_12px_rgba(96,165,250,0.55)]',
+    iconActive: 'bg-blue-500/15 border-2 border-blue-400 shadow-[0_0_12px_rgba(96,165,250,0.55)]',
   },
   violet: {
     text: 'text-violet-400',
     bg: 'bg-violet-500/15',
-    iconIdle: 'bg-violet-500/15 group-hover:shadow-[0_0_12px_rgba(167,139,250,0.55)]',
-    iconActive: 'bg-violet-500/15 shadow-[0_0_12px_rgba(167,139,250,0.55)]',
+    iconIdle: 'bg-violet-500/15 border-2 border-violet-500/60 group-hover:shadow-[0_0_12px_rgba(167,139,250,0.55)]',
+    iconActive: 'bg-violet-500/15 border-2 border-violet-400 shadow-[0_0_12px_rgba(167,139,250,0.55)]',
   },
   cyan: {
     text: 'text-cyan-400',
     bg: 'bg-cyan-500/15',
-    iconIdle: 'bg-cyan-500/15 group-hover:shadow-[0_0_12px_rgba(34,211,238,0.55)]',
-    iconActive: 'bg-cyan-500/15 shadow-[0_0_12px_rgba(34,211,238,0.55)]',
+    iconIdle: 'bg-cyan-500/15 border-2 border-cyan-500/60 group-hover:shadow-[0_0_12px_rgba(34,211,238,0.55)]',
+    iconActive: 'bg-cyan-500/15 border-2 border-cyan-400 shadow-[0_0_12px_rgba(34,211,238,0.55)]',
   },
   amber: {
     text: 'text-amber-400',
     bg: 'bg-amber-500/15',
-    iconIdle: 'bg-amber-500/15 group-hover:shadow-[0_0_12px_rgba(251,191,36,0.55)]',
-    iconActive: 'bg-amber-500/15 shadow-[0_0_12px_rgba(251,191,36,0.55)]',
+    iconIdle: 'bg-amber-500/15 border-2 border-amber-500/60 group-hover:shadow-[0_0_12px_rgba(251,191,36,0.55)]',
+    iconActive: 'bg-amber-500/15 border-2 border-amber-400 shadow-[0_0_12px_rgba(251,191,36,0.55)]',
   },
   emerald: {
     text: 'text-emerald-400',
     bg: 'bg-emerald-500/15',
-    iconIdle: 'bg-emerald-500/15 group-hover:shadow-[0_0_12px_rgba(52,211,153,0.55)]',
-    iconActive: 'bg-emerald-500/15 shadow-[0_0_12px_rgba(52,211,153,0.55)]',
+    iconIdle: 'bg-emerald-500/15 border-2 border-emerald-500/60 group-hover:shadow-[0_0_12px_rgba(52,211,153,0.55)]',
+    iconActive: 'bg-emerald-500/15 border-2 border-emerald-400 shadow-[0_0_12px_rgba(52,211,153,0.55)]',
   },
   rose: {
     text: 'text-rose-400',
     bg: 'bg-rose-500/15',
-    iconIdle: 'bg-rose-500/15 group-hover:shadow-[0_0_12px_rgba(251,113,133,0.55)]',
-    iconActive: 'bg-rose-500/15 shadow-[0_0_12px_rgba(251,113,133,0.55)]',
+    iconIdle: 'bg-rose-500/15 border-2 border-rose-500/60 group-hover:shadow-[0_0_12px_rgba(251,113,133,0.55)]',
+    iconActive: 'bg-rose-500/15 border-2 border-rose-400 shadow-[0_0_12px_rgba(251,113,133,0.55)]',
   },
 } as const;
 
@@ -183,12 +183,41 @@ export function Sidebar() {
       onMouseLeave={handleMouseLeave}
       className={`fixed left-0 top-16 h-[calc(100vh-4rem)] z-30 flex flex-col transition-all duration-500 ease-in-out ${
         wide
-          ? 'w-56 bg-slate-900 border-r border-slate-800 shadow-[8px_0_24px_-8px_rgba(0,0,0,0.5)]'
+          ? 'w-56 bg-slate-900 shadow-[8px_0_24px_-8px_rgba(0,0,0,0.5)]'
           : ultraMinimal
           ? 'w-3 bg-transparent'
-          : 'w-16 bg-slate-900 border-r border-slate-800'
+          : 'w-16 bg-slate-900'
       }`}
     >
+      {/* The rail's right edge is a soft wave instead of a straight ruled
+          line — a plain border read as a hard box; this keeps the same
+          blue-violet accent language as the active-link tab and idle
+          sliver, just traced continuously down the full height. Skipped
+          in the ultraMinimal state, which already has its own capsule
+          accent for the same edge. */}
+      {!ultraMinimal && (
+        <svg
+          className="absolute -right-2.5 top-0 h-full w-5 pointer-events-none"
+          viewBox="0 0 20 720"
+          preserveAspectRatio="none"
+          aria-hidden="true"
+        >
+          <defs>
+            <linearGradient id="sidebar-edge-grad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#60a5fa" stopOpacity="0.9" />
+              <stop offset="50%" stopColor="#a78bfa" stopOpacity="0.9" />
+              <stop offset="100%" stopColor="#60a5fa" stopOpacity="0.9" />
+            </linearGradient>
+          </defs>
+          <path
+            d="M10,0 C18,20 2,50 10,70 C18,90 2,120 10,140 C18,160 2,190 10,210 C18,230 2,260 10,280 C18,300 2,330 10,350 C18,370 2,400 10,420 C18,440 2,470 10,490 C18,510 2,540 10,560 C18,580 2,610 10,630 C18,650 2,680 10,700 C18,712 2,715 10,720"
+            fill="none"
+            stroke="url(#sidebar-edge-grad)"
+            strokeWidth="3"
+            vectorEffect="non-scaling-stroke"
+          />
+        </svg>
+      )}
       {ultraMinimal ? (
         // The idle state: everything else in this file fades out, leaving
         // only a thin curved tab as a quiet reminder the sidebar exists.
@@ -202,10 +231,10 @@ export function Sidebar() {
           onClick={togglePin}
           title={pinned ? 'Unpin sidebar' : 'Pin sidebar open'}
           aria-label={pinned ? 'Unpin sidebar' : 'Pin sidebar open — needed to use the sidebar on touch devices, which have no hover'}
-          className={`w-7 h-7 rounded-md flex items-center justify-center transition-all duration-150 ${
+          className={`spring-hover w-7 h-7 rounded-full flex items-center justify-center ${
             pinned
               ? 'text-cyan-400 bg-cyan-500/15 shadow-[0_0_10px_rgba(34,211,238,0.5)] rotate-45'
-              : 'text-slate-500 hover:text-cyan-300 hover:bg-white/5'
+              : 'text-slate-500 hover:text-cyan-300 hover:bg-white/5 hover:scale-110'
           }`}
         >
           <Pin className="w-3.5 h-3.5" strokeWidth={2.4} />
@@ -230,8 +259,8 @@ export function Sidebar() {
                 <span className="absolute left-0 top-1/2 -translate-y-1/2 h-5 w-[3px] rounded-r-full bg-gradient-to-b from-blue-400 to-violet-500 shadow-[0_0_8px_rgba(96,165,250,0.7)]" />
               )}
               <span
-                className={`flex items-center justify-center w-8 h-8 rounded-md shrink-0 transition-all duration-200 ${
-                  active ? accent.iconActive : accent.iconIdle
+                className={`spring-hover flex items-center justify-center w-8 h-8 rounded-full shrink-0 group-hover:scale-110 group-hover:-rotate-6 ${
+                  active ? `${accent.iconActive} ${accent.text} active-icon-ring` : accent.iconIdle
                 }`}
               >
                 <Icon className={`w-4 h-4 ${accent.text}`} strokeWidth={2} />

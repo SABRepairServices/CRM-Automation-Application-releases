@@ -6,7 +6,6 @@ import { useInspections, InspectionReport, InspectionStatus, DiagnosisResult } f
 import { useClients, Client } from '@/hooks/useClients';
 import type { DocumentSignatures } from '@/hooks/useQuotations';
 import { DocumentHeader } from '@/components/DocumentHeader';
-import { MetaBox } from '@/components/documents/MetaBox';
 import { ActionButton } from '@/components/ui/action-button';
 import { SendDocumentBar } from '@/components/SendDocumentBar';
 import { DocSection } from '@/components/documents/DocSection';
@@ -133,20 +132,19 @@ export default function InspectionDocumentPage() {
           />
         </div>
 
-        <div className="doc-header-row flex gap-4 items-stretch mb-6">
-          <DocumentHeader client={client} title="Inspection Report" />
-          <MetaBox
-            fields={[
-              { label: 'Inspection No.', value: report.report_number, highlight: true },
-              { label: 'Date', value: fmtDate(report.inspected_at) },
-              { label: 'Inspected By', value: report.inspected_by || '—' },
-              { label: 'Appliance', value: report.appliance_type || '—' },
-            ]}
-          />
-        </div>
+        <DocumentHeader
+          client={client}
+          title="Inspection Report"
+          metaFields={[
+            { label: 'Inspection No.', value: report.report_number, highlight: true },
+            { label: 'Date', value: fmtDate(report.inspected_at) },
+            { label: 'Inspected By', value: report.inspected_by || '—' },
+            { label: 'Appliance', value: report.appliance_type || '—' },
+          ]}
+        />
 
         <DocSection title="Customer Details" icon="🏢" accent="blue">
-          <div className="fg c2">
+          <div className="fg c2 fg-lines">
             <div>
               <div className="meta-label">Customer</div>
               <div className="text-sm text-white">{report.customer_name || '—'}</div>
@@ -155,7 +153,7 @@ export default function InspectionDocumentPage() {
               <div className="meta-label">Phone</div>
               <div className="text-sm text-slate-300">{report.customer_phone || '—'}</div>
             </div>
-            <div className="full">
+            <div className="full fg-lines-full">
               <div className="meta-label">Address</div>
               <div className="text-sm text-slate-300">{report.customer_address || '—'}</div>
             </div>
@@ -186,7 +184,7 @@ export default function InspectionDocumentPage() {
         {(report.root_cause || report.technician_notes) && (
           <DocSection title="Analysis" icon="📝" accent="gray">
             {report.root_cause && (
-              <div className="mb-3">
+              <div className={`pb-3 ${report.technician_notes ? 'mb-3 border-b border-slate-800' : ''}`}>
                 <div className="meta-label">Root Cause</div>
                 <p className="text-sm text-slate-300">{report.root_cause}</p>
               </div>
