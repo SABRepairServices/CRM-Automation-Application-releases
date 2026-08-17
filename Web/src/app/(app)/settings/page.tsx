@@ -33,6 +33,8 @@ export default function SettingsPage() {
   const [saved, setSaved] = useState(false);
   const [logoError, setLogoError] = useState('');
   const [docLogoError, setDocLogoError] = useState('');
+  const [savingLogos, setSavingLogos] = useState(false);
+  const [logosSaved, setLogosSaved] = useState(false);
   const [backupFolder, setBackupFolder] = useState<string | null>(null);
   const [changingFolder, setChangingFolder] = useState(false);
   const [backupFolderSaved, setBackupFolderSaved] = useState(false);
@@ -131,11 +133,30 @@ export default function SettingsPage() {
     if (!clientId) return;
     setSaved(false);
     try {
-      await updateClient(clientId, formData);
+      const { logo_url, document_logo_url, ...companyDetails } = formData;
+      await updateClient(clientId, companyDetails);
       setSaved(true);
       setTimeout(() => setSaved(false), 3000);
     } catch (err) {
       console.error('Error saving company profile:', err);
+    }
+  };
+
+  // Logos save independently from the rest of the company profile — you
+  // shouldn't have to fill in or re-submit name/phone/address just to swap
+  // a logo, and vice versa.
+  const handleSaveLogos = async () => {
+    if (!clientId) return;
+    setSavingLogos(true);
+    setLogosSaved(false);
+    try {
+      await updateClient(clientId, { logo_url: formData.logo_url, document_logo_url: formData.document_logo_url });
+      setLogosSaved(true);
+      setTimeout(() => setLogosSaved(false), 3000);
+    } catch (err) {
+      console.error('Error saving logos:', err);
+    } finally {
+      setSavingLogos(false);
     }
   };
 
@@ -366,11 +387,14 @@ export default function SettingsPage() {
 
         {pinSection}
 
+        {/* Saves independently from Company Profile below — swapping a
+            logo shouldn't require touching or re-submitting name/phone/
+            address, and vice versa. */}
         <div className="bg-slate-900 border border-slate-800 rounded-md mb-6">
           <div className="px-5 py-3 border-b border-slate-800">
-            <h2 className="text-sm font-semibold text-slate-300">Company Profile</h2>
+            <h2 className="text-sm font-semibold text-slate-300">Logos</h2>
           </div>
-          <form onSubmit={handleSubmit} className="p-5 space-y-5">
+          <div className="p-5 space-y-5">
             <div className="flex items-center gap-4">
               <div className="w-20 h-20 rounded-md border border-slate-800 flex items-center justify-center overflow-hidden bg-slate-950 shrink-0">
                 {formData.logo_url ? (
@@ -474,6 +498,20 @@ export default function SettingsPage() {
               </div>
             </div>
 
+            {logosSaved && (
+              <div className="bg-emerald-500/10 border border-emerald-200 text-emerald-300 text-sm px-4 py-3 rounded-md">
+                Logos saved.
+              </div>
+            )}
+            <ActionButton type="button" onClick={handleSaveLogos} disabled={savingLogos} text={savingLogos ? 'Saving...' : 'Save Logos'} />
+          </div>
+        </div>
+
+        <div className="bg-slate-900 border border-slate-800 rounded-md mb-6">
+          <div className="px-5 py-3 border-b border-slate-800">
+            <h2 className="text-sm font-semibold text-slate-300">Company Profile</h2>
+          </div>
+          <form onSubmit={handleSubmit} className="p-5 space-y-5">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-xs font-medium text-slate-500 mb-1">Company Name</label>
