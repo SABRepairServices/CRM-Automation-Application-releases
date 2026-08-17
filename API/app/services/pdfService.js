@@ -193,11 +193,21 @@ const generateQuotationPdf = ({ client, quotation, customerName, customerPhone }
       }))
     );
 
+    // Derived the same way quotationService.js's computeTotals() derives it
+    // (subtotal * vat_percent/100) rather than back-solving from the stored
+    // total_amount. labour/parts/discount/total are each independently
+    // rounded NUMERIC(12,2) columns, so total - labour - parts + discount
+    // can drift a cent from the true VAT once rounding compounds across
+    // four separately-rounded values — this recomputes it from the same
+    // subtotal the total was originally built from, so it can't disagree.
+    const quotationSubtotal = Number(quotation.labour_amount) + Number(quotation.parts_amount) - Number(quotation.discount_amount);
+    const quotationVatAmount = quotationSubtotal * (Number(quotation.vat_percent) / 100);
+
     totalsBox(doc, [
       { label: 'Labour', value: money(quotation.labour_amount) },
       { label: 'Parts', value: money(quotation.parts_amount) },
       ...(Number(quotation.discount_amount) > 0 ? [{ label: 'Discount', value: `-${money(quotation.discount_amount)}` }] : []),
-      { label: `VAT (${quotation.vat_percent}%)`, value: money((quotation.total_amount - quotation.labour_amount - quotation.parts_amount + Number(quotation.discount_amount))) },
+      { label: `VAT (${quotation.vat_percent}%)`, value: money(quotationVatAmount) },
       { label: 'TOTAL DUE', value: money(quotation.total_amount), grand: true },
     ]);
 
