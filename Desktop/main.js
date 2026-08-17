@@ -251,6 +251,18 @@ async function ensureBackupFolder() {
   return saved;
 }
 
+// Shared between registerIpcHandlers (the manual "Restart Now" button) and
+// setupAutoUpdates (the 30s no-interaction auto-install) so whichever one
+// fires first cancels the other — otherwise a click right at the 30s mark
+// could trigger quitAndInstall twice.
+let pendingAutoInstallTimer = null;
+function clearPendingAutoInstall() {
+  if (pendingAutoInstallTimer) {
+    clearTimeout(pendingAutoInstallTimer);
+    pendingAutoInstallTimer = null;
+  }
+}
+
 function registerIpcHandlers() {
   ipcMain.handle('get-app-version', () => app.getVersion());
 
@@ -274,13 +286,15 @@ function registerIpcHandlers() {
     shell.openExternal(WEB_URL);
   });
 
-  // Triggered by the "Restart Now" button on the in-app update card.
-  // quitAndInstall relaunches the app on the new version immediately;
-  // if the user instead dismisses with "Later", autoInstallOnAppQuit
-  // (set in setupAutoUpdates) installs it the next time they close the
-  // app normally, so it's never lost either way.
+  // Triggered by the "Restart Now" button on the in-app update card, and
+  // also by the 30s auto-install timer in setupAutoUpdates if nobody
+  // clicks anything. Both isSilent and isForceRunAfter are set: the NSIS
+  // installer runs with no UI of its own and overwrites the existing
+  // install path in place, and the app is guaranteed to relaunch
+  // afterward even though the install itself was silent.
   ipcMain.handle('install-update', () => {
-    autoUpdater.quitAndInstall();
+    clearPendingAutoInstall();
+    autoUpdater.quitAndInstall(true, true);
   });
 
   ipcMain.handle('save-document-pdf', async (event, meta) => {
@@ -337,6 +351,18 @@ function setupAutoUpdates() {
         releaseNotes: info.releaseNotes || info.releaseName || null,
       });
     }
+
+    // Nobody has to click "Restart Now" for the update to actually land —
+    // if the card sits untouched for 30s, install it anyway (silently,
+    // relaunching after) so the app never gets stuck on an old build just
+    // because it was left running unattended, which is exactly what let
+    // installs pile up 10+ releases behind before.
+    clearPendingAutoInstall();
+    pendingAutoInstallTimer = setTimeout(() => {
+      pendingAutoInstallTimer = null;
+      log('[Update] no interaction within 30s — installing automatically.');
+      autoUpdater.quitAndInstall(true, true);
+    }, 30 * 1000);
   });
   autoUpdater.on('error', (err) => {
     updateInFlight = false;

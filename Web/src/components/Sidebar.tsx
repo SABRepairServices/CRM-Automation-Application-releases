@@ -83,6 +83,7 @@ export function Sidebar() {
   const isActive = (path: string) => pathname === path;
   const [version, setVersion] = useState<string | null>(null);
   const [updateReady, setUpdateReady] = useState<UpdateInfo | null>(null);
+  const [autoInstallIn, setAutoInstallIn] = useState<number | null>(null);
 
   // Three-state expand logic: collapsed icon rail by default, hover
   // previews it wide, and pinning locks it wide until unpinned. Closing it
@@ -94,19 +95,39 @@ export function Sidebar() {
   const wide = pinned || hovering;
 
   // The main content area lives outside this component (in the shared app
-  // shell layout), so it needs to know the sidebar's current width too —
-  // otherwise expanding the sidebar just overlays it on top of the page
-  // instead of pushing the content over, hiding whatever was underneath.
+  // shell layout) and only needs to shift over for a PINNED sidebar — a
+  // persistent layout change the user asked for. A hover preview is
+  // transient and shouldn't reflow the page every time the cursor passes
+  // near the edge; the sidebar is already `position: fixed` with its own
+  // z-index, so while only hovering it just floats over the content
+  // (which has real desktop-window room to spare) instead of shoving it
+  // aside and back on every mouse-in/mouse-out.
   const { setWide: setSidebarWide } = useSidebarWidth();
   useEffect(() => {
-    setSidebarWide(wide);
-  }, [wide, setSidebarWide]);
+    setSidebarWide(pinned);
+  }, [pinned, setSidebarWide]);
 
   useEffect(() => {
     if (!isElectron()) return;
     getAppVersion().then(setVersion);
     return onUpdateDownloaded((info) => setUpdateReady(info));
   }, []);
+
+  // Mirrors the real 30s auto-install timer main.js runs — purely a visual
+  // cue so the app quitting and relaunching on its own doesn't blindside
+  // whoever's mid-task; clicking "Restart Now" jumps straight to install
+  // and this display never matters.
+  useEffect(() => {
+    if (!updateReady) {
+      setAutoInstallIn(null);
+      return;
+    }
+    setAutoInstallIn(30);
+    const interval = setInterval(() => {
+      setAutoInstallIn((s) => (s === null ? null : Math.max(0, s - 1)));
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [updateReady]);
 
   const handleMouseEnter = () => {
     if (suppressHoverRef.current) return;
@@ -199,8 +220,13 @@ export function Sidebar() {
             onClick={() => installUpdate()}
             className="w-full text-xs font-medium text-white bg-blue-600 hover:bg-blue-500 rounded-md px-2 py-1.5 transition-colors"
           >
-            Restart to update
+            Restart Now
           </button>
+          {autoInstallIn !== null && (
+            <p className="text-[10px] text-slate-500 text-center">
+              Installing automatically in {autoInstallIn}s if untouched
+            </p>
+          )}
         </div>
       )}
 
