@@ -156,7 +156,7 @@ export default function InvoicesPage() {
           <div className="meta-row">
             <div className="meta-card hi">
               <div className="meta-label">Invoice No.</div>
-              <input className="meta-input" value="Auto-generated on save" readOnly />
+              <input className="meta-input" value="" placeholder="—" readOnly />
             </div>
             <div className="meta-card">
               <div className="meta-label">Invoice Date</div>

@@ -6,6 +6,7 @@ import { useInspections, InspectionReport, InspectionStatus, DiagnosisResult } f
 import { useClients, Client } from '@/hooks/useClients';
 import type { DocumentSignatures } from '@/hooks/useQuotations';
 import { DocumentHeader } from '@/components/DocumentHeader';
+import { MetaBox } from '@/components/documents/MetaBox';
 import { ActionButton } from '@/components/ui/action-button';
 import { SendDocumentBar } from '@/components/SendDocumentBar';
 import { DocSection } from '@/components/documents/DocSection';
@@ -17,7 +18,6 @@ import { isElectron, saveDocumentBackup } from '@/lib/electronBridge';
 const SIGNATURE_ROLES = [
   { key: 'technician', label: 'Technician', placeholder: 'Technician name' },
   { key: 'customer', label: 'Customer / Owner', placeholder: 'Customer name' },
-  { key: 'office', label: 'Office (Verified By)' },
 ];
 
 const STATUS_OPTIONS: StatusOption<InspectionStatus>[] = [
@@ -133,29 +133,16 @@ export default function InspectionDocumentPage() {
           />
         </div>
 
-        <DocumentHeader client={client} title="Inspection Report" />
-
-        <div className="meta-row">
-          <div className="meta-col">
-            <div className="meta-card hi">
-              <div className="meta-label">Inspection No.</div>
-              <div className="text-sm text-white font-medium">{report.report_number}</div>
-            </div>
-            <div className="meta-card">
-              <div className="meta-label">Date</div>
-              <div className="text-sm text-slate-300">{fmtDate(report.inspected_at)}</div>
-            </div>
-          </div>
-          <div className="meta-col">
-            <div className="meta-card">
-              <div className="meta-label">Inspected By</div>
-              <div className="text-sm text-slate-300">{report.inspected_by || '—'}</div>
-            </div>
-            <div className="meta-card">
-              <div className="meta-label">Appliance</div>
-              <div className="text-sm text-slate-300">{report.appliance_type || '—'}</div>
-            </div>
-          </div>
+        <div className="doc-header-row flex gap-4 items-stretch mb-6">
+          <DocumentHeader client={client} title="Inspection Report" />
+          <MetaBox
+            fields={[
+              { label: 'Inspection No.', value: report.report_number, highlight: true },
+              { label: 'Date', value: fmtDate(report.inspected_at) },
+              { label: 'Inspected By', value: report.inspected_by || '—' },
+              { label: 'Appliance', value: report.appliance_type || '—' },
+            ]}
+          />
         </div>
 
         <DocSection title="Customer Details" icon="🏢" accent="blue">

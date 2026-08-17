@@ -6,6 +6,7 @@ import { useInvoices, Invoice } from '@/hooks/useInvoices';
 import { useClients, Client } from '@/hooks/useClients';
 import type { DocumentSignatures } from '@/hooks/useQuotations';
 import { DocumentHeader } from '@/components/DocumentHeader';
+import { MetaBox } from '@/components/documents/MetaBox';
 import { ActionButton } from '@/components/ui/action-button';
 import { SendDocumentBar } from '@/components/SendDocumentBar';
 import { DocSection } from '@/components/documents/DocSection';
@@ -13,7 +14,6 @@ import { SignatureBlock } from '@/components/documents/SignatureBlock';
 import { isElectron, saveDocumentBackup } from '@/lib/electronBridge';
 
 const SIGNATURE_ROLES = [
-  { key: 'issued_by', label: 'Issued By (Office)' },
   { key: 'received_by', label: 'Received By (Customer)', placeholder: 'Customer name' },
   { key: 'technician', label: 'Technician', placeholder: 'Technician name' },
 ];
@@ -115,29 +115,16 @@ export default function InvoiceDocumentPage() {
           />
         </div>
 
-        <DocumentHeader client={client} title="Tax Invoice" />
-
-        <div className="meta-row">
-          <div className="meta-col">
-            <div className="meta-card hi">
-              <div className="meta-label">Invoice No.</div>
-              <div className="text-sm text-white font-medium">{invoice.invoice_number}</div>
-            </div>
-            <div className="meta-card">
-              <div className="meta-label">Invoice Date</div>
-              <div className="text-sm text-slate-300">{fmtDate(invoice.issue_date)}</div>
-            </div>
-          </div>
-          <div className="meta-col">
-            <div className="meta-card">
-              <div className="meta-label">Due Date</div>
-              <div className="text-sm text-slate-300">{fmtDate(invoice.due_date)}</div>
-            </div>
-            <div className="meta-card">
-              <div className="meta-label">Status</div>
-              <div className="text-sm text-slate-300 capitalize">{invoice.status}</div>
-            </div>
-          </div>
+        <div className="doc-header-row flex gap-4 items-stretch mb-6">
+          <DocumentHeader client={client} title="Tax Invoice" />
+          <MetaBox
+            fields={[
+              { label: 'Invoice No.', value: invoice.invoice_number, highlight: true },
+              { label: 'Invoice Date', value: fmtDate(invoice.issue_date) },
+              { label: 'Due Date', value: fmtDate(invoice.due_date) },
+              { label: 'Status', value: <span className="capitalize">{invoice.status}</span> },
+            ]}
+          />
         </div>
 
         <DocSection title="Bill To — Customer Details" icon="🏢" accent="blue">

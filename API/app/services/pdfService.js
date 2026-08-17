@@ -215,7 +215,6 @@ const generateInspectionPdf = async ({ client, report, customerName, customerPho
     signatureBlock(doc, report.signatures, [
       { key: 'technician', label: 'Technician' },
       { key: 'customer', label: 'Customer / Owner' },
-      { key: 'office', label: 'Office (Verified By)' },
     ]);
 
     footer(doc, client);
@@ -304,7 +303,6 @@ const generateInvoicePdf = async ({ client, invoice, customerName, customerPhone
     ]);
 
     signatureBlock(doc, invoice.signatures, [
-      { key: 'issued_by', label: 'Issued By (Office)' },
       { key: 'received_by', label: 'Received By (Customer)' },
       { key: 'technician', label: 'Technician' },
     ]);
