@@ -26,28 +26,80 @@ const { saveDocumentPdf } = require('./pdfBackup');
 // web-standalone/ by build-standalone.js and packaged as an extraResource
 // so it lives outside the asar archive (see package.json's build.extraResources).
 //
-// The actual root cause of the recurring blank-screen/crash: this used to be
-// hardcoded to port 3000. Any leftover server from a previous run (crashed,
-// force-closed, or killed via Task Manager instead of a clean quit) stays
-// bound to that port forever, since the cleanup in shutdownChildProcesses()
-// only runs on a graceful Electron quit. The next launch would then either
-// fail outright (EADDRINUSE) or — worse — silently connect the window to
-// that stale orphaned server instead of its own fresh one, which is what
-// produced the blank window. Picking a free ephemeral port on every launch
-// makes that class of collision impossible.
-let WEB_PORT = process.env.WEB_PORT ? Number(process.env.WEB_PORT) : null;
+// FIXED port, not ephemeral. This used to be hardcoded to 3000, then got
+// switched to a random free port every launch to dodge a real bug: a
+// leftover server from a crashed/force-closed previous run stayed bound to
+// 3000 forever (cleanup only ran on a graceful quit), so the next launch
+// either failed outright or silently connected to that stale orphaned
+// server — a blank window.
+//
+// But a random port breaks something more fundamental: the renderer's
+// localStorage — where the login token, refresh token, and selected
+// client all live — is scoped to the page's exact origin, port included.
+// A different port every launch means a genuinely different origin every
+// launch, so the browser storage from last time is simply unreachable —
+// every single open of the app looks like a brand-new, empty profile,
+// permanently, no matter what auth/data fixes ship. Confirmed directly:
+// real login tokens and a real selectedClientId were found sitting in
+// this app's own userData Local Storage, all scoped to a http://localhost
+// origin the app doesn't even use anymore since ephemeral ports shipped.
+//
+// The actual fix for the orphan-process problem isn't "never reuse a
+// port" — it's "if something's already on our port, it's almost
+// certainly our own dead process; kill it and take the port back."
+// clearStalePort() below does exactly that before every launch, so the
+// port can stay fixed and storage can stay persistent.
+const FIXED_WEB_PORT = 47829;
+let WEB_PORT = process.env.WEB_PORT ? Number(process.env.WEB_PORT) : FIXED_WEB_PORT;
 let WEB_URL = null;
 
-function getFreePort() {
-  return new Promise((resolve, reject) => {
+function isPortFree(port) {
+  return new Promise((resolve) => {
     const server = net.createServer();
-    server.unref();
-    server.on('error', reject);
-    server.listen(0, '127.0.0.1', () => {
-      const { port } = server.address();
-      server.close(() => resolve(port));
+    server.once('error', () => resolve(false));
+    server.listen(port, '127.0.0.1', () => {
+      server.close(() => resolve(true));
     });
   });
+}
+
+/**
+ * Finds whatever process is bound to our fixed port on Windows (via
+ * netstat) and kills it. Only ever needed when a previous run of this
+ * same app didn't shut down cleanly — best-effort: any failure here just
+ * falls through to the normal EADDRINUSE error path instead of silently
+ * connecting to a stale server.
+ */
+function clearStalePort(port) {
+  return new Promise((resolve) => {
+    const netstat = spawn('cmd.exe', ['/c', `netstat -ano | findstr :${port}`], { windowsHide: true });
+    let output = '';
+    netstat.stdout.on('data', (d) => { output += d.toString(); });
+    netstat.on('close', () => {
+      const pids = new Set();
+      output.split('\n').forEach((line) => {
+        const match = line.match(/LISTENING\s+(\d+)/);
+        if (match) pids.add(match[1]);
+      });
+      if (pids.size === 0) return resolve();
+      log(`[Port] ${port} is occupied by a leftover process — clearing it:`, [...pids].join(', '));
+      let remaining = pids.size;
+      pids.forEach((pid) => {
+        treeKill(Number(pid), () => {
+          remaining -= 1;
+          if (remaining === 0) resolve();
+        });
+      });
+    });
+    netstat.on('error', () => resolve());
+  });
+}
+
+async function ensurePortAvailable(port) {
+  if (await isPortFree(port)) return;
+  await clearStalePort(port);
+  // Give Windows a moment to actually release the socket after the kill.
+  await new Promise((r) => setTimeout(r, 500));
 }
 
 // app.isPackaged is false both in plain `node main.js` and in `electron .`
@@ -413,11 +465,11 @@ async function boot() {
   setSplashStatus('Starting local services…');
 
   try {
-    if (!WEB_PORT) {
-      WEB_PORT = await getFreePort();
-    }
     WEB_URL = `http://localhost:${WEB_PORT}`;
     log('Using UI server port', WEB_PORT);
+
+    setSplashStatus('Starting local services…');
+    await ensurePortAvailable(WEB_PORT);
 
     setSplashStatus('Starting the app server…');
     startWebServer();
