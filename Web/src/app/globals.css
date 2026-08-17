@@ -419,6 +419,23 @@ textarea:focus {
   transition: transform 350ms cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 200ms ease;
 }
 
+/* 3D button feel for the sidebar's expanded nav rows — a raised bevel at
+   rest (light top edge, dark bottom edge, like a physical key), and a real
+   press-down on click instead of just a color change. */
+.nav-row-3d {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    inset 0 -2px 0 rgba(0, 0, 0, 0.25),
+    0 1px 2px rgba(0, 0, 0, 0.3);
+  transition: transform 120ms ease, box-shadow 120ms ease, border-color 200ms ease, background-color 200ms ease;
+}
+.nav-row-3d:active {
+  transform: translateY(1px) scale(0.99);
+  box-shadow:
+    inset 0 2px 3px rgba(0, 0, 0, 0.35),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.03);
+}
+
 /* Status pills app-wide (job/invoice/quote/inspection status chips) — a
    shared hover treatment so every one of them feels like the same kind of
    control, regardless of which page's STATUS_COLORS map produced its base

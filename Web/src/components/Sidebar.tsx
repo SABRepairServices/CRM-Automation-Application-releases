@@ -31,36 +31,48 @@ const ACCENTS = {
     bg: 'bg-blue-500/15',
     iconIdle: 'bg-blue-500/15 border-2 border-blue-500/60 group-hover:shadow-[0_0_12px_rgba(96,165,250,0.55)]',
     iconActive: 'bg-blue-500/15 border-2 border-blue-400 shadow-[0_0_12px_rgba(96,165,250,0.55)]',
+    row: 'border border-blue-500/25 group-hover:border-blue-400/70 group-hover:shadow-[0_0_14px_-4px_rgba(96,165,250,0.5)]',
+    rowActive: 'border border-blue-400/70 bg-blue-500/[0.06] shadow-[0_0_14px_-4px_rgba(96,165,250,0.5)]',
   },
   violet: {
     text: 'text-violet-400',
     bg: 'bg-violet-500/15',
     iconIdle: 'bg-violet-500/15 border-2 border-violet-500/60 group-hover:shadow-[0_0_12px_rgba(167,139,250,0.55)]',
     iconActive: 'bg-violet-500/15 border-2 border-violet-400 shadow-[0_0_12px_rgba(167,139,250,0.55)]',
+    row: 'border border-violet-500/25 group-hover:border-violet-400/70 group-hover:shadow-[0_0_14px_-4px_rgba(167,139,250,0.5)]',
+    rowActive: 'border border-violet-400/70 bg-violet-500/[0.06] shadow-[0_0_14px_-4px_rgba(167,139,250,0.5)]',
   },
   cyan: {
     text: 'text-cyan-400',
     bg: 'bg-cyan-500/15',
     iconIdle: 'bg-cyan-500/15 border-2 border-cyan-500/60 group-hover:shadow-[0_0_12px_rgba(34,211,238,0.55)]',
     iconActive: 'bg-cyan-500/15 border-2 border-cyan-400 shadow-[0_0_12px_rgba(34,211,238,0.55)]',
+    row: 'border border-cyan-500/25 group-hover:border-cyan-400/70 group-hover:shadow-[0_0_14px_-4px_rgba(34,211,238,0.5)]',
+    rowActive: 'border border-cyan-400/70 bg-cyan-500/[0.06] shadow-[0_0_14px_-4px_rgba(34,211,238,0.5)]',
   },
   amber: {
     text: 'text-amber-400',
     bg: 'bg-amber-500/15',
     iconIdle: 'bg-amber-500/15 border-2 border-amber-500/60 group-hover:shadow-[0_0_12px_rgba(251,191,36,0.55)]',
     iconActive: 'bg-amber-500/15 border-2 border-amber-400 shadow-[0_0_12px_rgba(251,191,36,0.55)]',
+    row: 'border border-amber-500/25 group-hover:border-amber-400/70 group-hover:shadow-[0_0_14px_-4px_rgba(251,191,36,0.5)]',
+    rowActive: 'border border-amber-400/70 bg-amber-500/[0.06] shadow-[0_0_14px_-4px_rgba(251,191,36,0.5)]',
   },
   emerald: {
     text: 'text-emerald-400',
     bg: 'bg-emerald-500/15',
     iconIdle: 'bg-emerald-500/15 border-2 border-emerald-500/60 group-hover:shadow-[0_0_12px_rgba(52,211,153,0.55)]',
     iconActive: 'bg-emerald-500/15 border-2 border-emerald-400 shadow-[0_0_12px_rgba(52,211,153,0.55)]',
+    row: 'border border-emerald-500/25 group-hover:border-emerald-400/70 group-hover:shadow-[0_0_14px_-4px_rgba(52,211,153,0.5)]',
+    rowActive: 'border border-emerald-400/70 bg-emerald-500/[0.06] shadow-[0_0_14px_-4px_rgba(52,211,153,0.5)]',
   },
   rose: {
     text: 'text-rose-400',
     bg: 'bg-rose-500/15',
     iconIdle: 'bg-rose-500/15 border-2 border-rose-500/60 group-hover:shadow-[0_0_12px_rgba(251,113,133,0.55)]',
     iconActive: 'bg-rose-500/15 border-2 border-rose-400 shadow-[0_0_12px_rgba(251,113,133,0.55)]',
+    row: 'border border-rose-500/25 group-hover:border-rose-400/70 group-hover:shadow-[0_0_14px_-4px_rgba(251,113,133,0.5)]',
+    rowActive: 'border border-rose-400/70 bg-rose-500/[0.06] shadow-[0_0_14px_-4px_rgba(251,113,133,0.5)]',
   },
 } as const;
 
@@ -252,7 +264,7 @@ export function Sidebar() {
               href={link.href}
               title={wide ? undefined : link.label}
               className={`group relative flex items-center gap-2.5 rounded-lg text-sm transition-all duration-150 ${
-                wide ? 'px-2 py-2' : 'justify-center px-0 py-2'
+                wide ? `px-2 py-2 nav-row-3d ${active ? accent.rowActive : accent.row}` : 'justify-center px-0 py-2'
               } ${active ? 'text-white font-medium' : 'text-slate-400 hover:text-slate-200'}`}
             >
               {active && (
