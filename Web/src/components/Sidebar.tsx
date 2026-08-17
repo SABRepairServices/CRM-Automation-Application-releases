@@ -117,6 +117,13 @@ export function Sidebar() {
   // cue so the app quitting and relaunching on its own doesn't blindside
   // whoever's mid-task; clicking "Restart Now" jumps straight to install
   // and this display never matters.
+  //
+  // Keyed on the version STRING, not the updateReady object — main.js now
+  // dedupes repeat 'update-downloaded' events for the same version, but
+  // keying on object identity here too is cheap insurance: an object
+  // reference changing without the version actually changing would have
+  // restarted this effect and reset the countdown back to 30, which is
+  // exactly what made the timer visibly jump instead of counting down.
   useEffect(() => {
     if (!updateReady) {
       setAutoInstallIn(null);
@@ -127,7 +134,7 @@ export function Sidebar() {
       setAutoInstallIn((s) => (s === null ? null : Math.max(0, s - 1)));
     }, 1000);
     return () => clearInterval(interval);
-  }, [updateReady]);
+  }, [updateReady?.version]);
 
   const handleMouseEnter = () => {
     if (suppressHoverRef.current) return;
