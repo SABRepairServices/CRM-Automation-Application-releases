@@ -266,7 +266,6 @@ const generateQuotationPdf = async ({ client, quotation, customerName, customerP
     ]);
 
     signatureBlock(doc, quotation.signatures, [
-      { key: 'prepared_by', label: 'Prepared By (Office)' },
       { key: 'approved_by', label: 'Approved By (Customer)' },
       { key: 'technician', label: 'Technician' },
     ]);

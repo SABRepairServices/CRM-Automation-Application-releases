@@ -17,46 +17,39 @@ export function DocumentHeader({ client, title }: { client: Client | null; title
     [client?.city, client?.country].filter(Boolean).join(', '),
     client?.phone,
     client?.email,
+    client?.vat_number ? `TRN: ${client.vat_number}` : null,
   ].filter(Boolean);
-  const trnLine = client?.vat_number ? `TRN: ${client.vat_number}` : null;
 
   return (
-    <div className="doc-header mb-6 border border-slate-800 rounded-md overflow-hidden">
-      <div className="grid grid-cols-[1fr_2fr_1fr] items-start gap-3 px-5 py-4 bg-slate-900">
-        <div className="flex justify-start">
+    <div className="doc-header rounded-lg border border-slate-800 bg-slate-900 overflow-hidden flex-1 min-w-0">
+      <div className="px-5 py-4 flex items-start gap-4">
+        <div className="shrink-0">
           {showLogo ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
               src={documentLogoUrl}
               alt={client?.name}
-              className="max-h-9 max-w-[100px] object-contain"
+              className="h-14 w-14 rounded-full object-cover border-2 border-amber-400"
               onError={() => setLogoFailed(true)}
             />
           ) : (
-            // A thin outline, not a heavy filled box — this is an empty-state
-            // hint for the office, not a real logo placeholder, so it should
-            // read as a quiet line, not a competing shape on the page.
-            <div className="h-7 w-[88px] border border-slate-700 flex items-center justify-center text-[8px] font-medium text-slate-600 uppercase tracking-widest">
+            // A thin circular outline, not a heavy filled box — this is an
+            // empty-state hint for the office, not a real logo placeholder,
+            // so it should read as a quiet ring, not a competing shape.
+            <div className="h-14 w-14 rounded-full border border-slate-700 flex items-center justify-center text-[7px] font-medium text-slate-600 uppercase tracking-widest">
               Logo
             </div>
           )}
         </div>
 
-        <div className="text-center">
-          <div className="text-base font-bold text-white tracking-tight">{client?.name || 'Your Company'}</div>
-          <div className="text-[10px] font-semibold tracking-[0.16em] uppercase text-amber-400 mt-1.5">{title}</div>
-        </div>
-
-        <div className="text-right text-[10px] text-amber-400 leading-relaxed">
-          {contactLines.map((line, i) => <div key={i}>{line}</div>)}
+        <div className="min-w-0">
+          <div className="text-base font-bold text-white tracking-tight truncate">{client?.name || 'Your Company'}</div>
+          <div className="text-[10px] font-semibold tracking-[0.16em] uppercase text-amber-400 mt-1">{title}</div>
+          <div className="text-[10px] text-slate-400 leading-relaxed mt-2">
+            {contactLines.map((line, i) => <div key={i}>{line}</div>)}
+          </div>
         </div>
       </div>
-
-      {trnLine && (
-        <div className="px-5 py-1.5 text-[10px] text-slate-500 text-right border-t border-slate-800 bg-slate-950/40">
-          {trnLine}
-        </div>
-      )}
     </div>
   );
 }

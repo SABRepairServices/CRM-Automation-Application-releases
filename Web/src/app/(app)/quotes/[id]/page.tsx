@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { useQuotations, Quotation, DocumentSignatures } from '@/hooks/useQuotations';
 import { useClients, Client } from '@/hooks/useClients';
 import { DocumentHeader } from '@/components/DocumentHeader';
+import { MetaBox } from '@/components/documents/MetaBox';
 import { ActionButton } from '@/components/ui/action-button';
 import { SendDocumentBar } from '@/components/SendDocumentBar';
 import { DocSection } from '@/components/documents/DocSection';
@@ -12,7 +13,6 @@ import { SignatureBlock } from '@/components/documents/SignatureBlock';
 import { isElectron, saveDocumentBackup } from '@/lib/electronBridge';
 
 const SIGNATURE_ROLES = [
-  { key: 'prepared_by', label: 'Prepared By (Office)' },
   { key: 'approved_by', label: 'Approved By (Customer)', placeholder: 'Customer full name' },
   { key: 'technician', label: 'Technician', placeholder: 'Technician name' },
 ];
@@ -125,29 +125,16 @@ export default function QuotationDocumentPage() {
           />
         </div>
 
-        <DocumentHeader client={client} title="Quotation" />
-
-        <div className="meta-row">
-          <div className="meta-col">
-            <div className="meta-card hi">
-              <div className="meta-label">Quotation No.</div>
-              <div className="text-sm text-white font-medium">{quotation.quotation_number}</div>
-            </div>
-            <div className="meta-card">
-              <div className="meta-label">Date</div>
-              <div className="text-sm text-slate-300">{fmtDate(quotation.created_at)}</div>
-            </div>
-          </div>
-          <div className="meta-col">
-            <div className="meta-card">
-              <div className="meta-label">Valid Until</div>
-              <div className="text-sm text-slate-300">{fmtDate(quotation.valid_until)}</div>
-            </div>
-            <div className="meta-card">
-              <div className="meta-label">Status</div>
-              <div className="text-sm text-slate-300 capitalize">{quotation.status}</div>
-            </div>
-          </div>
+        <div className="doc-header-row flex gap-4 items-stretch mb-6">
+          <DocumentHeader client={client} title="Quotation" />
+          <MetaBox
+            fields={[
+              { label: 'Quotation No.', value: quotation.quotation_number, highlight: true },
+              { label: 'Date', value: fmtDate(quotation.created_at) },
+              { label: 'Valid Until', value: fmtDate(quotation.valid_until) },
+              { label: 'Status', value: <span className="capitalize">{quotation.status}</span> },
+            ]}
+          />
         </div>
 
         <DocSection title="Bill To — Customer Details" icon="🏢" accent="blue">

@@ -101,6 +101,7 @@
 .doc-theme .doc-section-hdr {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 9px;
   padding: 10px 18px;
   border-bottom: 1px solid var(--doc-border);
@@ -528,29 +529,36 @@
     background: #fff !important;
     break-inside: avoid;
   }
-  /* The header banner keeps its own navy/gold branding on print — same
-     branded letterhead the emailed PDF uses (pdfService.js) — rather
-     than flattening to plain text like the sections below. Without this
-     override the blanket .doc-theme * { color: #0f172a } above turns its
-     white/gold text invisible: dark text on its own still-dark navy
-     background. */
-  .doc-theme .doc-header {
-    border: none !important;
-    border-radius: 0 !important;
-    margin: 0 !important;
+  /* The header row — logo/name box + document-meta box — keeps its own
+     navy/gold branding and rounded corners on print, same letterhead
+     look as the emailed PDF (pdfService.js), deliberately different from
+     the flat ruled-line sections below: this is the one part of the
+     sheet meant to look like a decorated letterhead, not a plain form. */
+  .doc-theme .doc-header-row {
+    padding: 14px 14px 0 !important;
+    gap: 14px !important;
     break-inside: avoid;
   }
-  .doc-theme .doc-header .bg-slate-900 {
+  .doc-theme .doc-header {
     background: #0D2137 !important;
+    border: 1.5px solid #0D2137 !important;
+    border-radius: 10px !important;
+    margin: 0 !important;
   }
-  .doc-theme .doc-header .bg-slate-900 * {
+  .doc-theme .doc-header * {
     color: #fff !important;
   }
   .doc-theme .doc-header .text-amber-400 {
     color: #C9933A !important;
   }
-  .doc-theme .doc-header .bg-slate-950\/40 {
+  .doc-theme .meta-box {
     background: #fff !important;
+    border: 1.5px solid #C9933A !important;
+    border-radius: 10px !important;
+    margin: 0 !important;
+  }
+  .doc-theme .meta-box .meta-label {
+    color: #92400e !important;
   }
   .doc-theme .doc-section-hdr { padding: 7px 12px !important; }
   .doc-theme .doc-section-hdr.blue { background: #dbeafe !important; }

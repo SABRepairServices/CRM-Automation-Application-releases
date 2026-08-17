@@ -28,7 +28,6 @@ const REPAIR_TYPES: { value: RepairType; label: string }[] = [
 ];
 
 const SIGNATURE_ROLES = [
-  { key: 'prepared_by', label: 'Prepared By (Office)' },
   { key: 'approved_by', label: 'Approved By (Customer)', placeholder: 'Customer full name' },
   { key: 'technician', label: 'Technician', placeholder: 'Technician name' },
 ];
@@ -215,7 +214,7 @@ export default function QuotesPage() {
           <div className="meta-row">
             <div className="meta-card hi">
               <div className="meta-label">Quotation No.</div>
-              <input className="meta-input" value="Auto-generated on save" readOnly />
+              <input className="meta-input" value="" placeholder="—" readOnly />
             </div>
             <div className="meta-card">
               <div className="meta-label">Date</div>
