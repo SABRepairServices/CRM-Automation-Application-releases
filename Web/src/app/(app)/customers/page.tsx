@@ -8,6 +8,15 @@ import { ActionButton } from '@/components/ui/action-button';
 
 const EMPTY_FORM = { name: '', phone: '', whatsapp: '', email: '', area: '', address: '', source: 'google', billing_type: 'individual' as 'individual' | 'contractor', notes: '' };
 
+const SOURCE_LABELS: Record<string, string> = {
+  google: 'Google',
+  instagram: 'Instagram',
+  facebook: 'Facebook',
+  whatsapp: 'WhatsApp',
+  referral: 'Referral',
+  walk_in: 'Walk In',
+};
+
 export default function CustomersPage() {
   const router = useRouter();
   const clientId = useSelectedClientId();
@@ -216,7 +225,7 @@ export default function CustomersPage() {
                     <td className="px-5 py-3 font-medium text-white">{customer.name}</td>
                     <td className="px-5 py-3 text-slate-400">{customer.phone}</td>
                     <td className="px-5 py-3 text-slate-400">{customer.area || '—'}</td>
-                    <td className="px-5 py-3 text-slate-400 capitalize">{customer.source}</td>
+                    <td className="px-5 py-3 text-slate-400">{SOURCE_LABELS[customer.source] || customer.source}</td>
                     <td className="px-5 py-3">
                       <span
                         className={`status-pill px-2 py-0.5 rounded-full text-xs font-medium ${
