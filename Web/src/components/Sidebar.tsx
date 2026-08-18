@@ -106,26 +106,6 @@ export function Sidebar() {
   const suppressHoverRef = useRef(false);
   const wide = pinned || hovering;
 
-  // A 4th state below "collapsed icon rail": after a few seconds with the
-  // mouse away entirely, the sidebar recedes to a thin curved edge tab —
-  // just enough to show something's there — and any hover on that sliver
-  // brings the normal icon rail straight back. Never fires while pinned
-  // or already hovering, and resets the instant either one starts.
-  const [idle, setIdle] = useState(false);
-  const idleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  useEffect(() => {
-    if (pinned || hovering) {
-      setIdle(false);
-      if (idleTimerRef.current) clearTimeout(idleTimerRef.current);
-      return;
-    }
-    idleTimerRef.current = setTimeout(() => setIdle(true), 3000);
-    return () => {
-      if (idleTimerRef.current) clearTimeout(idleTimerRef.current);
-    };
-  }, [pinned, hovering]);
-  const ultraMinimal = idle && !wide;
-
   // The main content area lives outside this component (in the shared app
   // shell layout) and only needs to shift over for a PINNED sidebar — a
   // persistent layout change the user asked for. A hover preview is
@@ -196,48 +176,9 @@ export function Sidebar() {
       className={`fixed left-0 top-16 h-[calc(100vh-4rem)] z-30 flex flex-col transition-all duration-500 ease-in-out ${
         wide
           ? 'w-56 bg-slate-900 shadow-[8px_0_24px_-8px_rgba(0,0,0,0.5)]'
-          : ultraMinimal
-          ? 'w-3 bg-transparent'
           : 'w-16 bg-slate-900'
       }`}
     >
-      {/* The rail's right edge is a soft wave instead of a straight ruled
-          line — a plain border read as a hard box; this keeps the same
-          blue-violet accent language as the active-link tab and idle
-          sliver, just traced continuously down the full height. Skipped
-          in the ultraMinimal state, which already has its own capsule
-          accent for the same edge. */}
-      {!ultraMinimal && (
-        <svg
-          className="absolute -right-2.5 top-0 h-full w-5 pointer-events-none"
-          viewBox="0 0 20 720"
-          preserveAspectRatio="none"
-          aria-hidden="true"
-        >
-          <defs>
-            <linearGradient id="sidebar-edge-grad" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#60a5fa" stopOpacity="0.9" />
-              <stop offset="50%" stopColor="#a78bfa" stopOpacity="0.9" />
-              <stop offset="100%" stopColor="#60a5fa" stopOpacity="0.9" />
-            </linearGradient>
-          </defs>
-          <path
-            d="M10,0 C18,20 2,50 10,70 C18,90 2,120 10,140 C18,160 2,190 10,210 C18,230 2,260 10,280 C18,300 2,330 10,350 C18,370 2,400 10,420 C18,440 2,470 10,490 C18,510 2,540 10,560 C18,580 2,610 10,630 C18,650 2,680 10,700 C18,712 2,715 10,720"
-            fill="none"
-            stroke="url(#sidebar-edge-grad)"
-            strokeWidth="3"
-            vectorEffect="non-scaling-stroke"
-          />
-        </svg>
-      )}
-      {ultraMinimal ? (
-        // The idle state: everything else in this file fades out, leaving
-        // only a thin curved tab as a quiet reminder the sidebar exists.
-        // Hovering this sliver re-triggers handleMouseEnter above like any
-        // other part of the sidebar, bringing the icon rail straight back.
-        <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1.5 h-16 rounded-r-full bg-gradient-to-b from-blue-400 to-violet-500 opacity-50 transition-opacity duration-500 hover:opacity-90" />
-      ) : (
-      <>
       <div className={`flex items-center h-9 shrink-0 ${wide ? 'justify-end px-2 pt-2' : 'justify-center pt-2'}`}>
         <button
           onClick={togglePin}
@@ -332,8 +273,6 @@ export function Sidebar() {
             <p>© 2026 Shams Al Barakat Repair Services</p>
           </div>
         </div>
-      )}
-      </>
       )}
     </aside>
   );

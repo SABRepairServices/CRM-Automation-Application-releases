@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
@@ -24,8 +24,11 @@ export function Header() {
   // Tracks only whether the stored client id has resolved yet — starts
   // true so a fresh profile with no selectedClientId (nothing to fetch)
   // doesn't hang on a skeleton forever waiting for an effect that will
-  // never run.
+  // never run. Only ever flips true for the very first load: switching
+  // tabs re-fetches in the background to pick up profile edits, but
+  // shouldn't blank the header back to a skeleton every single time.
   const [clientLoading, setClientLoading] = useState(true);
+  const hasLoadedRef = useRef(false);
 
   useEffect(() => {
     if (isElectron()) {
@@ -42,9 +45,12 @@ export function Header() {
       setClientLoading(false);
       return;
     }
-    setClientLoading(true);
+    if (!hasLoadedRef.current) setClientLoading(true);
     getClient(clientId)
-      .then(setClient)
+      .then((c) => {
+        setClient(c);
+        hasLoadedRef.current = true;
+      })
       .finally(() => setClientLoading(false));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pathname]);
