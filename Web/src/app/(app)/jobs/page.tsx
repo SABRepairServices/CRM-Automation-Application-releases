@@ -106,7 +106,7 @@ export default function JobsPage() {
         <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="text-2xl font-semibold text-white">Repair Jobs</h1>
-            <p className="text-sm text-slate-500 mt-1">new â†’ scheduled â†’ inspected â†’ quoted â†’ approved â†’ in_progress â†’ completed</p>
+            <p className="text-sm text-slate-500 mt-1">new &rarr; scheduled &rarr; inspected &rarr; quoted &rarr; approved &rarr; in_progress &rarr; completed</p>
           </div>
           <ActionButton
             text={showForm ? 'Cancel' : 'New Job'}
