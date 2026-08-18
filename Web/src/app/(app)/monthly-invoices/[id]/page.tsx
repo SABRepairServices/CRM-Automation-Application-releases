@@ -13,7 +13,6 @@ import { SignatureBlock } from '@/components/documents/SignatureBlock';
 import { isElectron, saveDocumentBackup } from '@/lib/electronBridge';
 
 const SIGNATURE_ROLES = [
-  { key: 'issued_by', label: 'Issued By (Office)' },
   { key: 'verified_by', label: 'Verified By (Manager)', placeholder: 'Manager name' },
   { key: 'acknowledged_by', label: 'Acknowledged By (Client)', placeholder: 'Client representative' },
 ];

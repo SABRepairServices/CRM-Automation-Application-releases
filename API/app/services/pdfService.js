@@ -349,7 +349,6 @@ const generateMonthlyInvoicePdf = async ({ client, invoice, customerName }) => {
     ]);
 
     signatureBlock(doc, invoice.signatures, [
-      { key: 'issued_by', label: 'Issued By (Office)' },
       { key: 'verified_by', label: 'Verified By (Manager)' },
       { key: 'acknowledged_by', label: 'Acknowledged By (Client)' },
     ]);
