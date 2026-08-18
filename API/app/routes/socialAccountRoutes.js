@@ -9,6 +9,15 @@ const router = express.Router();
 const callbackUrl = (req) => `${req.protocol}://${req.get('host')}/api/social-accounts/connect/facebook/callback`;
 
 /**
+ * Lets the frontend show accurate connect-vs-not-configured state instead
+ * of a static "Coming soon" — Settings checks this before offering the
+ * Facebook/Instagram connect flow.
+ */
+router.get('/meta-status', authenticate, (req, res) => {
+  res.json({ data: { configured: metaService.isConfigured() }, error: null });
+});
+
+/**
  * Step 1 of OAuth: frontend calls this (authenticated) to get the Meta
  * consent URL, then does a full browser redirect to it — Meta's OAuth
  * dialog can't be opened via XHR/fetch, it has to be a real navigation.

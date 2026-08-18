@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import axios from 'axios';
 import { useClients, Client } from '@/hooks/useClients';
 import { ActionButton } from '@/components/ui/action-button';
@@ -25,9 +26,11 @@ const EMPTY_FORM = {
 };
 
 export default function SettingsPage() {
+  const router = useRouter();
   const { clients, listClients, getClient, updateClient, loading, error } = useClients();
   const { pinConfigured, register, refreshPinStatus } = useAuth();
   const [clientId, setClientId] = useState('');
+  const [metaConfigured, setMetaConfigured] = useState<boolean | null>(null);
   const [clientsChecked, setClientsChecked] = useState(false);
   const [formData, setFormData] = useState(EMPTY_FORM);
   const [saved, setSaved] = useState(false);
@@ -112,6 +115,14 @@ export default function SettingsPage() {
   useEffect(() => {
     if (!isElectron()) return;
     getBackupFolder().then(setBackupFolder);
+  }, []);
+
+  useEffect(() => {
+    axios
+      .get(`${API_URL}/social-accounts/meta-status`, authHeaders())
+      .then(({ data }) => setMetaConfigured(Boolean(data?.data?.configured)))
+      .catch(() => setMetaConfigured(false));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleChooseFolder = async () => {
@@ -661,13 +672,28 @@ export default function SettingsPage() {
             <h2 className="text-sm font-semibold text-slate-300">Social Integrations</h2>
           </div>
           <div className="p-5 space-y-3">
-            {['Facebook / Instagram', 'TikTok', 'Google Business'].map((name) => (
+            <button
+              type="button"
+              onClick={() => router.push('/social-accounts')}
+              className="w-full flex items-center justify-between px-4 py-3 border border-slate-800 rounded-md hover:border-blue-500/50 hover:bg-slate-800/40 transition-all text-left"
+            >
+              <div>
+                <div className="text-sm font-medium text-white">Facebook / Instagram</div>
+                <div className="text-xs text-slate-500">
+                  {metaConfigured === null ? 'Checking…' : metaConfigured ? 'Ready — connect from Social Accounts' : 'Needs a Meta App ID/Secret set on the server first'}
+                </div>
+              </div>
+              <span className={`text-xs font-medium ${metaConfigured ? 'text-emerald-400' : 'text-amber-400'}`}>
+                {metaConfigured === null ? '…' : metaConfigured ? 'Connect →' : 'Setup needed'}
+              </span>
+            </button>
+            {['TikTok', 'Google Business'].map((name) => (
               <div key={name} className="flex items-center justify-between px-4 py-3 border border-slate-800 rounded-md">
                 <div>
                   <div className="text-sm font-medium text-white">{name}</div>
-                  <div className="text-xs text-slate-500">Not connected yet</div>
+                  <div className="text-xs text-slate-500">Needs API credentials from {name}&apos;s developer console first</div>
                 </div>
-                <span className="text-xs text-slate-400">Coming soon</span>
+                <span className="text-xs text-slate-400">Not built yet</span>
               </div>
             ))}
           </div>

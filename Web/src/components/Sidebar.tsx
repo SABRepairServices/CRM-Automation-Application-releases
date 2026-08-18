@@ -18,6 +18,7 @@ import {
   UserCog,
   FlaskConical,
   Pin,
+  Share2,
 } from 'lucide-react';
 
 // Each nav item gets its own accent so the rail reads as a row of distinct
@@ -86,6 +87,7 @@ const links: { href: string; label: string; icon: typeof LayoutDashboard; accent
   { href: '/quotes', label: 'Quotes', icon: FileText, accent: 'blue' },
   { href: '/invoices', label: 'Invoices', icon: Receipt, accent: 'violet' },
   { href: '/monthly-invoices', label: 'Monthly Invoices', icon: CalendarRange, accent: 'amber' },
+  { href: '/social-accounts', label: 'Social Accounts', icon: Share2, accent: 'violet' },
   { href: '/call-agent', label: 'Call Agent', icon: Phone, accent: 'cyan' },
   { href: '/whatsapp-sim', label: 'WhatsApp Sim', icon: FlaskConical, accent: 'rose' },
 ];
