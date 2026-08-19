@@ -74,6 +74,17 @@
 .doc-theme .meta-card.hi .meta-label {
   color: var(--doc-gold);
 }
+/* The rest of the meta strip (date/valid-until/prepared-by, etc.) read as
+   flat gray boxes next to the one gold "highlighted" card — give each its
+   own quiet accent so the whole row reads as colorful, not just the first
+   card. :not(.hi) keeps this from fighting the gold highlight on forms
+   that mark more than one card highlighted (e.g. Monthly Invoice). */
+.doc-theme .meta-card:nth-child(2):not(.hi) { border-color: rgba(96, 165, 250, 0.35); }
+.doc-theme .meta-card:nth-child(2):not(.hi) .meta-label { color: #93c5fd; }
+.doc-theme .meta-card:nth-child(3):not(.hi) { border-color: rgba(167, 139, 250, 0.35); }
+.doc-theme .meta-card:nth-child(3):not(.hi) .meta-label { color: #c4b5fd; }
+.doc-theme .meta-card:nth-child(4):not(.hi) { border-color: rgba(52, 211, 153, 0.35); }
+.doc-theme .meta-card:nth-child(4):not(.hi) .meta-label { color: #6ee7b7; }
 .doc-theme .meta-input {
   width: 100%;
   background: var(--doc-input-bg);
