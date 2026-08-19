@@ -428,7 +428,7 @@ textarea:focus {
 .ring-hover::after {
   padding: 2px;
   background: conic-gradient(
-    from 0deg,
+    from var(--ring-angle, 0deg),
     transparent 0deg,
     rgb(var(--ring-clr) / 0.95) 90deg,
     transparent 190deg,
@@ -443,8 +443,18 @@ textarea:focus {
   animation-play-state: paused;
   transition: opacity 200ms ease;
 }
+/* Rotating the gradient's own angle (not the element) is what makes the
+   glow trace the actual outline — hugging straight edges and rounded
+   corners alike. Rotating the whole masked box instead (transform: rotate)
+   looks fine on a circle but sweeps a clock-hand arc straight across a
+   rounded-rect row instead of following its border path. */
+@property --ring-angle {
+  syntax: '<angle>';
+  inherits: false;
+  initial-value: 0deg;
+}
 @keyframes ring-spin {
-  to { transform: rotate(360deg); }
+  to { --ring-angle: 360deg; }
 }
 .ring-hover:hover::before,
 .ring-hover:focus-visible::before {
