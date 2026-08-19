@@ -143,7 +143,7 @@ export default function TechniciansPage() {
                 />
               </div>
               <div className="sm:col-span-2">
-                <ActionButton type="submit" disabled={loading} text={loading ? 'Adding...' : 'Add Technician'} />
+                <ActionButton type="submit" disabled={loading} isLoading={loading} text={loading ? 'Adding...' : 'Add Technician'} />
               </div>
             </form>
           </div>

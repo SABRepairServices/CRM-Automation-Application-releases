@@ -200,7 +200,7 @@ export default function CallAgentPage() {
                 />
               </div>
               <div className="sm:col-span-2">
-                <ActionButton type="submit" disabled={loading} text={loading ? 'Saving...' : 'Save Call Log'} />
+                <ActionButton type="submit" disabled={loading} isLoading={loading} text={loading ? 'Saving...' : 'Save Call Log'} />
               </div>
             </form>
           </div>

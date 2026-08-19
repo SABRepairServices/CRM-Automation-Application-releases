@@ -207,7 +207,7 @@ export default function QuotationDocumentPage() {
           <SignatureBlock roles={SIGNATURE_ROLES} value={signatures} onChange={setSignatures} />
           <div className="mt-4 print:hidden">
             <ActionButton text={savingSignatures ? 'Saving…' : 'Save Signatures'} variant="ghost" showArrow={false}
-              disabled={savingSignatures} onClick={saveSignatures} />
+              disabled={savingSignatures} isLoading={savingSignatures} onClick={saveSignatures} />
           </div>
         </DocSection>
       </div>

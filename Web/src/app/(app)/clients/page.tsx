@@ -75,7 +75,7 @@ export default function ClientsPage() {
                 <input type="text" value={formData.city} onChange={(e) => setFormData({ ...formData, city: e.target.value })} className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-md text-sm text-white placeholder:text-slate-600" />
               </div>
               <div className="sm:col-span-2">
-                <ActionButton type="submit" disabled={loading} text={loading ? 'Creating...' : 'Create Client'} />
+                <ActionButton type="submit" disabled={loading} isLoading={loading} text={loading ? 'Creating...' : 'Create Client'} />
               </div>
             </form>
           </div>

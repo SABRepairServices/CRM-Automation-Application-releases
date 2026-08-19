@@ -173,7 +173,7 @@ export default function CustomersPage() {
                 <textarea value={formData.notes} onChange={(e) => setFormData({ ...formData, notes: e.target.value })} rows={2} className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-md text-sm text-white placeholder:text-slate-600" />
               </div>
               <div className="sm:col-span-2">
-                <ActionButton type="submit" disabled={loading} text={loading ? 'Saving...' : editingId ? 'Update Customer' : 'Create Customer'} />
+                <ActionButton type="submit" disabled={loading} isLoading={loading} text={loading ? 'Saving...' : editingId ? 'Update Customer' : 'Create Customer'} />
               </div>
             </form>
           </div>

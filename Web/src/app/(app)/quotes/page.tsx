@@ -307,7 +307,7 @@ export default function QuotesPage() {
           </DocSection>
 
           {formError && <p className="text-xs text-red-400 mb-3">{formError}</p>}
-          <ActionButton type="submit" disabled={loading} text={loading ? 'Creating…' : 'Create Quotation'} />
+          <ActionButton type="submit" disabled={loading} isLoading={loading} text={loading ? 'Creating…' : 'Create Quotation'} />
         </form>
 
         <div className="bg-slate-900 border border-slate-800 rounded-md overflow-hidden mt-8">

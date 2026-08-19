@@ -226,7 +226,7 @@ export default function MonthlyInvoiceDocumentPage() {
           <SignatureBlock roles={SIGNATURE_ROLES} value={signatures} onChange={setSignatures} />
           <div className="mt-4 print:hidden">
             <ActionButton text={saving ? 'Saving…' : 'Save Signatures'} variant="ghost" showArrow={false}
-              disabled={saving} onClick={saveSignatures} />
+              disabled={saving} isLoading={saving} onClick={saveSignatures} />
           </div>
         </DocSection>
       </div>

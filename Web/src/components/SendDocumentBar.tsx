@@ -89,6 +89,7 @@ export function SendDocumentBar({
         variant="primary"
         showArrow={false}
         disabled={status === 'sending'}
+        isLoading={status === 'sending'}
         onClick={handleSend}
         className="ml-auto"
       />

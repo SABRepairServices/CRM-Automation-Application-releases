@@ -300,6 +300,7 @@ export default function SettingsPage() {
           type="button"
           onClick={() => handleSetPin(setupConfirmPin)}
           disabled={settingUpPin || setupConfirmPin.length !== 4}
+          isLoading={settingUpPin}
           text={settingUpPin ? 'Setting...' : 'Set PIN'}
         />
       </div>
@@ -331,7 +332,7 @@ export default function SettingsPage() {
           <PinInput key={`confirm-${changeFailCount}`} length={4} value={confirmNewPin} onChange={setConfirmNewPin} onComplete={handleChangePin} />
         </div>
         <p className="text-xs text-slate-500">Forgot your current PIN? There&apos;s no self-service reset &mdash; contact your developer to reset it directly.</p>
-        <ActionButton type="button" onClick={() => handleChangePin()} disabled={changingPin} text={changingPin ? 'Changing...' : 'Change PIN'} />
+        <ActionButton type="button" onClick={() => handleChangePin()} disabled={changingPin} isLoading={changingPin} text={changingPin ? 'Changing...' : 'Change PIN'} />
       </div>
     </div>
   );
@@ -514,7 +515,7 @@ export default function SettingsPage() {
                 Logos saved.
               </div>
             )}
-            <ActionButton type="button" onClick={handleSaveLogos} disabled={savingLogos} text={savingLogos ? 'Saving...' : 'Save Logos'} />
+            <ActionButton type="button" onClick={handleSaveLogos} disabled={savingLogos} isLoading={savingLogos} text={savingLogos ? 'Saving...' : 'Save Logos'} />
           </div>
         </div>
 
@@ -558,7 +559,7 @@ export default function SettingsPage() {
               </div>
             </div>
 
-            <ActionButton type="submit" disabled={loading} text={loading ? 'Saving...' : 'Save Company Profile'} />
+            <ActionButton type="submit" disabled={loading} isLoading={loading} text={loading ? 'Saving...' : 'Save Company Profile'} />
           </form>
         </div>
 
@@ -582,6 +583,7 @@ export default function SettingsPage() {
                   variant="ghost"
                   showArrow={false}
                   disabled={changingFolder}
+                  isLoading={changingFolder}
                   onClick={handleChooseFolder}
                 />
               </div>
@@ -613,7 +615,7 @@ export default function SettingsPage() {
                   Number <span className="font-mono text-white">{waStatus.displayNumber || waStatus.phoneNumberId}</span> is connected. Document send buttons on Quotes, Invoices and Inspections will use this number.
                 </p>
                 <div className="flex gap-2">
-                  <ActionButton text={waSaving ? 'Disconnecting…' : 'Disconnect'} variant="danger" showArrow={false} disabled={waSaving} onClick={handleDisconnectWhatsapp} />
+                  <ActionButton text={waSaving ? 'Disconnecting…' : 'Disconnect'} variant="danger" showArrow={false} disabled={waSaving} isLoading={waSaving} onClick={handleDisconnectWhatsapp} />
                 </div>
               </div>
             ) : (
@@ -657,6 +659,7 @@ export default function SettingsPage() {
                   variant="primary"
                   showArrow={false}
                   disabled={waSaving || !waToken || !waPhoneId}
+                  isLoading={waSaving}
                   onClick={handleSaveWhatsapp}
                 />
               </div>

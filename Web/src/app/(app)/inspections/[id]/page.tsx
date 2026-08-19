@@ -238,7 +238,7 @@ export default function InspectionDocumentPage() {
           <SignatureBlock roles={SIGNATURE_ROLES} value={signatures} onChange={setSignatures} />
           <div className="mt-4 print:hidden">
             <ActionButton text={saving ? 'Saving…' : 'Save Signatures'} variant="ghost" showArrow={false}
-              disabled={saving} onClick={() => patch({ signatures })} />
+              disabled={saving} isLoading={saving} onClick={() => patch({ signatures })} />
           </div>
         </DocSection>
       </div>

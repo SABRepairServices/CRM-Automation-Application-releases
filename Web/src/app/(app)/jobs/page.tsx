@@ -177,7 +177,7 @@ export default function JobsPage() {
                     <label className="block text-xs font-medium text-slate-500 mb-1">Diagnosis</label>
                     <textarea value={formData.diagnosis} onChange={(e) => setFormData({ ...formData, diagnosis: e.target.value })} rows={2} className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-md text-sm text-white placeholder:text-slate-600" />
                   </div>
-                  <ActionButton type="submit" disabled={loading} text={loading ? 'Creating...' : 'Create Job'} />
+                  <ActionButton type="submit" disabled={loading} isLoading={loading} text={loading ? 'Creating...' : 'Create Job'} />
                 </form>
               </div>
             )}
