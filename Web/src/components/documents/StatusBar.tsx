@@ -1,5 +1,7 @@
 'use client';
 
+import type { CSSProperties } from 'react';
+
 type Tone = 'gold' | 'green' | 'red' | 'blue' | 'slate';
 
 export interface StatusOption<T extends string> {
@@ -33,7 +35,8 @@ export function StatusBar<T extends string>({
           disabled={disabled}
           aria-pressed={value === opt.value}
           onClick={() => onChange(opt.value)}
-          className={`s-btn ${value === opt.value ? opt.tone : ''}`}
+          style={{ '--ring-clr': '251 191 36' } as CSSProperties}
+          className={`s-btn ring-hover ring-hover-row ${value === opt.value ? `${opt.tone} ring-hover-selected` : ''}`}
         >
           {opt.label}
         </button>

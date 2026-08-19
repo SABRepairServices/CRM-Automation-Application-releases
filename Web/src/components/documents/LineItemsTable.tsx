@@ -1,6 +1,6 @@
 'use client';
 
-import { ReactNode } from 'react';
+import { ReactNode, CSSProperties } from 'react';
 
 export interface LineColumn<T> {
   key: keyof T & string;
@@ -99,7 +99,13 @@ export function LineItemsTable<T extends Record<string, unknown>>({
                 {computed && <td className="amt-cell">{computed(row)}</td>}
                 {!readOnly && (
                   <td className="del-cell">
-                    <button type="button" className="del-btn" aria-label="Remove line" onClick={() => removeRow(i)}>
+                    <button
+                      type="button"
+                      style={{ '--ring-clr': '244 63 94' } as CSSProperties}
+                      className="del-btn ring-hover ring-hover-circle"
+                      aria-label="Remove line"
+                      onClick={() => removeRow(i)}
+                    >
                       ×
                     </button>
                   </td>

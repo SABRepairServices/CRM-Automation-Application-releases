@@ -399,20 +399,75 @@ textarea:focus {
   animation: iconWiggle 0.4s ease-in-out;
 }
 
-@keyframes iconPulseRing {
-  0% { box-shadow: 0 0 0 0 currentColor; opacity: 0.55; }
-  100% { box-shadow: 0 0 0 8px currentColor; opacity: 0; }
-}
-.active-icon-ring {
+/* Neon ring hover/selected system — app-wide, replaces the old per-item
+   pulsing active-icon-ring. Rest: flat. Hover: a thin static ring appears
+   plus an outer conic-gradient glow that slowly spins around the element.
+   Selected/active: only the static ring shows, permanently, no glow/spin
+   even while hovered — reads calmer than "currently under the mouse."
+   Color is set per usage site via --ring-clr (an "R G B" triplet, e.g.
+   "245 158 11") so one ruleset serves every context/accent. */
+.ring-hover {
+  --ring-clr: 245 158 11; /* amber-500 fallback */
   position: relative;
+  isolation: isolate;
 }
-.active-icon-ring::after {
+.ring-hover::before,
+.ring-hover::after {
   content: '';
   position: absolute;
-  inset: 0;
-  border-radius: 9999px;
-  animation: iconPulseRing 1.8s ease-out infinite;
+  inset: -4px;
+  border-radius: inherit;
   pointer-events: none;
+  z-index: -1;
+}
+.ring-hover::before {
+  border: 1.5px solid rgb(var(--ring-clr) / 0.9);
+  opacity: 0;
+  transition: opacity 180ms ease;
+}
+.ring-hover::after {
+  padding: 2px;
+  background: conic-gradient(
+    from 0deg,
+    transparent 0deg,
+    rgb(var(--ring-clr) / 0.95) 90deg,
+    transparent 190deg,
+    transparent 360deg
+  );
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  opacity: 0;
+  filter: blur(0.5px);
+  animation: ring-spin 2.2s linear infinite;
+  animation-play-state: paused;
+  transition: opacity 200ms ease;
+}
+@keyframes ring-spin {
+  to { transform: rotate(360deg); }
+}
+.ring-hover:hover::before,
+.ring-hover:focus-visible::before {
+  opacity: 1;
+}
+.ring-hover:hover::after,
+.ring-hover:focus-visible::after {
+  opacity: 1;
+  animation-play-state: running;
+}
+.ring-hover-circle { border-radius: 9999px; }
+.ring-hover-row { border-radius: 10px; }
+/* Icon nested inside an already-ringed row gets a tighter inset so its own
+   ring doesn't collide with the parent row's ring. */
+.ring-hover-icon { border-radius: 9999px; }
+.ring-hover-icon::before,
+.ring-hover-icon::after { inset: -3px; }
+.ring-hover-selected::before {
+  opacity: 1 !important;
+}
+.ring-hover-selected::after {
+  opacity: 0 !important;
+  animation-play-state: paused !important;
 }
 
 .spring-hover {

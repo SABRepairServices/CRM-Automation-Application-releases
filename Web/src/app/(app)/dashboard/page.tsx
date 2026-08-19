@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, CSSProperties } from 'react';
 import { useRouter } from 'next/navigation';
 import { useCustomers } from '@/hooks/useCustomers';
 import { useJobs } from '@/hooks/useJobs';
@@ -160,7 +160,8 @@ export default function DashboardPage() {
           <div className="relative ml-auto">
             <button
               onClick={() => setNotifOpen((v) => !v)}
-              className="group relative w-8 h-8 flex items-center justify-center rounded-full bg-slate-900 border border-slate-800 text-slate-400 hover:text-white hover:border-slate-700 transition-all"
+              style={{ '--ring-clr': '59 130 246' } as CSSProperties}
+              className={`group relative ring-hover ring-hover-circle w-8 h-8 flex items-center justify-center rounded-full bg-slate-900 border border-slate-800 text-slate-400 hover:text-white hover:border-slate-700 transition-all ${notifOpen ? 'ring-hover-selected' : ''}`}
             >
               <Bell className="w-4 h-4 group-hover:animate-[iconWiggle_0.4s_ease-in-out]" />
               {notifications.length > 0 && (

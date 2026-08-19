@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, CSSProperties } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
@@ -125,10 +125,9 @@ export function Header() {
           href="/settings"
           aria-label="Settings"
           title="Settings"
-          className={`group w-10 h-10 flex items-center justify-center rounded-full transition-all duration-200 ${
-            pathname === '/settings'
-              ? 'bg-blue-500/10 text-blue-400 shadow-[0_0_12px_rgba(96,165,250,0.5)]'
-              : 'text-slate-500 hover:bg-slate-800 hover:text-slate-300 hover:shadow-[0_0_12px_rgba(148,163,184,0.35)]'
+          style={{ '--ring-clr': '59 130 246' } as CSSProperties}
+          className={`group ring-hover ring-hover-circle w-10 h-10 flex items-center justify-center rounded-full transition-colors duration-200 ${
+            pathname === '/settings' ? 'ring-hover-selected bg-blue-500/10 text-blue-400' : 'text-slate-500 hover:bg-slate-800 hover:text-slate-300'
           }`}
         >
           <svg
@@ -157,7 +156,8 @@ export function Header() {
         <div className="relative">
           <button
             onClick={() => setMenuOpen((v) => !v)}
-            className="w-9 h-9 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-white text-sm font-semibold transition-shadow duration-200 hover:shadow-[0_0_14px_rgba(168,85,247,0.55)]"
+            style={{ '--ring-clr': '168 85 247' } as CSSProperties}
+            className="ring-hover ring-hover-circle w-9 h-9 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-white text-sm font-semibold"
           >
             {initials}
           </button>

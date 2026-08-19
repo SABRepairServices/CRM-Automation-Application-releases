@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, CSSProperties } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { getAppVersion, installUpdate, isElectron, onUpdateDownloaded, UpdateInfo } from '@/lib/electronBridge';
@@ -21,61 +21,20 @@ import {
   Share2,
 } from 'lucide-react';
 
-// Each nav item gets its own accent so the rail reads as a row of distinct
-// colorful controls instead of one flat monochrome list. Every class string
-// used in the DOM is written out in full below — Tailwind's JIT scanner
-// only picks up classes that appear as literal, unbroken tokens in the
-// source, so these can't be assembled at runtime via template interpolation.
+// Each nav item's icon keeps its own tint so the rail reads as a row of
+// distinct controls, not one flat monochrome list — but the hover/selected
+// motion itself (the ring-hover system) is one uniform amber "sidebar"
+// context color, per the app-wide ring design system.
 const ACCENTS = {
-  blue: {
-    text: 'text-blue-400',
-    bg: 'bg-blue-500/15',
-    iconIdle: 'bg-blue-500/15 border-2 border-blue-500/60 group-hover:shadow-[0_0_12px_rgba(96,165,250,0.55)]',
-    iconActive: 'bg-blue-500/15 border-2 border-blue-400 shadow-[0_0_12px_rgba(96,165,250,0.55)]',
-    row: 'border border-blue-500/25 group-hover:border-blue-400/70 group-hover:shadow-[0_0_14px_-4px_rgba(96,165,250,0.5)]',
-    rowActive: 'border border-blue-400/70 bg-blue-500/[0.06] shadow-[0_0_14px_-4px_rgba(96,165,250,0.5)]',
-  },
-  violet: {
-    text: 'text-violet-400',
-    bg: 'bg-violet-500/15',
-    iconIdle: 'bg-violet-500/15 border-2 border-violet-500/60 group-hover:shadow-[0_0_12px_rgba(167,139,250,0.55)]',
-    iconActive: 'bg-violet-500/15 border-2 border-violet-400 shadow-[0_0_12px_rgba(167,139,250,0.55)]',
-    row: 'border border-violet-500/25 group-hover:border-violet-400/70 group-hover:shadow-[0_0_14px_-4px_rgba(167,139,250,0.5)]',
-    rowActive: 'border border-violet-400/70 bg-violet-500/[0.06] shadow-[0_0_14px_-4px_rgba(167,139,250,0.5)]',
-  },
-  cyan: {
-    text: 'text-cyan-400',
-    bg: 'bg-cyan-500/15',
-    iconIdle: 'bg-cyan-500/15 border-2 border-cyan-500/60 group-hover:shadow-[0_0_12px_rgba(34,211,238,0.55)]',
-    iconActive: 'bg-cyan-500/15 border-2 border-cyan-400 shadow-[0_0_12px_rgba(34,211,238,0.55)]',
-    row: 'border border-cyan-500/25 group-hover:border-cyan-400/70 group-hover:shadow-[0_0_14px_-4px_rgba(34,211,238,0.5)]',
-    rowActive: 'border border-cyan-400/70 bg-cyan-500/[0.06] shadow-[0_0_14px_-4px_rgba(34,211,238,0.5)]',
-  },
-  amber: {
-    text: 'text-amber-400',
-    bg: 'bg-amber-500/15',
-    iconIdle: 'bg-amber-500/15 border-2 border-amber-500/60 group-hover:shadow-[0_0_12px_rgba(251,191,36,0.55)]',
-    iconActive: 'bg-amber-500/15 border-2 border-amber-400 shadow-[0_0_12px_rgba(251,191,36,0.55)]',
-    row: 'border border-amber-500/25 group-hover:border-amber-400/70 group-hover:shadow-[0_0_14px_-4px_rgba(251,191,36,0.5)]',
-    rowActive: 'border border-amber-400/70 bg-amber-500/[0.06] shadow-[0_0_14px_-4px_rgba(251,191,36,0.5)]',
-  },
-  emerald: {
-    text: 'text-emerald-400',
-    bg: 'bg-emerald-500/15',
-    iconIdle: 'bg-emerald-500/15 border-2 border-emerald-500/60 group-hover:shadow-[0_0_12px_rgba(52,211,153,0.55)]',
-    iconActive: 'bg-emerald-500/15 border-2 border-emerald-400 shadow-[0_0_12px_rgba(52,211,153,0.55)]',
-    row: 'border border-emerald-500/25 group-hover:border-emerald-400/70 group-hover:shadow-[0_0_14px_-4px_rgba(52,211,153,0.5)]',
-    rowActive: 'border border-emerald-400/70 bg-emerald-500/[0.06] shadow-[0_0_14px_-4px_rgba(52,211,153,0.5)]',
-  },
-  rose: {
-    text: 'text-rose-400',
-    bg: 'bg-rose-500/15',
-    iconIdle: 'bg-rose-500/15 border-2 border-rose-500/60 group-hover:shadow-[0_0_12px_rgba(251,113,133,0.55)]',
-    iconActive: 'bg-rose-500/15 border-2 border-rose-400 shadow-[0_0_12px_rgba(251,113,133,0.55)]',
-    row: 'border border-rose-500/25 group-hover:border-rose-400/70 group-hover:shadow-[0_0_14px_-4px_rgba(251,113,133,0.5)]',
-    rowActive: 'border border-rose-400/70 bg-rose-500/[0.06] shadow-[0_0_14px_-4px_rgba(251,113,133,0.5)]',
-  },
+  blue: { text: 'text-blue-400', bg: 'bg-blue-500/15' },
+  violet: { text: 'text-violet-400', bg: 'bg-violet-500/15' },
+  cyan: { text: 'text-cyan-400', bg: 'bg-cyan-500/15' },
+  amber: { text: 'text-amber-400', bg: 'bg-amber-500/15' },
+  emerald: { text: 'text-emerald-400', bg: 'bg-emerald-500/15' },
+  rose: { text: 'text-rose-400', bg: 'bg-rose-500/15' },
 } as const;
+
+const SIDEBAR_RING = { '--ring-clr': '245 158 11' } as CSSProperties;
 
 const links: { href: string; label: string; icon: typeof LayoutDashboard; accent: keyof typeof ACCENTS }[] = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, accent: 'blue' },
@@ -206,17 +165,14 @@ export function Sidebar() {
               key={link.href}
               href={link.href}
               title={wide ? undefined : link.label}
+              style={SIDEBAR_RING}
               className={`group relative flex items-center gap-2.5 rounded-lg text-sm transition-all duration-150 ${
-                wide ? `px-2 py-2 nav-row-3d ${active ? accent.rowActive : accent.row}` : 'justify-center px-0 py-2'
+                wide ? `px-2 py-2 nav-row-3d ring-hover ring-hover-row ${active ? 'ring-hover-selected' : ''}` : 'justify-center px-0 py-2'
               } ${active ? 'text-white font-medium' : 'text-slate-400 hover:text-slate-200'}`}
             >
-              {active && (
-                <span className="absolute left-0 top-1/2 -translate-y-1/2 h-5 w-[3px] rounded-r-full bg-gradient-to-b from-blue-400 to-violet-500 shadow-[0_0_8px_rgba(96,165,250,0.7)]" />
-              )}
               <span
-                className={`spring-hover flex items-center justify-center w-8 h-8 rounded-full shrink-0 group-hover:scale-110 group-hover:-rotate-6 ${
-                  active ? `${accent.iconActive} ${accent.text} active-icon-ring` : accent.iconIdle
-                }`}
+                style={SIDEBAR_RING}
+                className={`ring-hover ring-hover-icon flex items-center justify-center w-8 h-8 rounded-full shrink-0 ${active ? 'ring-hover-selected' : ''} ${accent.bg}`}
               >
                 <Icon className={`w-4 h-4 ${accent.text}`} strokeWidth={2} />
               </span>

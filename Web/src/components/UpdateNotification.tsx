@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, CSSProperties } from 'react';
 import { DownloadCloud, X } from 'lucide-react';
 import { onUpdateDownloaded, installUpdate } from '@/lib/electronBridge';
 
@@ -34,7 +34,8 @@ export function UpdateNotification() {
         <button
           onClick={() => setDismissed(true)}
           aria-label="Dismiss"
-          className="text-slate-500 hover:text-slate-300 shrink-0"
+          style={{ '--ring-clr': '148 163 184' } as CSSProperties}
+          className="ring-hover ring-hover-circle w-7 h-7 flex items-center justify-center text-slate-500 hover:text-slate-300 shrink-0"
         >
           <X className="w-4 h-4" />
         </button>

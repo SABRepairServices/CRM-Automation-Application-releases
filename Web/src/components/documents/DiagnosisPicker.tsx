@@ -1,5 +1,6 @@
 'use client';
 
+import type { CSSProperties } from 'react';
 import type { DiagnosisResult } from '@/hooks/useInspections';
 
 const OPTIONS: { value: DiagnosisResult; icon: string; label: string }[] = [
@@ -31,7 +32,8 @@ export function DiagnosisPicker({
           disabled={disabled}
           aria-pressed={value === opt.value}
           onClick={() => onChange(opt.value)}
-          className={`diag-opt ${value === opt.value ? `sel-${opt.value}` : ''}`}
+          style={{ '--ring-clr': '251 191 36' } as CSSProperties}
+          className={`diag-opt ring-hover ring-hover-row ${value === opt.value ? `sel-${opt.value} ring-hover-selected` : ''}`}
         >
           <div className="diag-opt-icon" aria-hidden="true">{opt.icon}</div>
           <div className="diag-opt-label">{opt.label}</div>
