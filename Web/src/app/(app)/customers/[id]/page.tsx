@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import type { Customer } from '@/hooks/useCustomers';
 import type { Job } from '@/hooks/useJobs';
+import { Wrench } from 'lucide-react';
 import type { Quotation } from '@/hooks/useQuotations';
 import type { Invoice } from '@/hooks/useInvoices';
 import type { InspectionReport } from '@/hooks/useInspections';
@@ -160,9 +161,14 @@ export default function CustomerDetailPage() {
         </div>
 
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-sm font-semibold text-slate-300">
-            Appliances &amp; Repair History
-          </h2>
+          <div className="flex items-center gap-2">
+            <span className="flex items-center justify-center w-6 h-6 rounded-full bg-cyan-500/15 text-cyan-400 shrink-0">
+              <Wrench className="w-3.5 h-3.5" strokeWidth={2} />
+            </span>
+            <h2 className="text-sm font-semibold text-slate-300">
+              Appliances &amp; Repair History
+            </h2>
+          </div>
           <span className="text-xs text-slate-400">
             {appliances.length} appliance{appliances.length !== 1 ? 's' : ''} — each with its own Inspection, Quotation &amp; Invoice
           </span>

@@ -12,6 +12,7 @@ import { JobContextFields } from '@/components/documents/JobContextFields';
 import { LineItemsTable, LineColumn } from '@/components/documents/LineItemsTable';
 import { SignatureBlock } from '@/components/documents/SignatureBlock';
 import { DiagnosisPicker } from '@/components/documents/DiagnosisPicker';
+import { ClipboardCheck } from 'lucide-react';
 
 const SIGNATURE_ROLES = [
   { key: 'technician', label: 'Technician', placeholder: 'Technician name' },
@@ -277,7 +278,12 @@ export default function InspectionsPage() {
 
         <div className="bg-slate-900 border border-slate-800 rounded-md overflow-hidden mt-8">
           <div className="px-5 py-3 border-b border-slate-800 flex items-center justify-between">
-            <h2 className="text-sm font-semibold text-slate-300">All Inspection Reports</h2>
+            <div className="flex items-center gap-2">
+              <span className="flex items-center justify-center w-6 h-6 rounded-full bg-rose-500/15 text-rose-400 shrink-0">
+                <ClipboardCheck className="w-3.5 h-3.5" strokeWidth={2} />
+              </span>
+              <h2 className="text-sm font-semibold text-slate-300">All Inspection Reports</h2>
+            </div>
             <span className="text-xs text-slate-400">{reports.length} total</span>
           </div>
 

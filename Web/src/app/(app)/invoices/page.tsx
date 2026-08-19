@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useInvoices, Invoice } from '@/hooks/useInvoices';
 import { useSelectedClientId } from '@/hooks/useSelectedClientId';
 import { ActionButton } from '@/components/ui/action-button';
+import { Receipt } from 'lucide-react';
 import { DocSection } from '@/components/documents/DocSection';
 import { LineItemsTable, LineColumn } from '@/components/documents/LineItemsTable';
 
@@ -230,7 +231,12 @@ export default function InvoicesPage() {
 
         <div className="bg-slate-900 border border-slate-800 rounded-md overflow-hidden mt-8">
           <div className="px-5 py-3 border-b border-slate-800 flex items-center justify-between">
-            <h2 className="text-sm font-semibold text-slate-300">All Invoices</h2>
+            <div className="flex items-center gap-2">
+              <span className="flex items-center justify-center w-6 h-6 rounded-full bg-violet-500/15 text-violet-400 shrink-0">
+                <Receipt className="w-3.5 h-3.5" strokeWidth={2} />
+              </span>
+              <h2 className="text-sm font-semibold text-slate-300">All Invoices</h2>
+            </div>
             <span className="text-xs text-slate-400">{invoices.length} total</span>
           </div>
 

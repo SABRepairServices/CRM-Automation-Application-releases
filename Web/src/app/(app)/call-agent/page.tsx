@@ -7,6 +7,7 @@ import { useTechnicians } from '@/hooks/useTechnicians';
 import { useJobs } from '@/hooks/useJobs';
 import { useSelectedClientId } from '@/hooks/useSelectedClientId';
 import { ActionButton } from '@/components/ui/action-button';
+import { Phone } from 'lucide-react';
 
 const PURPOSE_LABEL: Record<string, string> = {
   reminder: 'Reminder',
@@ -214,7 +215,12 @@ export default function CallAgentPage() {
 
         <div className="bg-slate-900 border border-slate-800 rounded-md overflow-hidden">
           <div className="px-5 py-3 border-b border-slate-800 flex items-center justify-between">
-            <h2 className="text-sm font-semibold text-slate-300">Call History</h2>
+            <div className="flex items-center gap-2">
+              <span className="flex items-center justify-center w-6 h-6 rounded-full bg-cyan-500/15 text-cyan-400 shrink-0">
+                <Phone className="w-3.5 h-3.5" strokeWidth={2} />
+              </span>
+              <h2 className="text-sm font-semibold text-slate-300">Call History</h2>
+            </div>
             <span className="text-xs text-slate-400">{calls.length} total</span>
           </div>
 
