@@ -155,7 +155,7 @@ export function Sidebar() {
         </button>
       </div>
 
-      <nav className="flex-1 px-2.5 py-1 space-y-0.5 overflow-y-auto overflow-x-hidden">
+      <nav className="flex-1 px-2.5 py-1 space-y-1.5 overflow-y-auto overflow-x-hidden">
         {links.map((link) => {
           const Icon = link.icon;
           const active = isActive(link.href);

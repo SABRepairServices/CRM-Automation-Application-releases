@@ -466,9 +466,14 @@ textarea:focus {
   animation-play-state: running;
 }
 .ring-hover-circle { border-radius: 9999px; }
+/* Tighter inset than the -4px default — a row sitting in a tightly-packed
+   stacked list (e.g. sidebar nav) would otherwise bleed its ring into the
+   next row's ring across a small gap. */
 .ring-hover-row { border-radius: 10px; }
-/* Icon nested inside an already-ringed row gets a tighter inset so its own
-   ring doesn't collide with the parent row's ring. */
+.ring-hover-row::before,
+.ring-hover-row::after { inset: -2px; }
+/* Icon nested inside an already-ringed row gets an even tighter inset so
+   its own ring doesn't collide with the parent row's ring. */
 .ring-hover-icon { border-radius: 9999px; }
 .ring-hover-icon::before,
 .ring-hover-icon::after { inset: -3px; }
